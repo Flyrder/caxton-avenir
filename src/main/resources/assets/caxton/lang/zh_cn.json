@@ -1,0 +1,13 @@
+{
+    "caxton.gui.libraryLoadingFailed": "加载库文件失败",
+    "caxton.gui.unsupportedPlatform": "不支持的平台",
+    "caxton.gui.libraryLoadingFailed.description": "Caxton 在加载本地库时失败了。请附上游戏错误日志将此错误报告给开发者",
+    "caxton.gui.unsupportedPlatform.description": "该版本的 Caxton 不支持当前计算机的操作系统和架构。你需要自行寻找或者构建适用于你的电脑的模组文件，亦或请求开发者使模组支持该平台。",
+    "caxton.gui.unsupportedPlatform.description.osx": "该版本的 Caxton 不支持当前计算机的操作系统和架构。你需要自行寻找或者构建适用于你的电脑的模组文件。",
+    "caxton.gui.unsupportedPlatform.description.osx2": "不幸的是，我们无法为 macOS 提供预构建的模组文件",
+    "caxton.gui.libraryLoadingFailed.link": "报告问题：%s",
+    "caxton.gui.unsupportedPlatform.link": "了解更多：%s",
+    "caxton.gui.failDescription": "%s\n\n操作系统：%s\n架构：%s\n\n%s",
+    "caxton.resourcePack.inter": "示例字体：Inter",
+    "caxton.resourcePack.opensans": "示例字体：Open Sans"
+}
