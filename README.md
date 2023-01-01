@@ -38,7 +38,7 @@ disable sign buffering for Exordium.
 [Sodium]: https://modrinth.com/mod/sodium
 [ImmediatelyFast]: https://modrinth.com/mod/immediatelyfast
 [Exordium]: https://modrinth.com/mod/exordium
-[text on signs will look blocky]: https://github.com/tr7zw/Exordium/issues/48
+[text on signs will look pixelated]: https://github.com/tr7zw/Exordium/issues/48
 
 ## OS support
 
