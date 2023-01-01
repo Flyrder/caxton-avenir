@@ -28,6 +28,18 @@ Available on [Modrinth](https://modrinth.com/mod/caxton)!
 * Font hinting will probably never be supported.
 * Currently, all glyphs are uploaded to VRAM eagerly.
 
+#### Mod compatibility
+
+Caxton has been confirmed to work with [Sodium] and [ImmediatelyFast].
+
+If [Exordium]’s sign buffering feature is enabled, then [text on signs will look pixelated]. If this happens, then
+disable sign buffering for Exordium.
+
+[Sodium]: https://modrinth.com/mod/sodium
+[ImmediatelyFast]: https://modrinth.com/mod/immediatelyfast
+[Exordium]: https://modrinth.com/mod/exordium
+[text on signs will look blocky]: https://github.com/tr7zw/Exordium/issues/48
+
 ## OS support
 
 Caxton uses a native library to assist with text shaping and MSDF generation. The pre-built copy of the mod bundles
