@@ -36,8 +36,11 @@ If [Exordium]’s sign buffering feature is enabled, then [text on signs will lo
 disable sign buffering for Exordium.
 
 [Sodium]: https://modrinth.com/mod/sodium
+
 [ImmediatelyFast]: https://modrinth.com/mod/immediatelyfast
+
 [Exordium]: https://modrinth.com/mod/exordium
+
 [text on signs will look pixelated]: https://github.com/tr7zw/Exordium/issues/48
 
 ## OS support
@@ -218,3 +221,7 @@ Caxton would not have been possible without the following projects:
 [MixinExtras]: https://github.com/LlamaLad7/MixinExtras
 
 [Caffeine]: https://github.com/ben-manes/caffeine
+
+The following people are also credited for translations:
+
+* IcedDog for the Chinese translation
