@@ -67,18 +67,18 @@ public class CaxtonTextRenderer {
         return this.fontStorageAccessor.apply(id);
     }
 
-    public float drawLayer(String text, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider, boolean seeThrough, int underlineColor, int light, int leftmostCodePoint, float maxWidth) {
+    public float drawLayer(String text, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider, boolean seeThrough, int backgroundColor, int light, int leftmostCodePoint, float maxWidth) {
         TextRenderer.TextLayerType layerType = seeThrough ? TextRenderer.TextLayerType.SEE_THROUGH : TextRenderer.TextLayerType.NORMAL;
         CaxtonText runGroups = CaxtonText.fromFormatted(text, fontStorageAccessor, Style.EMPTY, false, this.rtl, handler.getCache());
-        float newX = drawRunGroups(x, y, color, shadow, matrix, vertexConsumerProvider, layerType, underlineColor, light, runGroups, leftmostCodePoint, maxWidth);
+        float newX = drawRunGroups(x, y, color, shadow, matrix, vertexConsumerProvider, layerType, backgroundColor, light, runGroups, leftmostCodePoint, maxWidth);
         if (!shadow) this.rtl = false;
         return newX;
     }
 
-    public float drawLayer(OrderedText text, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider, boolean seeThrough, int underlineColor, int light, int leftmostCodePoint, float maxWidth) {
+    public float drawLayer(OrderedText text, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider, boolean seeThrough, int backgroundColor, int light, int leftmostCodePoint, float maxWidth) {
         TextRenderer.TextLayerType layerType = seeThrough ? TextRenderer.TextLayerType.SEE_THROUGH : TextRenderer.TextLayerType.NORMAL;
         CaxtonText runGroups = CaxtonText.from(text, fontStorageAccessor, false, this.rtl, handler.getCache());
-        return drawRunGroups(x, y, color, shadow, matrix, vertexConsumerProvider, layerType, underlineColor, light, runGroups, leftmostCodePoint, maxWidth);
+        return drawRunGroups(x, y, color, shadow, matrix, vertexConsumerProvider, layerType, backgroundColor, light, runGroups, leftmostCodePoint, maxWidth);
     }
 
     public void drawWithOutline(OrderedText text, float x, float y, int color, int outlineColor, Matrix4f matrix, VertexConsumerProvider vertexConsumers, int light) {
@@ -148,7 +148,7 @@ public class CaxtonTextRenderer {
             float x, float y,
             int color, boolean shadow,
             Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider,
-            TextRenderer.TextLayerType layerType, int underlineColor, int light,
+            TextRenderer.TextLayerType layerType, int backgroundColor, int light,
             CaxtonText text, int leftmostCodePoint, float maxWidth) {
 //        System.err.println(text);
         Threshold threshold = new Threshold(leftmostCodePoint);
@@ -171,7 +171,7 @@ public class CaxtonTextRenderer {
                         return false;
                     return drawer.accept(index2, style, codePoint);
                 });
-                x = drawer.drawLayer(underlineColor, x);
+                x = drawer.drawLayer(0, x);
             } else {
                 ShapingResult[] shapingResults = runGroup.getShapingResults();
 
@@ -181,7 +181,8 @@ public class CaxtonTextRenderer {
                 }
             }
         }
-        drawer.drawLayer(underlineColor, origX);
+        ((TextRendererDrawerAccessor) drawer).setX(x);
+        drawer.drawLayer(backgroundColor, origX);
         return x;
     }
 
