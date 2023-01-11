@@ -104,35 +104,36 @@ public abstract class AbstractSignEditScreenMixin
                         cursorX + 1, lineY + this.blockEntity.getTextLineHeight(),
                         0xFF000000 | signColor);
             }
-            if (selectionEnd == selectionStart) return;
 
-            int selectionMin = Math.min(selectionStart, selectionEnd);
-            int selectionMax = Math.max(selectionStart, selectionEnd);
+            if (selectionEnd != selectionStart) {
+                int selectionMin = Math.min(selectionStart, selectionEnd);
+                int selectionMax = Math.max(selectionStart, selectionEnd);
 
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder bufferBuilder = tessellator.getBuffer();
-            RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-            RenderSystem.disableTexture();
-            RenderSystem.enableColorLogicOp();
-            RenderSystem.logicOp(GlStateManager.LogicOp.OR_REVERSE);
-            bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
-            cth.getHighlightRanges(ct, selectionMin, selectionMax, (start, end) -> {
-                bufferBuilder.vertex(positionMatrix, start - x, lineY + this.blockEntity.getTextLineHeight(), 0.0f)
-                        .color(0, 0, 255, 255)
-                        .next();
-                bufferBuilder.vertex(positionMatrix, end - x, lineY + this.blockEntity.getTextLineHeight(), 0.0f)
-                        .color(0, 0, 255, 255)
-                        .next();
-                bufferBuilder.vertex(positionMatrix, end - x, lineY, 0.0f)
-                        .color(0, 0, 255, 255)
-                        .next();
-                bufferBuilder.vertex(positionMatrix, start - x, lineY, 0.0f)
-                        .color(0, 0, 255, 255)
-                        .next();
-            });
-            BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
-            RenderSystem.disableColorLogicOp();
-            RenderSystem.enableTexture();
+                Tessellator tessellator = Tessellator.getInstance();
+                BufferBuilder bufferBuilder = tessellator.getBuffer();
+                RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+                RenderSystem.disableTexture();
+                RenderSystem.enableColorLogicOp();
+                RenderSystem.logicOp(GlStateManager.LogicOp.OR_REVERSE);
+                bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+                cth.getHighlightRanges(ct, selectionMin, selectionMax, (start, end) -> {
+                    bufferBuilder.vertex(positionMatrix, start - x, lineY + this.blockEntity.getTextLineHeight(), 0.0f)
+                            .color(0, 0, 255, 255)
+                            .next();
+                    bufferBuilder.vertex(positionMatrix, end - x, lineY + this.blockEntity.getTextLineHeight(), 0.0f)
+                            .color(0, 0, 255, 255)
+                            .next();
+                    bufferBuilder.vertex(positionMatrix, end - x, lineY, 0.0f)
+                            .color(0, 0, 255, 255)
+                            .next();
+                    bufferBuilder.vertex(positionMatrix, start - x, lineY, 0.0f)
+                            .color(0, 0, 255, 255)
+                            .next();
+                });
+                BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
+                RenderSystem.disableColorLogicOp();
+                RenderSystem.enableTexture();
+            }
         }
     }
 }
