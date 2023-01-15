@@ -186,8 +186,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;getInnerWidth()I"), method = "mouseClicked", cancellable = true)
     private void onMouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
         if (caxtonText == null) {
-            cir.setReturnValue(false);
-            return;
+            updateCaxtonText();
         }
 
         CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
