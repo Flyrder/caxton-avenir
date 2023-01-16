@@ -110,6 +110,19 @@ rasterizing the font:
 }
 ```
 
+### Global configuration
+
+```json5
+{
+  // One of the Rust platform names (https://doc.rust-lang.org/nightly/rustc/platform-support.html) corresponding to your platform.
+  // If this is null, then Caxton will determine the correct value for your platform, so it is recommended to change this only when necessary.
+  "rustTarget": null,
+  // Some text handling methods are inherently broken and unsupported by Caxton. Caxton will log a warning whenever these methods are called. If this option is set to true, then Caxton will throw an exception instead.
+  // This option is primarily useful for debugging.
+  "fatalOnBrokenMethodCall": false
+}
+```
+
 [William Caxton]: https://en.wikipedia.org/wiki/William_Caxton
 
 [MSDF]: https://github.com/Chlumsky/msdfgen

@@ -1,8 +1,10 @@
 package xyz.flirora.caxton.dll;
 
+import xyz.flirora.caxton.CaxtonModClient;
+
 public class RustPlatform {
     public static String forCurrent() {
-        String target = System.getProperty("xyz.flirora.caxton.rustTarget");
+        String target = CaxtonModClient.CONFIG.rustTarget;
         if (target != null) {
             return target;
         }

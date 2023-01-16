@@ -16,8 +16,8 @@ import xyz.flirora.caxton.dll.LibraryLoading;
 @Environment(EnvType.CLIENT)
 public class CaxtonModClient implements ClientModInitializer {
     public static final String MOD_ID = "caxton";
-    private static final Logger LOGGER = LogUtils.getLogger();
-    private static final boolean FATAL_ON_BROKEN_METHOD_CALL = false;
+    public static final Logger LOGGER = LogUtils.getLogger();
+    public static CaxtonConfig CONFIG = null;
 
     // This is meant to be called from a mixin method injecting into a Minecraft method.
     public static void onBrokenMethod() {
@@ -27,7 +27,7 @@ public class CaxtonModClient implements ClientModInitializer {
             LOGGER.warn("    at " + stackTrace[i].toString());
         }
         LOGGER.warn("Do not use this method; its API is fundamentally broken.");
-        if (FATAL_ON_BROKEN_METHOD_CALL) {
+        if (CONFIG.fatalOnBrokenMethodCall) {
             throw new UnsupportedOperationException();
         }
     }
@@ -35,6 +35,8 @@ public class CaxtonModClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         LOGGER.info("Initializing mod...");
+
+        CONFIG = CaxtonConfig.readFromFile();
 
         LibraryLoading.loadNativeLibrary(LOGGER);
 
