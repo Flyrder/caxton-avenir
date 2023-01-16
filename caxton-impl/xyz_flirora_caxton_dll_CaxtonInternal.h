@@ -65,19 +65,11 @@ JNIEXPORT jlong JNICALL Java_xyz_flirora_caxton_dll_CaxtonInternal_fontBboxes
 
 /*
  * Class:     xyz_flirora_caxton_dll_CaxtonInternal
- * Method:    fontAtlasNumPages
- * Signature: (J)I
- */
-JNIEXPORT jint JNICALL Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtlasNumPages
-  (JNIEnv *, jclass, jlong);
-
-/*
- * Class:     xyz_flirora_caxton_dll_CaxtonInternal
  * Method:    fontAtlasPage
- * Signature: (JI)J
+ * Signature: (J)J
  */
 JNIEXPORT jlong JNICALL Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtlasPage
-  (JNIEnv *, jclass, jlong, jint);
+  (JNIEnv *, jclass, jlong);
 
 /*
  * Class:     xyz_flirora_caxton_dll_CaxtonInternal

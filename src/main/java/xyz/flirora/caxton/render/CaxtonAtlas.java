@@ -1,11 +1,14 @@
-package xyz.flirora.caxton.font;
+package xyz.flirora.caxton.render;
 
-import it.unimi.dsi.fastutil.ints.Int2LongRBTreeMap;
-import it.unimi.dsi.fastutil.ints.Int2LongSortedMap;
+import it.unimi.dsi.fastutil.longs.LongRBTreeSet;
+import it.unimi.dsi.fastutil.longs.LongSortedSet;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
+import net.minecraft.client.texture.TextureManager;
+import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -16,7 +19,13 @@ import java.util.List;
 public class CaxtonAtlas implements AutoCloseable {
     public static int PAGE_SIZE = 4096;
     private final List<NativeImageBackedTexture> pages = new ArrayList<>();
-    private final Int2LongSortedMap spaces = new Int2LongRBTreeMap();
+    private final LongSortedSet spaces = new LongRBTreeSet(Comparator.comparingInt(CaxtonAtlas::getH));
+    private final List<Identifier> ids = new ArrayList<>();
+    private final TextureManager textureManager;
+
+    public CaxtonAtlas(TextureManager textureManager) {
+        this.textureManager = textureManager;
+    }
 
     public static int getX(long packed) {
         return (int) (packed & 0x1FFF);
@@ -40,6 +49,14 @@ public class CaxtonAtlas implements AutoCloseable {
 
     private static long pack(int x, int y, int w, int h, int page) {
         return ((long) x) | (((long) y) << 13) | (((long) w) << 26) | (((long) h) << 39) | (((long) page) << 52);
+    }
+
+    public Identifier getAtlasPage(int pageNum) {
+        return this.ids.get(pageNum);
+    }
+
+    public NativeImageBackedTexture getAtlasPageTexture(int pageNum) {
+        return this.pages.get(pageNum);
     }
 
     public long insert(int width, int height, int additionalMargin) {
@@ -76,11 +93,9 @@ public class CaxtonAtlas implements AutoCloseable {
     }
 
     private long chooseSpace(int width, int height) {
-        var tallEnough = spaces.tailMap(height).int2LongEntrySet();
-        var it = tallEnough.stream().iterator();
+        var it = spaces.iterator(pack(0, 0, 0, Math.max(height - 1, 0), 0));
         while (it.hasNext()) {
-            var entry = it.next();
-            long space = entry.getLongValue();
+            long space = it.nextLong();
             if (getW(space) >= width) {
                 it.remove();
                 return space;
@@ -111,13 +126,18 @@ public class CaxtonAtlas implements AutoCloseable {
     }
 
     private void addSpace(int x, int y, int width, int height, int page) {
-        spaces.put(height, pack(x, y, width, height, page));
+        spaces.add(pack(x, y, width, height, page));
     }
 
     private void addNewPage() {
+        int pageNum = pages.size();
         NativeImage image = new NativeImage(NativeImage.Format.RGBA, PAGE_SIZE, PAGE_SIZE, false);
         NativeImageBackedTexture texture = new NativeImageBackedTexture(image);
+        Identifier id = new Identifier("caxton", "atlas/" + pageNum);
+        this.textureManager.registerTexture(id, texture);
         this.pages.add(texture);
+        this.ids.add(id);
+        this.addSpace(0, 0, PAGE_SIZE, PAGE_SIZE, pageNum);
     }
 
     @Override
@@ -126,5 +146,12 @@ public class CaxtonAtlas implements AutoCloseable {
             texture.close();
         }
         this.pages.clear();
+    }
+
+    public void clear() {
+        this.close();
+        pages.clear();
+        spaces.clear();
+        ids.clear();
     }
 }

@@ -73,7 +73,6 @@ public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStora
         }
         return allFonts.filter(font -> {
             if (font instanceof CaxtonTypeface c) {
-                c.registerFonts(this.textureManager);
                 return true;
             }
             return predicate.test(font);

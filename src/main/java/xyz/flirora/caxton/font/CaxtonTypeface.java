@@ -117,6 +117,7 @@ public class CaxtonTypeface implements Font {
      *
      * @param textureManager the {@link TextureManager} to register the font textures under
      */
+    @Deprecated(forRemoval = true)
     public void registerFonts(TextureManager textureManager) {
         this.fonts().forEach(f -> f.font().registerTextures(textureManager));
     }

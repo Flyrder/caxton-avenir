@@ -32,12 +32,15 @@ public class CaxtonTextRenderer {
     private final CaxtonTextHandler handler;
     private final TextRenderer vanillaTextRenderer;
     private final Random RANDOM = Random.createLocal();
+    private final CaxtonGlyphCache cache;
     public boolean rtl;
 
     public CaxtonTextRenderer(Function<Identifier, FontStorage> fontStorageAccessor, TextRenderer vanillaTextRenderer) {
         this.fontStorageAccessor = fontStorageAccessor;
         this.handler = new CaxtonTextHandler(fontStorageAccessor, vanillaTextRenderer.getTextHandler());
         this.vanillaTextRenderer = vanillaTextRenderer;
+        // TODO: procure the TextureManager from a legitimate source
+        this.cache = new CaxtonGlyphCache(MinecraftClient.getInstance().getTextureManager());
     }
 
     public static CaxtonTextRenderer getInstance() {
@@ -198,6 +201,7 @@ public class CaxtonTextRenderer {
         ConfiguredCaxtonFont configuredFont = runGroup.getFont();
         CaxtonFont font = configuredFont.font();
         CaxtonFontOptions options = font.getOptions();
+        CaxtonGlyphCache.Font cacheForFont = cache.forFont(font);
 
         double shrink = options.shrinkage();
         int margin = options.margin();
@@ -241,9 +245,9 @@ public class CaxtonTextRenderer {
             }
 
             Style style = runGroup.getStyleAt(offset + clusterIndex);
-            if (style.isObfuscated() && font.getAtlasLocation(glyphId) != -1) {
-                long atlasLoc = font.getAtlasLocation(glyphId);
-                int width = CaxtonAtlas.getW(atlasLoc);
+            long tlLoc = font.getTlistLocation(glyphId);
+            if (style.isObfuscated() && tlLoc != -1) {
+                int width = (int) (tlLoc & 0xFFFF);
                 IntList others = font.getGlyphsByWidth().get(width);
                 glyphId = others.getInt(RANDOM.nextInt(others.size()));
             }
@@ -262,14 +266,14 @@ public class CaxtonTextRenderer {
             int offsetY = shapedRun.offsetY(i);
             int gx = cumulAdvanceX + offsetX;
 
-            long atlasLoc = font.getAtlasLocation(glyphId);
-            if (atlasLoc != -1) {
+            if (tlLoc != -1) {
+                long atlasLoc = cacheForFont.getOrCreateAtlasLocation(glyphId, tlLoc);
                 int atlasX = CaxtonAtlas.getX(atlasLoc);
                 int atlasY = CaxtonAtlas.getY(atlasLoc);
                 int atlasWidth = CaxtonAtlas.getW(atlasLoc);
-                int atlasHeight = CaxtonAtlas.getY(atlasLoc);
+                int atlasHeight = CaxtonAtlas.getH(atlasLoc);
                 int atlasPageIndex = CaxtonAtlas.getPage(atlasLoc);
-                CaxtonAtlasTexture atlasPage = font.getAtlasPage(atlasPageIndex);
+                Identifier atlasPage = cache.getAtlasPage(atlasPageIndex);
 
                 long glyphBbox = font.getBbox(glyphId);
                 short bbXMin = (short) glyphBbox;
@@ -281,7 +285,7 @@ public class CaxtonTextRenderer {
                 gx += bbXMin;
                 offsetY += bbYMin;
 
-                RenderLayer renderLayer = CaxtonTextRenderLayers.text(atlasPage.getId(), layerType);
+                RenderLayer renderLayer = CaxtonTextRenderLayers.text(atlasPage, layerType);
                 VertexConsumer vertexConsumer = vertexConsumers.getBuffer(renderLayer);
 
                 // Draw the quad
@@ -350,6 +354,7 @@ public class CaxtonTextRenderer {
 
     public void clearCaches() {
         this.handler.clearCaches();
+        this.cache.clear();
     }
 
     public CaxtonTextHandler getHandler() {

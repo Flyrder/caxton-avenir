@@ -10,12 +10,12 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.util.Identifier;
 import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 import xyz.flirora.caxton.dll.CaxtonInternal;
+import xyz.flirora.caxton.render.CaxtonAtlas;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,13 +38,13 @@ public class CaxtonFont implements AutoCloseable {
     private static String cacheDir = null;
     private final Identifier id;
     private final short[] metrics;
-    private final int atlasSize;
+    private final int glyphCount;
     private final long atlasLocations;
     private final long bboxes;
     private final CaxtonFontOptions options;
     private final Int2ObjectMap<IntList> glyphsByWidth;
     private final List<Pair<StackTraceElement[], Boolean>> changes;
-    private CaxtonAtlasTexture[] pages;
+    private final long pixelData;
     private ByteBuffer fontData;
     private long fontPtr;
     private boolean registered = false;
@@ -74,18 +74,14 @@ public class CaxtonFont implements AutoCloseable {
                     getCacheDir(),
                     options.toString());
             metrics = CaxtonInternal.fontMetrics(fontPtr);
-            atlasSize = CaxtonInternal.fontAtlasSize(fontPtr);
+            glyphCount = CaxtonInternal.fontAtlasSize(fontPtr);
             atlasLocations = CaxtonInternal.fontAtlasLocations(fontPtr);
             bboxes = CaxtonInternal.fontBboxes(fontPtr);
-            int numPages = CaxtonInternal.fontAtlasNumPages(fontPtr);
-            pages = new CaxtonAtlasTexture[numPages];
+            pixelData = CaxtonInternal.fontAtlasPage(fontPtr);
             this.options = new CaxtonFontOptions(options);
-            for (int i = 0; i < numPages; ++i) {
-                pages[i] = new CaxtonAtlasTexture(this, fontPtr, i);
-            }
             this.glyphsByWidth = new Int2ObjectOpenHashMap<>();
-            for (int glyphId = 0; glyphId < atlasSize; ++glyphId) {
-                long atlasLoc = MemoryUtil.memGetLong(atlasLocations + 8 * ((long) glyphId));
+            for (int glyphId = 0; glyphId < glyphCount; ++glyphId) {
+                long atlasLoc = MemoryUtil.memGetLong(atlasLocations + 8 * Integer.toUnsignedLong(glyphId));
                 int width = CaxtonAtlas.getW(atlasLoc);
                 this.glyphsByWidth.computeIfAbsent(width, w -> new IntArrayList())
                         .add(glyphId);
@@ -126,12 +122,6 @@ public class CaxtonFont implements AutoCloseable {
             throw new IllegalStateException("font closed with a refcount of 0");
         }
         if (remainingRefs == 0) {
-            if (pages != null) {
-                for (NativeImageBackedTexture page : pages) {
-                    if (page != null) page.close();
-                }
-            }
-            pages = null;
             CaxtonInternal.destroyFont(fontPtr);
             fontPtr = 0;
             MemoryUtil.memFree(fontData);
@@ -195,16 +185,14 @@ public class CaxtonFont implements AutoCloseable {
     }
 
     /**
-     * Gets the location of glyph number {@code glyphId} in the glyph atlas.
+     * Gets the location of glyph number {@code glyphId} in the glyph storage.
      * <p>
      * This is laid out as such, with bit 0 being the least significant:
      *
      * <ul>
-     *     <li><b>Bits 0 – 12:</b> The <var>x</var>-coordinate of the top-left corner of the box, in pixels.</li>
-     *     <li><b>Bits 13 – 25:</b> The <var>y</var>-coordinate of the top-left corner of the box, in pixels.</li>
-     *     <li><b>Bits 26 – 38:</b> The width of the box, in pixels.</li>
-     *     <li><b>Bits 39 – 51:</b> The height of the box, in pixels.</li>
-     *     <li><b>Bits 52 – 63:</b> The index of the atlas page in which the glyph lies.</li>
+     *     <li><b>Bits 0 – 15:</b> The width of this image, in pixels.</li>
+     *     <li><b>Bits 16 – 31:</b> The height of this image, in pixels.</li>
+     *     <li><b>Bits 32  63:</b> The offset of this image relative to {@link CaxtonFont#getPixelData()}.</li>
      * </ul>
      * <p>
      * In addition, the glyph atlas leaves a margin of {@code getOptions().margin()} pixels on all sides of the glyph itself. This margin is reflected in the returned value.
@@ -212,11 +200,11 @@ public class CaxtonFont implements AutoCloseable {
      * @param glyphId the ID of the glyph to retrieve the atlas location for
      * @return a packed atlas location value
      */
-    public long getAtlasLocation(int glyphId) {
-        if (glyphId < 0 || glyphId >= atlasSize) {
-            throw new IndexOutOfBoundsException("i must be in [0, " + atlasSize + ") (got " + glyphId + ")");
+    public long getTlistLocation(int glyphId) {
+        if (glyphId < 0 || glyphId >= glyphCount) {
+            throw new IndexOutOfBoundsException("i must be in [0, " + glyphCount + ") (got " + glyphId + ")");
         }
-        return MemoryUtil.memGetLong(atlasLocations + 8 * ((long) glyphId));
+        return MemoryUtil.memGetLong(atlasLocations + 8 * Integer.toUnsignedLong(glyphId));
     }
 
     /**
@@ -231,32 +219,31 @@ public class CaxtonFont implements AutoCloseable {
      *     <li><b>Bits 48 – 63:</b> The maximum <var>y</var>-coordinate of the bounding box.</li>
      * </ul>
      * <p>
-     * Unlike the coordinates returned by {@link CaxtonFont#getAtlasLocation(int)}, the coordinates here have the <var>y</var>-axis pointing up; that is, higher <var>y</var>-coordinates correspond to points farther up.
+     * Unlike the coordinates returned by {@link CaxtonFont#getTlistLocation(int)}, the coordinates here have the <var>y</var>-axis pointing up; that is, higher <var>y</var>-coordinates correspond to points farther up.
      *
      * @param glyphId the ID of the glyph to retrieve the atlas location for
      * @return a packed bounding box for the glyph
      */
     public long getBbox(int glyphId) {
-        if (glyphId < 0 || glyphId >= atlasSize) {
-            throw new IndexOutOfBoundsException("i must be in [0, " + atlasSize + ") (got " + glyphId + ")");
+        if (glyphId < 0 || glyphId >= glyphCount) {
+            throw new IndexOutOfBoundsException("i must be in [0, " + glyphCount + ") (got " + glyphId + ")");
         }
-        return MemoryUtil.memGetLong(bboxes + 8 * ((long) glyphId));
+        return MemoryUtil.memGetLong(bboxes + 8 * Integer.toUnsignedLong(glyphId));
     }
 
     /**
-     * Get the location of the image data for the {@param i}th atlas page.
+     * Gets the pointer to the pixel data.
      *
-     * @param i the index of the atlas page to retrieve
-     * @return the address to the image data for the atlas page
+     * @return the pointer to the pixel data.
      */
-    public CaxtonAtlasTexture getAtlasPage(int i) {
-        return this.pages[i];
+    public long getPixelData() {
+        return this.pixelData;
     }
 
     /**
      * Returns a map from width values to glyph IDs.
      * <p>
-     * In particular, the atlas bounding box width from {@link CaxtonFont#getAtlasLocation(int)} is used, not the value from {@link CaxtonFont#getBbox(int)}.
+     * In particular, the atlas bounding box width from {@link CaxtonFont#getTlistLocation(int)} is used, not the value from {@link CaxtonFont#getBbox(int)}.
      *
      * @return a map from width values to glyph IDs
      */
@@ -269,11 +256,9 @@ public class CaxtonFont implements AutoCloseable {
      *
      * @param textureManager the {@link TextureManager} to which the textures should be registered
      */
+    @Deprecated(forRemoval = true)
     public void registerTextures(TextureManager textureManager) {
         if (registered) return;
-        for (CaxtonAtlasTexture page : pages) {
-            textureManager.registerTexture(page.getId(), page);
-        }
         registered = true;
     }
 

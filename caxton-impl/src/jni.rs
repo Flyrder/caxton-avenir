@@ -195,10 +195,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
         eprintln!("warn: was passed an address of 0; returning");
         return 0;
     }
-    (*(addr as usize as *const Font))
-        .atlas
-        .glyph_locations()
-        .len() as i32
+    (*(addr as usize as *const Font)).tlist.locations().len() as i32
 }
 
 /// JNI wrapper for accessing atlas locations.
@@ -218,10 +215,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
         eprintln!("warn: was passed an address of 0; returning");
         return 0;
     }
-    (*(addr as usize as *const Font))
-        .atlas
-        .glyph_locations()
-        .as_ptr() as usize as i64
+    (*(addr as usize as *const Font)).tlist.locations().as_ptr() as usize as i64
 }
 
 /// JNI wrapper for accessing bounding box data.
@@ -250,33 +244,12 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontBbo
 ///
 /// `addr` must have previously been returned by [`Java_xyz_flirora_caxton_dll_CaxtonInternal_createFont`]
 /// and must not have been previously passed into [`Java_xyz_flirora_caxton_dll_CaxtonInternal_destroyFont`].
-// public static native int fontAtlasNumPages(long addr);
-#[no_mangle]
-pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtlasNumPages(
-    _env: JNIEnv,
-    _class: JClass,
-    addr: jlong,
-) -> jint {
-    if addr == 0 {
-        eprintln!("warn: was passed an address of 0; returning");
-        return 0;
-    }
-    (*(addr as usize as *const Font)).atlas.num_pages() as i32
-}
-
-/// JNI wrapper for accessing the number of atlas pages.
-///
-/// # Safety
-///
-/// `addr` must have previously been returned by [`Java_xyz_flirora_caxton_dll_CaxtonInternal_createFont`]
-/// and must not have been previously passed into [`Java_xyz_flirora_caxton_dll_CaxtonInternal_destroyFont`].
 // public static native int fontAtlasPage(long addr, int pageNum);
 #[no_mangle]
 pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtlasPage(
     env: JNIEnv,
     _class: JClass,
     addr: jlong,
-    page_num: jint,
 ) -> jlong {
     if addr == 0 {
         eprintln!("warn: was passed an address of 0; returning");
@@ -284,8 +257,8 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
     }
     throw_as_exn! {
         env;
-        let page = (*(addr as usize as *const Font)).atlas.page(page_num as usize).context("page out of bounds")?;
-        let ptr: *const u8 = page.deref().as_ptr();
+        let page = (*(addr as usize as *const Font)).tlist.data();
+        let ptr: *const image::Rgba<u8> = page.deref().as_ptr();
         Ok(ptr as i64)
     }
 }

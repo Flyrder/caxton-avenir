@@ -6,8 +6,8 @@ use std::{
 };
 
 use anyhow::{anyhow, Context};
-use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
+use base64::Engine;
 use image::GenericImage;
 use msdfgen::{Bitmap, FillRule, FontExt, Framing, MsdfGeneratorConfig, Pixel, Vector2};
 use rustybuzz::{Face, GlyphBuffer, Tag, UnicodeBuffer};
@@ -16,6 +16,7 @@ use sha2::{Digest, Sha256};
 use ttf_parser::{GlyphId, Rect, Variation};
 
 use crate::atlas::Atlas;
+use crate::tlist::TList;
 
 const SALT: [u8; 4] = [0xE6, 0x26, 0x69, 0x11];
 
@@ -31,8 +32,8 @@ pub struct CxVariation(pub Variation);
 
 impl<'de> Deserialize<'de> for CxVariation {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::Deserializer<'de>,
+    where
+        D: serde::Deserializer<'de>,
     {
         let format = CxVariationFormat::deserialize(deserializer)?;
         let axis = if format.axis.len() == 4 {
@@ -57,7 +58,6 @@ pub struct FontOptions {
     pub margin: u32,
     pub range: u32,
     pub invert: Option<bool>,
-    pub page_size: u32,
     pub variations: Vec<CxVariation>,
 }
 
@@ -68,7 +68,6 @@ impl Default for FontOptions {
             margin: 8,
             range: 4,
             invert: None,
-            page_size: 4096,
             variations: Default::default(),
         }
     }
@@ -77,7 +76,7 @@ impl Default for FontOptions {
 /// Font information used to render text by Caxton.
 pub struct Font<'a> {
     pub face: Face<'a>,
-    pub atlas: Atlas,
+    pub tlist: TList,
     pub bboxes: Vec<u64>,
 }
 
@@ -90,7 +89,7 @@ impl<'a> Font<'a> {
         let mut sha = Sha256::new();
         sha.update(contents);
         sha.update(&format!(
-            "{} {} {} {} {}",
+            "{} {} {} {}",
             options.shrinkage,
             options.margin,
             options.range,
@@ -99,7 +98,6 @@ impl<'a> Font<'a> {
                 Some(true) => "true",
                 Some(false) => "false",
             },
-            options.page_size,
         ));
         for var in &options.variations {
             sha.update(&format!(" {} {}", var.0.axis, var.0.value));
@@ -131,9 +129,9 @@ impl<'a> Font<'a> {
             })
             .collect();
 
-        let atlas = (|| -> anyhow::Result<_> {
+        let tlist = (|| -> anyhow::Result<_> {
             if this_cache.exists() && this_cache.is_dir() {
-                match Atlas::load(&this_cache, options.page_size) {
+                match TList::load(&this_cache) {
                     Ok(atlas) => return Ok(atlas),
                     Err(e) => {
                         eprintln!("warn: loading atlas failed; regenerating");
@@ -147,7 +145,7 @@ impl<'a> Font<'a> {
                 face.number_of_glyphs()
             );
             let before_atlas_construction = Instant::now();
-            let atlas = create_atlas(&face, options)?;
+            let tlist = create_atlas(&face, options)?;
             let after_atlas_construction = Instant::now();
             eprintln!(
                 "Built atlas in {} ms! ^_^",
@@ -160,37 +158,38 @@ impl<'a> Font<'a> {
             }
             DirBuilder::new().recursive(true).create(&this_cache)?;
             eprintln!("saving atlas to {}...", this_cache.display());
-            if let Err(e) = atlas.save(&this_cache) {
+            if let Err(e) = tlist.save(&this_cache) {
                 eprintln!("warn: failed to save cached atlas: {e}")
             }
-            Ok(atlas)
+            Ok(tlist)
         })()?;
 
         Ok(Font {
             face,
-            atlas,
+            tlist,
             bboxes,
         })
     }
 }
 
-fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Atlas> {
+fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<TList> {
     let msdf_config = MsdfGeneratorConfig::default();
 
-    let mut atlas = Atlas::builder(options.page_size);
+    let mut tlist = TList::new();
 
     let mut glyph_indices = (0..face.number_of_glyphs())
         .map(|glyph_idx| (glyph_idx, face.glyph_bounding_box(GlyphId(glyph_idx))))
         .collect::<Vec<_>>();
     glyph_indices.sort_by_key(|(_, bb)| bb.map(|bb| Reverse(bb.height())));
 
-    for (glyph_index, bounding_box) in glyph_indices {
+    for glyph_index in 0..face.number_of_glyphs() {
         let glyph_id = GlyphId(glyph_index);
+        let bounding_box = face.glyph_bounding_box(glyph_id);
 
         let bounding_box = match bounding_box {
             Some(s) => s,
             None => {
-                atlas.insert(glyph_id, 0, 0, 1)?;
+                tlist.add_empty();
                 continue;
             }
         };
@@ -200,20 +199,23 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Atlas> {
         let height = (bounding_box.height().unsigned_abs() as f64 / options.shrinkage).ceil()
             as u32
             + 2 * options.margin;
-        let location = atlas.insert(glyph_id, width, height, 1)?;
 
         let mut shape = face
             .as_ref()
             .glyph_shape(glyph_id)
             .ok_or_else(|| anyhow!("could not load glyph #{glyph_index}"))?;
         shape.edge_coloring_simple(3.0, 69);
-        let framing: Framing<f64> = Framing::new(options.range as f64 * options.shrinkage, Vector2 {
-            x: 1.0 / options.shrinkage,
-            y: 1.0 / options.shrinkage,
-        }, Vector2 {
-            x: options.margin as f64 * options.shrinkage - bounding_box.x_min as f64,
-            y: options.margin as f64 * options.shrinkage - bounding_box.y_min as f64,
-        });
+        let framing: Framing<f64> = Framing::new(
+            options.range as f64 * options.shrinkage,
+            Vector2 {
+                x: 1.0 / options.shrinkage,
+                y: 1.0 / options.shrinkage,
+            },
+            Vector2 {
+                x: options.margin as f64 * options.shrinkage - bounding_box.x_min as f64,
+                y: options.margin as f64 * options.shrinkage - bounding_box.y_min as f64,
+            },
+        );
 
         let mut mtsdf: Bitmap<msdfgen::Rgba<f32>> = Bitmap::new(width, height);
         shape.generate_mtsdf(&mut mtsdf, &framing, &msdf_config);
@@ -221,26 +223,13 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Atlas> {
             shape.correct_sign(&mut mtsdf, &framing, FillRule::NonZero);
         }
 
-        let page = atlas
-            .page_mut(location.page_index() as usize)
-            .context("failed to get page – this is a bug")?;
-
         let mtsdf_pixels = mtsdf.pixels_mut();
         if options.invert == Some(true) {
             mtsdf_pixels.iter_mut().for_each(|pixel| pixel.invert());
         }
 
-        for x in 0..width {
-            for y in 0..height {
-                let pixel = mtsdf_pixels[(x as usize) + (y as usize) * (width as usize)];
-                let pixel = image::Rgba([(pixel.r * 255.0) as u8, (pixel.g * 255.0) as u8, (pixel.b * 255.0) as u8, (pixel.a * 255.0) as u8]);
-                unsafe {
-                    // SAFETY: the rectangle [location.x(), location.x() + width) × [location.y(), location.y() + width) is in bounds of the page as specified by AtlasBuilder::insert
-                    page.unsafe_put_pixel(location.x() + x, location.y() + height - 1 - y, pixel);
-                }
-            }
-        }
+        tlist.add(&mtsdf);
     }
 
-    Ok(atlas.build())
+    Ok(tlist)
 }

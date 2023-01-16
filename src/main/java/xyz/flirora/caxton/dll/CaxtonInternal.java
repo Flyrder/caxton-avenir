@@ -23,9 +23,7 @@ public class CaxtonInternal {
 
     public static native long fontBboxes(long addr);
 
-    public static native int fontAtlasNumPages(long addr);
-
-    public static native long fontAtlasPage(long addr, int pageNum);
+    public static native long fontAtlasPage(long addr);
 
     public static native long configureFont(long fontAddr, String settings);
 
