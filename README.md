@@ -98,9 +98,9 @@ rasterizing the font:
   // representable signed distances.
   // This also determines the width of the border drawn for glowing sign text.
   "range": 4,
-  // Whether to invert the signed distance field.
-  // If your glyphs appear inverted, then try changing this setting.
-  "invert": false,
+  // Whether to invert the signed distance field (true or false).
+  // If this is null, then Caxton will try to determine this automatically, but you can override this in case it guesses incorrectly.
+  "invert": null,
   // The size of each page in the texture atlas.
   "page_size": 4096,
   // This option is used to set variation axis coordinates in variable fonts.

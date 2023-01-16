@@ -9,7 +9,7 @@ use anyhow::{anyhow, Context};
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
 use image::GenericImage;
-use msdfgen::{Bitmap, FillRule, FontExt, Framing, MsdfGeneratorConfig, Vector2};
+use msdfgen::{Bitmap, FillRule, FontExt, Framing, MsdfGeneratorConfig, Pixel, Vector2};
 use rustybuzz::{Face, GlyphBuffer, Tag, UnicodeBuffer};
 use serde::{de, Deserialize};
 use sha2::{Digest, Sha256};
@@ -56,7 +56,7 @@ pub struct FontOptions {
     pub shrinkage: f64,
     pub margin: u32,
     pub range: u32,
-    pub invert: bool,
+    pub invert: Option<bool>,
     pub page_size: u32,
     pub variations: Vec<CxVariation>,
 }
@@ -67,7 +67,7 @@ impl Default for FontOptions {
             shrinkage: 32.0,
             margin: 8,
             range: 4,
-            invert: false,
+            invert: None,
             page_size: 4096,
             variations: Default::default(),
         }
@@ -91,7 +91,15 @@ impl<'a> Font<'a> {
         sha.update(contents);
         sha.update(&format!(
             "{} {} {} {} {}",
-            options.shrinkage, options.margin, options.range, options.invert, options.page_size,
+            options.shrinkage,
+            options.margin,
+            options.range,
+            match options.invert {
+                None => "auto",
+                Some(true) => "true",
+                Some(false) => "false",
+            },
+            options.page_size,
         ));
         for var in &options.variations {
             sha.update(&format!(" {} {}", var.0.axis, var.0.value));
@@ -214,13 +222,19 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Atlas> {
 
         let mut mtsdf: Bitmap<msdfgen::Rgba<f32>> = Bitmap::new(width, height);
         shape.generate_mtsdf(&mut mtsdf, &framing, &msdf_config);
-        shape.correct_sign(&mut mtsdf, &framing, FillRule::NonZero);
+        if options.invert.is_none() {
+            shape.correct_sign(&mut mtsdf, &framing, FillRule::NonZero);
+        }
 
         let page = atlas
             .page_mut(location.page_index() as usize)
             .context("failed to get page – this is a bug")?;
 
-        let mtsdf_pixels = mtsdf.pixels();
+        let mtsdf_pixels = mtsdf.pixels_mut();
+        if options.invert == Some(true) {
+            mtsdf_pixels.iter_mut().for_each(|pixel| pixel.invert());
+        }
+        
         for x in 0..width {
             for y in 0..height {
                 let pixel = mtsdf_pixels[(x as usize) + (y as usize) * (width as usize)];
