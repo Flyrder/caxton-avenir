@@ -112,6 +112,8 @@ rasterizing the font:
 
 ### Global configuration
 
+The following options are available in `config/caxton.json`:
+
 ```json5
 {
   // One of the Rust platform names (https://doc.rust-lang.org/nightly/rustc/platform-support.html) corresponding to your platform.
