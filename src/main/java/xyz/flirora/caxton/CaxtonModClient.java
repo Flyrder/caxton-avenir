@@ -13,11 +13,20 @@ import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import xyz.flirora.caxton.dll.LibraryLoading;
 
+import java.util.Calendar;
+import java.util.Locale;
+
 @Environment(EnvType.CLIENT)
 public class CaxtonModClient implements ClientModInitializer {
     public static final String MOD_ID = "caxton";
     public static final Logger LOGGER = LogUtils.getLogger();
+    public static final boolean APRIL_FOOLS = isAprilFools();
     public static CaxtonConfig CONFIG = null;
+
+    private static boolean isAprilFools() {
+        Calendar calendar = Calendar.getInstance(Locale.ENGLISH);
+        return calendar.get(Calendar.MONTH) == Calendar.APRIL && calendar.get(Calendar.DAY_OF_MONTH) == 1;
+    }
 
     // This is meant to be called from a mixin method injecting into a Minecraft method.
     public static void onBrokenMethod() {
@@ -34,7 +43,7 @@ public class CaxtonModClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        LOGGER.info("Initializing mod...");
+        LOGGER.info(APRIL_FOOLS ? "Ufhed Gaadn ghap Muzsar!" : "Initializing mod...");
 
         CONFIG = CaxtonConfig.readFromFile();
 

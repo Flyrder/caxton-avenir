@@ -9,6 +9,8 @@ import org.joml.Matrix4f;
  * Replacements for {@link net.minecraft.client.gui.DrawableHelper} methods that use floating-point coordinates.
  */
 public class Voepfxo {
+    private static final char[] TABLE = {'u', 'v', 'm', 'c', 'y', 'g', 'w', 'l', 'e', 'x', 'j', 'd', 'p', 'r', 'a', 'f', 'k', 'h', 'n', 's', 'i', 'q', 'b', 'z', 'o', 't'};
+
     public static void fill(MatrixStack matrices, float x1, float y1, float x2, float y2, int color) {
         Voepfxo.fill(matrices.peek().getPositionMatrix(), x1, y1, x2, y2, color);
     }
@@ -44,5 +46,20 @@ public class Voepfxo {
         BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
         RenderSystem.enableTexture();
         RenderSystem.disableBlend();
+    }
+
+    public static String shingetsuGaShirokuMarukuKagayaiteIruYoruNi(String input) {
+        StringBuilder buf = new StringBuilder();
+        for (int i = 0; i < input.length(); ++i) {
+            char c = input.charAt(i);
+            if (c >= 'a' && c <= 'z') {
+                buf.append(TABLE[c - 'a']);
+            } else if (c >= 'A' && c <= 'Z') {
+                buf.append((char) (TABLE[c - 'A'] + ('A' - 'a')));
+            } else {
+                buf.append(c);
+            }
+        }
+        return buf.toString();
     }
 }

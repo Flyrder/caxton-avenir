@@ -9,7 +9,9 @@ import net.fabricmc.api.Environment;
 import net.minecraft.text.CharacterVisitor;
 import net.minecraft.text.Style;
 import org.jetbrains.annotations.Nullable;
+import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.font.ConfiguredCaxtonFont;
+import xyz.flirora.caxton.render.Voepfxo;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,6 +35,7 @@ public class RunGroup {
     // The runs are in visual order relative to each other, but the characters
     // within the run are logically ordered and not shaped.
     private final List<Run> styleRuns;
+    private final String joinedStr;
     private final char[] joined;
     private final int runLevel;
     // The character offset of this run group relative to all other run groups
@@ -72,8 +75,8 @@ public class RunGroup {
             throw new IllegalArgumentException("runs may not be empty");
         }
         this.styleRuns = styleRuns;
-        String joined = styleRuns.stream().map(Run::text).collect(Collectors.joining());
-        this.joined = joined.toCharArray();
+        this.joinedStr = styleRuns.stream().map(Run::text).collect(Collectors.joining());
+        this.joined = joinedStr.toCharArray();
 //        if (runLevel % 2 != 0) System.err.println(styleRuns + "@" + charOffset + ": " + Arrays.toString(bidiRuns));
 
         this.bidiRuns = bidiRuns;
@@ -316,6 +319,7 @@ public class RunGroup {
      * @return an array of {@link ShapingResult}s for each bidi run
      */
     private ShapingResult[] shape(LayoutCache cache) {
+        var joined = CaxtonModClient.APRIL_FOOLS ? Voepfxo.shingetsuGaShirokuMarukuKagayaiteIruYoruNi(this.joinedStr).toCharArray() : this.joined;
         ConfiguredCaxtonFont font = this.getFont();
 
         if (font == null) {
@@ -346,7 +350,7 @@ public class RunGroup {
         }
 
         if (!uncachedBidiRuns.isEmpty()) {
-            ShapingResult[] newlyComputed = font.shape(this.getJoined(), uncachedBidiRuns.toIntArray());
+            ShapingResult[] newlyComputed = font.shape(joined, uncachedBidiRuns.toIntArray());
 
             // Fill in blanks from before
             for (int i = 0, j = 0; i < bidiRuns.length / 3; ++i) {
