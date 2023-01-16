@@ -172,11 +172,6 @@ impl<'a> Font<'a> {
             bboxes,
         })
     }
-
-    pub fn shape(&self, buffer: UnicodeBuffer) -> GlyphBuffer {
-        // TODO: provide way to configure features in font
-        rustybuzz::shape(&self.face, &[], buffer)
-    }
 }
 
 fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Atlas> {
@@ -234,7 +229,7 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Atlas> {
         if options.invert == Some(true) {
             mtsdf_pixels.iter_mut().for_each(|pixel| pixel.invert());
         }
-        
+
         for x in 0..width {
             for y in 0..height {
                 let pixel = mtsdf_pixels[(x as usize) + (y as usize) * (width as usize)];

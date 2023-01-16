@@ -3,6 +3,7 @@ pub mod cfont;
 pub mod font;
 pub mod jni;
 pub mod shape;
+pub mod tlist;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right
