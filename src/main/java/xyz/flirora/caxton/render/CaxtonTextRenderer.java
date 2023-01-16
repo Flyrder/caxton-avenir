@@ -18,10 +18,7 @@ import net.minecraft.util.math.random.Random;
 import org.apache.commons.lang3.mutable.MutableFloat;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import xyz.flirora.caxton.font.CaxtonAtlasTexture;
-import xyz.flirora.caxton.font.CaxtonFont;
-import xyz.flirora.caxton.font.CaxtonFontOptions;
-import xyz.flirora.caxton.font.ConfiguredCaxtonFont;
+import xyz.flirora.caxton.font.*;
 import xyz.flirora.caxton.layout.*;
 import xyz.flirora.caxton.mixin.TextRendererDrawerAccessor;
 
@@ -246,7 +243,7 @@ public class CaxtonTextRenderer {
             Style style = runGroup.getStyleAt(offset + clusterIndex);
             if (style.isObfuscated() && font.getAtlasLocation(glyphId) != -1) {
                 long atlasLoc = font.getAtlasLocation(glyphId);
-                int width = (int) ((atlasLoc >> 26) & 0x1FFF);
+                int width = CaxtonAtlas.getW(atlasLoc);
                 IntList others = font.getGlyphsByWidth().get(width);
                 glyphId = others.getInt(RANDOM.nextInt(others.size()));
             }
@@ -267,11 +264,11 @@ public class CaxtonTextRenderer {
 
             long atlasLoc = font.getAtlasLocation(glyphId);
             if (atlasLoc != -1) {
-                int atlasX = (int) (atlasLoc & 0x1FFF);
-                int atlasY = (int) ((atlasLoc >> 13) & 0x1FFF);
-                int atlasWidth = (int) ((atlasLoc >> 26) & 0x1FFF);
-                int atlasHeight = (int) ((atlasLoc >> 39) & 0x1FFF);
-                int atlasPageIndex = (int) (atlasLoc >>> 52);
+                int atlasX = CaxtonAtlas.getX(atlasLoc);
+                int atlasY = CaxtonAtlas.getY(atlasLoc);
+                int atlasWidth = CaxtonAtlas.getW(atlasLoc);
+                int atlasHeight = CaxtonAtlas.getY(atlasLoc);
+                int atlasPageIndex = CaxtonAtlas.getPage(atlasLoc);
                 CaxtonAtlasTexture atlasPage = font.getAtlasPage(atlasPageIndex);
 
                 long glyphBbox = font.getBbox(glyphId);

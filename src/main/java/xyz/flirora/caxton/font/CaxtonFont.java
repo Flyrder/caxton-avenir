@@ -86,7 +86,7 @@ public class CaxtonFont implements AutoCloseable {
             this.glyphsByWidth = new Int2ObjectOpenHashMap<>();
             for (int glyphId = 0; glyphId < atlasSize; ++glyphId) {
                 long atlasLoc = MemoryUtil.memGetLong(atlasLocations + 8 * ((long) glyphId));
-                int width = (int) ((atlasLoc >> 26) & 0x1FFF);
+                int width = CaxtonAtlas.getW(atlasLoc);
                 this.glyphsByWidth.computeIfAbsent(width, w -> new IntArrayList())
                         .add(glyphId);
             }
