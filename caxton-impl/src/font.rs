@@ -6,9 +6,10 @@ use std::{
 };
 
 use anyhow::{anyhow, Context};
-use image::{buffer::ConvertBuffer, GenericImage, RgbaImage};
-use mint::Vector2;
-use msdf::{GlyphLoader, Projection, SDFTrait};
+use base64::Engine;
+use base64::engine::general_purpose::URL_SAFE;
+use image::GenericImage;
+use msdfgen::{Bitmap, FillRule, FontExt, Framing, MsdfGeneratorConfig, Vector2};
 use rustybuzz::{Face, GlyphBuffer, Tag, UnicodeBuffer};
 use serde::{de, Deserialize};
 use sha2::{Digest, Sha256};
@@ -30,8 +31,8 @@ pub struct CxVariation(pub Variation);
 
 impl<'de> Deserialize<'de> for CxVariation {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
+        where
+            D: serde::Deserializer<'de>,
     {
         let format = CxVariationFormat::deserialize(deserializer)?;
         let axis = if format.axis.len() == 4 {
@@ -99,7 +100,7 @@ impl<'a> Font<'a> {
         let sha = sha.finalize();
 
         let mut this_cache = cache_dir.to_path_buf();
-        this_cache.push(base64::encode_config(sha, base64::URL_SAFE));
+        this_cache.push(URL_SAFE.encode(sha));
 
         let mut face = Face::from_slice(contents, 0).context("failed to parse font")?;
         for var in &options.variations {
@@ -171,7 +172,7 @@ impl<'a> Font<'a> {
 }
 
 fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Atlas> {
-    let msdf_config = Default::default();
+    let msdf_config = MsdfGeneratorConfig::default();
 
     let mut atlas = Atlas::builder(options.page_size);
 
@@ -198,45 +199,38 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Atlas> {
             + 2 * options.margin;
         let location = atlas.insert(glyph_id, width, height, 1)?;
 
-        let shape = face
+        let mut shape = face
             .as_ref()
-            .load_shape(glyph_id)
+            .glyph_shape(glyph_id)
             .ok_or_else(|| anyhow!("could not load glyph #{glyph_index}"))?;
-        let colored_shape = shape.color_edges_simple(3.0);
-        let projection = Projection {
-            scale: Vector2 {
-                x: 1.0 / options.shrinkage,
-                y: 1.0 / options.shrinkage,
-            },
-            translation: Vector2 {
-                x: options.margin as f64 * options.shrinkage - bounding_box.x_min as f64,
-                y: options.margin as f64 * options.shrinkage - bounding_box.y_min as f64,
-            },
-        };
+        shape.edge_coloring_simple(3.0, 69);
+        let framing: Framing<f64> = Framing::new(options.range as f64 * options.shrinkage, Vector2 {
+            x: 1.0 / options.shrinkage,
+            y: 1.0 / options.shrinkage,
+        }, Vector2 {
+            x: options.margin as f64 * options.shrinkage - bounding_box.x_min as f64,
+            y: options.margin as f64 * options.shrinkage - bounding_box.y_min as f64,
+        });
 
-        let mtsdf = colored_shape.generate_mtsdf(
-            width,
-            height,
-            options.range as f64 * options.shrinkage,
-            &projection,
-            &msdf_config,
-        );
+        let mut mtsdf: Bitmap<msdfgen::Rgba<f32>> = Bitmap::new(width, height);
+        shape.generate_mtsdf(&mut mtsdf, &framing, &msdf_config);
+        shape.correct_sign(&mut mtsdf, &framing, FillRule::NonZero);
 
         let page = atlas
             .page_mut(location.page_index() as usize)
             .context("failed to get page – this is a bug")?;
 
-        let mut image: RgbaImage = mtsdf.to_image().convert();
-
-        if options.invert {
-            for pixel in image.pixels_mut() {
-                for value in &mut pixel.0 {
-                    *value = !*value;
+        let mtsdf_pixels = mtsdf.pixels();
+        for x in 0..width {
+            for y in 0..height {
+                let pixel = mtsdf_pixels[(x as usize) + (y as usize) * (width as usize)];
+                let pixel = image::Rgba([(pixel.r * 255.0) as u8, (pixel.g * 255.0) as u8, (pixel.b * 255.0) as u8, (pixel.a * 255.0) as u8]);
+                unsafe {
+                    // SAFETY: the rectangle [location.x(), location.x() + width) × [location.y(), location.y() + width) is in bounds of the page as specified by AtlasBuilder::insert
+                    page.unsafe_put_pixel(location.x() + x, location.y() + height - 1 - y, pixel);
                 }
             }
         }
-
-        page.copy_from(&image, location.x(), location.y())?;
     }
 
     Ok(atlas.build())

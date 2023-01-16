@@ -1,7 +1,7 @@
 [package]
 name = "caxton-impl"
 description = "Native library for the Caxton mod for Minecraft"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "MIT"
 repository = "https://gitlab.com/Kyarei/caxton"
@@ -9,20 +9,19 @@ repository = "https://gitlab.com/Kyarei/caxton"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.66"
-base64 = "0.13.1"
-image = { version = "0.24.4", default-features = false, features = ["png"] }
+anyhow = "1.0.68"
+base64 = "0.21.0"
+image = { version = "0.24.5", default-features = false, features = ["png"] }
 io_ext = "0.2.0"
 jni = "0.20.0"
-mint = "0.5.9"
 # Stupid workaround until msdf-rs updates its ttf-parser dependency
-msdf = { path = "msdf-rs/msdf" }
+msdfgen = { git = "https://github.com/bluebear94/msdfgen-rs", branch = "cross-compile-workaround", features = ["ttf-parser", "bindgen"] }
 rustybuzz = { git = "https://github.com/bluebear94/rustybuzz" }
-serde = { version = "1.0.147", features = ["derive"] }
-serde_json = "1.0.87"
+serde = { version = "1.0.152", features = ["derive"] }
+serde_json = "1.0.91"
 sha2 = "0.10.6"
-thiserror = "1.0.37"
-ttf-parser = "0.17.1"
+thiserror = "1.0.38"
+ttf-parser = "0.18.1"
 
 [lib]
 crate_type = ["cdylib"]
