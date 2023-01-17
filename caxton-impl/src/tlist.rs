@@ -14,8 +14,6 @@ pub struct TLocation {
     packed: u64,
 }
 
-pub const INVALID: TLocation = TLocation { packed: u64::MAX };
-
 impl TLocation {
     pub fn new(offset: u32, width: u16, height: u16) -> Self {
         TLocation {

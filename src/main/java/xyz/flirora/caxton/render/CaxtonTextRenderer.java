@@ -250,7 +250,7 @@ public class CaxtonTextRenderer {
 
             Style style = runGroup.getStyleAt(offset + clusterIndex);
             long tlLoc = font.getTlistLocation(glyphId);
-            if (style.isObfuscated() && tlLoc != -1) {
+            if (style.isObfuscated()) {
                 int width = (int) (tlLoc & 0xFFFF);
                 IntList others = font.getGlyphsByWidth().get(width);
                 glyphId = others.getInt(RANDOM.nextInt(others.size()));
@@ -271,8 +271,8 @@ public class CaxtonTextRenderer {
             int offsetY = shapedRun.offsetY(i);
             int gx = cumulAdvanceX + offsetX;
 
-            if (tlLoc != -1) {
-                long atlasLoc = cacheForFont.getOrCreateAtlasLocation(glyphId, tlLoc, font.getOptions().range());
+            {
+                long atlasLoc = cacheForFont.getOrCreateAtlasLocation(font, glyphId, tlLoc);
                 int atlasX = CaxtonAtlas.getX(atlasLoc);
                 int atlasY = CaxtonAtlas.getY(atlasLoc);
                 int atlasWidth = CaxtonAtlas.getW(atlasLoc);
