@@ -4,7 +4,6 @@ use std::path::Path;
 use std::{mem, slice};
 
 use anyhow::{bail, Context};
-use image::Pixel;
 use io_ext::{ReadExt, WriteExt};
 use msdfgen::Bitmap;
 

@@ -210,7 +210,7 @@ public class CaxtonTextRenderer {
         double shrink = options.shrinkage();
         int margin = options.margin();
         float shadowOffset = configuredFont.shadowOffset();
-        float pageSize = (float) options.pageSize();
+        float pageSize = CaxtonAtlas.PAGE_SIZE;
 
         int offset = runGroup.getBidiRuns()[3 * index];
 

@@ -8,9 +8,8 @@ use std::{
 use anyhow::{anyhow, Context};
 use base64::engine::general_purpose::URL_SAFE;
 use base64::Engine;
-use image::GenericImage;
 use msdfgen::{Bitmap, FillRule, FontExt, Framing, MsdfGeneratorConfig, Pixel, Vector2};
-use rustybuzz::{Face, GlyphBuffer, Tag, UnicodeBuffer};
+use rustybuzz::{Face, Tag};
 use serde::{de, Deserialize};
 use sha2::{Digest, Sha256};
 use ttf_parser::{GlyphId, Rect, Variation};

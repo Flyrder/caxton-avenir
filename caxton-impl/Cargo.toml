@@ -11,7 +11,7 @@ repository = "https://gitlab.com/Kyarei/caxton"
 [dependencies]
 anyhow = "1.0.68"
 base64 = "0.21.0"
-image = { version = "0.24.5", default-features = false, features = ["png"] }
+image = { version = "0.24.5", default-features = false }
 io_ext = "0.2.0"
 jni = "0.20.0"
 # Stupid workaround until msdf-rs updates its ttf-parser dependency
