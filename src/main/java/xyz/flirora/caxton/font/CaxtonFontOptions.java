@@ -21,9 +21,7 @@ public record CaxtonFontOptions(
         double shrinkage,
         int margin,
         int range,
-        boolean invert,
-        @Deprecated(forRemoval = true)
-        int pageSize) {
+        boolean invert) {
     public CaxtonFontOptions {
         if (shrinkage <= 0.0) {
             throw new IllegalArgumentException("shrinkage must be positive");
@@ -34,9 +32,6 @@ public record CaxtonFontOptions(
         if (range < 0) {
             throw new IllegalArgumentException("range cannot be negative");
         }
-        if (pageSize < 64 || pageSize > 4096) {
-            throw new IllegalArgumentException("page size must be in [64, 4096]");
-        }
     }
 
     public CaxtonFontOptions(JsonObject json) {
@@ -44,8 +39,7 @@ public record CaxtonFontOptions(
                 JsonHelper.getDouble(json, "shrinkage", 64.0),
                 JsonHelper.getInt(json, "margin", 4),
                 JsonHelper.getInt(json, "range", 2),
-                JsonHelper.getBoolean(json, "invert", true),
-                JsonHelper.getInt(json, "page_size", 4096)
+                JsonHelper.getBoolean(json, "invert", true)
         );
     }
 }

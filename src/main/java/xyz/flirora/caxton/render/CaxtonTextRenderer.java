@@ -363,10 +363,6 @@ public class CaxtonTextRenderer {
         this.renderLayers.clear();
     }
 
-    public int getScaleForPage(int pageNum) {
-        return this.cache.getAtlasPageTexture(pageNum).getRange();
-    }
-
     public CaxtonTextHandler getHandler() {
         return handler;
     }
