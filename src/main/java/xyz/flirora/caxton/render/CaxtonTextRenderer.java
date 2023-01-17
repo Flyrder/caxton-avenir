@@ -1,5 +1,6 @@
 package xyz.flirora.caxton.render;
 
+import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -18,6 +19,7 @@ import net.minecraft.util.math.random.Random;
 import org.apache.commons.lang3.mutable.MutableFloat;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.slf4j.Logger;
 import xyz.flirora.caxton.font.CaxtonFont;
 import xyz.flirora.caxton.font.CaxtonFontOptions;
 import xyz.flirora.caxton.font.ConfiguredCaxtonFont;
@@ -30,6 +32,7 @@ import java.util.function.Function;
 public class CaxtonTextRenderer {
     // Copied from TextRenderer
     private static final Vector3f FORWARD_SHIFT = new Vector3f(0.0f, 0.0f, 0.03f);
+    private static final Logger LOGGER = LogUtils.getLogger();
     private final Function<Identifier, FontStorage> fontStorageAccessor;
     private final CaxtonTextHandler handler;
     private final TextRenderer vanillaTextRenderer;
@@ -38,12 +41,11 @@ public class CaxtonTextRenderer {
     private final CaxtonTextRenderLayers renderLayers;
     public boolean rtl;
 
-    public CaxtonTextRenderer(Function<Identifier, FontStorage> fontStorageAccessor, TextRenderer vanillaTextRenderer) {
+    public CaxtonTextRenderer(Function<Identifier, FontStorage> fontStorageAccessor, TextRenderer vanillaTextRenderer, CaxtonGlyphCache cache) {
         this.fontStorageAccessor = fontStorageAccessor;
         this.handler = new CaxtonTextHandler(fontStorageAccessor, vanillaTextRenderer.getTextHandler());
         this.vanillaTextRenderer = vanillaTextRenderer;
-        // TODO: procure the TextureManager from a legitimate source
-        this.cache = new CaxtonGlyphCache(MinecraftClient.getInstance().getTextureManager());
+        this.cache = cache;
         this.renderLayers = new CaxtonTextRenderLayers();
     }
 
@@ -359,8 +361,10 @@ public class CaxtonTextRenderer {
 
     public void clearCaches() {
         this.handler.clearCaches();
+        LOGGER.info("Cleared layout caches");
         this.cache.clear();
         this.renderLayers.clear();
+        LOGGER.info("Cleared rendering caches");
     }
 
     public CaxtonTextHandler getHandler() {

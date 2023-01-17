@@ -2,6 +2,7 @@ package xyz.flirora.caxton.mixin;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.FontStorage;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -9,11 +10,13 @@ import net.minecraft.text.OrderedText;
 import net.minecraft.util.Identifier;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import xyz.flirora.caxton.render.CaxtonGlyphCache;
 import xyz.flirora.caxton.render.CaxtonTextRenderer;
 import xyz.flirora.caxton.render.HasCaxtonTextRenderer;
 
@@ -22,11 +25,15 @@ import java.util.function.Function;
 @Environment(EnvType.CLIENT)
 @Mixin(TextRenderer.class)
 public class TextRendererMixin implements HasCaxtonTextRenderer {
+    // Would like to put this in a FontManager mixin, but it doesn’t pass itself to TextRenderer’s constructor.
+    @Unique
+    private static final CaxtonGlyphCache CACHE = new CaxtonGlyphCache(MinecraftClient.getInstance().getTextureManager());
+    @Unique
     private CaxtonTextRenderer caxtonRenderer;
 
     @Inject(at = @At("TAIL"), method = "<init>(Ljava/util/function/Function;Z)V")
     private void onInit(Function<Identifier, FontStorage> fontStorageAccessor, boolean validateAdvance, CallbackInfo ci) {
-        this.caxtonRenderer = new CaxtonTextRenderer(fontStorageAccessor, (TextRenderer) (Object) this);
+        this.caxtonRenderer = new CaxtonTextRenderer(fontStorageAccessor, (TextRenderer) (Object) this, CACHE);
     }
 
     // Stub out TextRenderer#mirror call; we will call this on each

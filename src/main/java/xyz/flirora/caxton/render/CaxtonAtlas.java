@@ -1,11 +1,13 @@
 package xyz.flirora.caxton.render;
 
+import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.longs.LongRBTreeSet;
 import it.unimi.dsi.fastutil.longs.LongSortedSet;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.util.Identifier;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -17,6 +19,7 @@ import java.util.List;
  * This is based on the caxton_impl implementation in Rust but is adapted to online settings where the list of glyphs is not fully known in advance. Instead of storing the list of free spaces in an array list, it uses a map sorted by the space’s height.
  */
 public class CaxtonAtlas implements AutoCloseable {
+    private static final Logger LOGGER = LogUtils.getLogger();
     public static int PAGE_SIZE = 4096;
     private final List<Page> pages = new ArrayList<>();
     private final LongSortedSet spaces = new LongRBTreeSet(Comparator.comparingInt(CaxtonAtlas::getH));
@@ -130,8 +133,9 @@ public class CaxtonAtlas implements AutoCloseable {
 
     private void addNewPage(int range) {
         int pageNum = pages.size();
+        LOGGER.info("I am {}", this);
+        LOGGER.info("Adding a new page #{} with range {}", pageNum, range);
         Page page = new Page(this, pageNum, range);
-        Identifier id = new Identifier("caxton", "atlas/" + pageNum);
         this.pages.add(page);
         this.addSpace(0, 0, PAGE_SIZE, PAGE_SIZE, pageNum);
     }
@@ -146,7 +150,6 @@ public class CaxtonAtlas implements AutoCloseable {
 
     public void clear() {
         this.close();
-        pages.clear();
         spaces.clear();
     }
 
