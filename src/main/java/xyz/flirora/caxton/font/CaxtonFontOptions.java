@@ -22,6 +22,7 @@ public record CaxtonFontOptions(
         int margin,
         int range,
         boolean invert,
+        @Deprecated(forRemoval = true)
         int pageSize) {
     public CaxtonFontOptions {
         if (shrinkage <= 0.0) {

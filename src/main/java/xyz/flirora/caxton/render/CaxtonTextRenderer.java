@@ -18,7 +18,9 @@ import net.minecraft.util.math.random.Random;
 import org.apache.commons.lang3.mutable.MutableFloat;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import xyz.flirora.caxton.font.*;
+import xyz.flirora.caxton.font.CaxtonFont;
+import xyz.flirora.caxton.font.CaxtonFontOptions;
+import xyz.flirora.caxton.font.ConfiguredCaxtonFont;
 import xyz.flirora.caxton.layout.*;
 import xyz.flirora.caxton.mixin.TextRendererDrawerAccessor;
 
@@ -33,6 +35,7 @@ public class CaxtonTextRenderer {
     private final TextRenderer vanillaTextRenderer;
     private final Random RANDOM = Random.createLocal();
     private final CaxtonGlyphCache cache;
+    private final CaxtonTextRenderLayers renderLayers;
     public boolean rtl;
 
     public CaxtonTextRenderer(Function<Identifier, FontStorage> fontStorageAccessor, TextRenderer vanillaTextRenderer) {
@@ -41,6 +44,7 @@ public class CaxtonTextRenderer {
         this.vanillaTextRenderer = vanillaTextRenderer;
         // TODO: procure the TextureManager from a legitimate source
         this.cache = new CaxtonGlyphCache(MinecraftClient.getInstance().getTextureManager());
+        this.renderLayers = new CaxtonTextRenderLayers();
     }
 
     public static CaxtonTextRenderer getInstance() {
@@ -267,13 +271,13 @@ public class CaxtonTextRenderer {
             int gx = cumulAdvanceX + offsetX;
 
             if (tlLoc != -1) {
-                long atlasLoc = cacheForFont.getOrCreateAtlasLocation(glyphId, tlLoc);
+                long atlasLoc = cacheForFont.getOrCreateAtlasLocation(glyphId, tlLoc, font.getOptions().range());
                 int atlasX = CaxtonAtlas.getX(atlasLoc);
                 int atlasY = CaxtonAtlas.getY(atlasLoc);
                 int atlasWidth = CaxtonAtlas.getW(atlasLoc);
                 int atlasHeight = CaxtonAtlas.getH(atlasLoc);
                 int atlasPageIndex = CaxtonAtlas.getPage(atlasLoc);
-                Identifier atlasPage = cache.getAtlasPage(atlasPageIndex);
+                CaxtonAtlas.Page atlasPage = cache.getAtlasPageTexture(atlasPageIndex);
 
                 long glyphBbox = font.getBbox(glyphId);
                 short bbXMin = (short) glyphBbox;
@@ -285,7 +289,7 @@ public class CaxtonTextRenderer {
                 gx += bbXMin;
                 offsetY += bbYMin;
 
-                RenderLayer renderLayer = CaxtonTextRenderLayers.text(atlasPage, layerType);
+                RenderLayer renderLayer = renderLayers.text(atlasPage, layerType);
                 VertexConsumer vertexConsumer = vertexConsumers.getBuffer(renderLayer);
 
                 // Draw the quad
@@ -355,6 +359,11 @@ public class CaxtonTextRenderer {
     public void clearCaches() {
         this.handler.clearCaches();
         this.cache.clear();
+        this.renderLayers.clear();
+    }
+
+    public int getScaleForPage(int pageNum) {
+        return this.cache.getAtlasPageTexture(pageNum).getRange();
     }
 
     public CaxtonTextHandler getHandler() {

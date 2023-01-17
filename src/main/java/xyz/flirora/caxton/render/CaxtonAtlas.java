@@ -18,9 +18,8 @@ import java.util.List;
  */
 public class CaxtonAtlas implements AutoCloseable {
     public static int PAGE_SIZE = 4096;
-    private final List<NativeImageBackedTexture> pages = new ArrayList<>();
+    private final List<Page> pages = new ArrayList<>();
     private final LongSortedSet spaces = new LongRBTreeSet(Comparator.comparingInt(CaxtonAtlas::getH));
-    private final List<Identifier> ids = new ArrayList<>();
     private final TextureManager textureManager;
 
     public CaxtonAtlas(TextureManager textureManager) {
@@ -52,14 +51,14 @@ public class CaxtonAtlas implements AutoCloseable {
     }
 
     public Identifier getAtlasPage(int pageNum) {
-        return this.ids.get(pageNum);
+        return this.pages.get(pageNum).id;
     }
 
-    public NativeImageBackedTexture getAtlasPageTexture(int pageNum) {
+    public Page getAtlasPageTexture(int pageNum) {
         return this.pages.get(pageNum);
     }
 
-    public long insert(int width, int height, int additionalMargin) {
+    public long insert(int width, int height, int additionalMargin, int fontRange) {
         if (width < 0) {
             throw new IllegalArgumentException("width must not be negative");
         }
@@ -81,7 +80,7 @@ public class CaxtonAtlas implements AutoCloseable {
         while (true) {
             space = this.tryInsert(totalWidth, totalHeight);
             if (space != -1) break;
-            this.addNewPage();
+            this.addNewPage(fontRange);
         }
         return space - ((long) additionalMargin) * ((1L << 26) | (1L << 39));
     }
@@ -129,14 +128,11 @@ public class CaxtonAtlas implements AutoCloseable {
         spaces.add(pack(x, y, width, height, page));
     }
 
-    private void addNewPage() {
+    private void addNewPage(int range) {
         int pageNum = pages.size();
-        NativeImage image = new NativeImage(NativeImage.Format.RGBA, PAGE_SIZE, PAGE_SIZE, false);
-        NativeImageBackedTexture texture = new NativeImageBackedTexture(image);
+        Page page = new Page(this, pageNum, range);
         Identifier id = new Identifier("caxton", "atlas/" + pageNum);
-        this.textureManager.registerTexture(id, texture);
-        this.pages.add(texture);
-        this.ids.add(id);
+        this.pages.add(page);
         this.addSpace(0, 0, PAGE_SIZE, PAGE_SIZE, pageNum);
     }
 
@@ -152,6 +148,25 @@ public class CaxtonAtlas implements AutoCloseable {
         this.close();
         pages.clear();
         spaces.clear();
-        ids.clear();
+    }
+
+    public static class Page extends NativeImageBackedTexture {
+        private final Identifier id;
+        private final int range;
+
+        public Page(CaxtonAtlas atlas, int pageNum, int range) {
+            super(new NativeImage(NativeImage.Format.RGBA, PAGE_SIZE, PAGE_SIZE, false));
+            this.id = new Identifier("caxton", "atlas/" + pageNum);
+            this.range = range;
+            atlas.textureManager.registerTexture(id, this);
+        }
+
+        public Identifier getId() {
+            return id;
+        }
+
+        public int getRange() {
+            return range;
+        }
     }
 }

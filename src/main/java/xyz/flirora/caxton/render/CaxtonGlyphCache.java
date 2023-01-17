@@ -28,6 +28,10 @@ public class CaxtonGlyphCache {
         return atlas.getAtlasPage(pageNum);
     }
 
+    public CaxtonAtlas.Page getAtlasPageTexture(int pageNum) {
+        return atlas.getAtlasPageTexture(pageNum);
+    }
+
     public void clear() {
         atlas.clear();
         cache.clear();
@@ -42,12 +46,12 @@ public class CaxtonGlyphCache {
             this.entry = entry;
         }
 
-        public long getOrCreateAtlasLocation(int glyphId, long tlLoc) {
+        public long getOrCreateAtlasLocation(int glyphId, long tlLoc, int fontRange) {
             return entry.computeIfAbsent(glyphId, id -> {
                 int width = (int) (tlLoc & 0xFFFF);
                 int height = (int) ((tlLoc >> 16) & 0xFFFF);
                 int offset = (int) (tlLoc >>> 32);
-                long location = CaxtonGlyphCache.this.atlas.insert(width, height, 1);
+                long location = CaxtonGlyphCache.this.atlas.insert(width, height, 1, fontRange);
                 atlas.getAtlasPageTexture(CaxtonAtlas.getPage(location)).bindTexture();
                 GlStateManager._pixelStore(GlConst.GL_UNPACK_ROW_LENGTH, 0);
                 GlStateManager._pixelStore(GlConst.GL_UNPACK_SKIP_PIXELS, 0);
