@@ -15,7 +15,6 @@ use serde::{de, Deserialize};
 use sha2::{Digest, Sha256};
 use ttf_parser::{GlyphId, Rect, Variation};
 
-use crate::atlas::Atlas;
 use crate::tlist::TList;
 
 const SALT: [u8; 4] = [0xE6, 0x26, 0x69, 0x11];
