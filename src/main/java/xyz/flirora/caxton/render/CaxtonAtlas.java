@@ -78,24 +78,24 @@ public class CaxtonAtlas implements AutoCloseable {
         }
         long space;
         while (true) {
-            space = this.tryInsert(totalWidth, totalHeight);
+            space = this.tryInsert(totalWidth, totalHeight, fontRange);
             if (space != -1) break;
             this.addNewPage(fontRange);
         }
         return space - ((long) additionalMargin) * ((1L << 26) | (1L << 39));
     }
 
-    private long tryInsert(int width, int height) {
-        long space = chooseSpace(width, height);
+    private long tryInsert(int width, int height, int range) {
+        long space = chooseSpace(width, height, range);
         if (space == -1) return -1;
         return deductPortion(space, width, height);
     }
 
-    private long chooseSpace(int width, int height) {
+    private long chooseSpace(int width, int height, int range) {
         var it = spaces.iterator(pack(0, 0, 0, Math.max(height - 1, 0), 0));
         while (it.hasNext()) {
             long space = it.nextLong();
-            if (getW(space) >= width) {
+            if (getW(space) >= width && range == getAtlasPageTexture(getPage(space)).range) {
                 it.remove();
                 return space;
             }
