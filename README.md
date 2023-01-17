@@ -202,7 +202,8 @@ Caxton would not have been possible without the following projects:
 * [Gradle Cargo Wrapper] (Arc-blroth, Apache-2.0)
 * [RustyBuzz] (RazrFalcon, MIT)
 * [ttf-parser] (RazrFalcon, MIT/Apache-2.0)
-* [msdfgen] (Chlumsky, MIT) and the [msdf-rs] bindings (Penple, MIT)
+* [msdfgen] (Chlumsky, MIT) and the [msdfgen-rs] bindings (Kayo Phoenix, MIT)
+    * Versions 0.2.3 and earlier used the [msdf-rs] bindings (Penple, MIT) instead.
 * [JNI bindings for Rust] (MIT/Apache-2.0)
 * [Cross] (MIT/Apache-2.0)
 * [Fabric-ASM] (Chocohead, MPL-2.0)
@@ -224,6 +225,8 @@ Caxton would not have been possible without the following projects:
 [msdfgen]: https://github.com/Chlumsky/msdfgen
 
 [msdf-rs]: https://github.com/Penple/msdf-rs
+
+[msdfgen-rs]: https://github.com/katyo/msdfgen-rs
 
 [JNI bindings for Rust]: https://github.com/jni-rs/jni-rs
 
