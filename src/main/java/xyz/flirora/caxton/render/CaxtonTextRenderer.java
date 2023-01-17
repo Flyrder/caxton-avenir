@@ -254,6 +254,7 @@ public class CaxtonTextRenderer {
                 int width = (int) (tlLoc & 0xFFFF);
                 IntList others = font.getGlyphsByWidth().get(width);
                 glyphId = others.getInt(RANDOM.nextInt(others.size()));
+                tlLoc = font.getTlistLocation(glyphId);
             }
 
             var styleColorObj = style.getColor();

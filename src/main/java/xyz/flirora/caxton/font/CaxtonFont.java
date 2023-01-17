@@ -15,7 +15,6 @@ import net.minecraft.util.Identifier;
 import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 import xyz.flirora.caxton.dll.CaxtonInternal;
-import xyz.flirora.caxton.render.CaxtonAtlas;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +38,7 @@ public class CaxtonFont implements AutoCloseable {
     private final Identifier id;
     private final short[] metrics;
     private final int glyphCount;
-    private final long atlasLocations;
+    private final long tlistLocations;
     private final long bboxes;
     private final CaxtonFontOptions options;
     private final Int2ObjectMap<IntList> glyphsByWidth;
@@ -75,14 +74,14 @@ public class CaxtonFont implements AutoCloseable {
                     options.toString());
             metrics = CaxtonInternal.fontMetrics(fontPtr);
             glyphCount = CaxtonInternal.fontAtlasSize(fontPtr);
-            atlasLocations = CaxtonInternal.fontAtlasLocations(fontPtr);
+            tlistLocations = CaxtonInternal.fontAtlasLocations(fontPtr);
             bboxes = CaxtonInternal.fontBboxes(fontPtr);
             pixelData = CaxtonInternal.fontAtlasPage(fontPtr);
             this.options = new CaxtonFontOptions(options);
             this.glyphsByWidth = new Int2ObjectOpenHashMap<>();
             for (int glyphId = 0; glyphId < glyphCount; ++glyphId) {
-                long atlasLoc = MemoryUtil.memGetLong(atlasLocations + 8 * Integer.toUnsignedLong(glyphId));
-                int width = CaxtonAtlas.getW(atlasLoc);
+                long tlLoc = MemoryUtil.memGetLong(tlistLocations + 8 * Integer.toUnsignedLong(glyphId));
+                int width = (int) (tlLoc & 0xFFFF);
                 this.glyphsByWidth.computeIfAbsent(width, w -> new IntArrayList())
                         .add(glyphId);
             }
@@ -204,7 +203,7 @@ public class CaxtonFont implements AutoCloseable {
         if (glyphId < 0 || glyphId >= glyphCount) {
             throw new IndexOutOfBoundsException("i must be in [0, " + glyphCount + ") (got " + glyphId + ")");
         }
-        return MemoryUtil.memGetLong(atlasLocations + 8 * Integer.toUnsignedLong(glyphId));
+        return MemoryUtil.memGetLong(tlistLocations + 8 * Integer.toUnsignedLong(glyphId));
     }
 
     /**
