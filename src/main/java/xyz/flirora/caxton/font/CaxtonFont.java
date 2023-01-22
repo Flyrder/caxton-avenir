@@ -12,6 +12,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 import xyz.flirora.caxton.dll.CaxtonInternal;
@@ -248,6 +249,10 @@ public class CaxtonFont implements AutoCloseable {
      */
     public Int2ObjectMap<IntList> getGlyphsByWidth() {
         return glyphsByWidth;
+    }
+
+    public @Nullable String getGlyphName(int id) {
+        return CaxtonInternal.fontGlyphName(this.fontPtr, id);
     }
 
     /**

@@ -37,6 +37,14 @@ public class CaxtonGlyphCache {
         cache.clear();
     }
 
+    public CaxtonAtlas getAtlas() {
+        return atlas;
+    }
+
+    public Map<CaxtonFont, Int2LongMap> getLocations() {
+        return cache;
+    }
+
     public class Font {
         private final CaxtonFont font;
         private final Int2LongMap entry;

@@ -9,5 +9,8 @@
   "caxton.gui.unsupportedPlatform.link": "Learn more at: %s",
   "caxton.gui.failDescription": "%s\n\nOperating system: %s\nArchitecture: %s\n\n%s",
   "caxton.resourcePack.inter": "Sample Font: Inter",
-  "caxton.resourcePack.opensans": "Sample Font: Open Sans"
+  "caxton.resourcePack.opensans": "Sample Font: Open Sans",
+  "caxton.command.caxtondumpatlas.success": "Saved atlas info at %s",
+  "caxton.command.caxtondumpatlas.atlasFailed": "Failed to save image for atlas page #%s",
+  "caxton.command.caxtondumpatlas.locationDataFailed": "Failed to save glyph location data"
 }

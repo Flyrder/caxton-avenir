@@ -359,6 +359,10 @@ public class CaxtonTextRenderer {
         return x + cumulAdvanceX * scale;
     }
 
+    public CaxtonGlyphCache getCache() {
+        return cache;
+    }
+
     public void clearCaches() {
         this.handler.clearCaches();
         LOGGER.info("Cleared layout caches");

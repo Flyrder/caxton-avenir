@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
 import net.fabricmc.loader.api.FabricLoader;
@@ -11,6 +12,7 @@ import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
+import xyz.flirora.caxton.command.DumpAtlasCommand;
 import xyz.flirora.caxton.dll.LibraryLoading;
 
 import java.util.Calendar;
@@ -48,6 +50,10 @@ public class CaxtonModClient implements ClientModInitializer {
         CONFIG = CaxtonConfig.readFromFile();
 
         LibraryLoading.loadNativeLibrary(LOGGER);
+
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            DumpAtlasCommand.register(dispatcher, registryAccess);
+        });
 
         LOGGER.info("Registering built-in resource packs");
 

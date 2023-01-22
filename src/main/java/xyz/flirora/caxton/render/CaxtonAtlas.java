@@ -1,11 +1,13 @@
 package xyz.flirora.caxton.render;
 
+import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.longs.LongRBTreeSet;
 import it.unimi.dsi.fastutil.longs.LongSortedSet;
+import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.texture.TextureManager;
+import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 
@@ -59,6 +61,10 @@ public class CaxtonAtlas implements AutoCloseable {
 
     public Page getAtlasPageTexture(int pageNum) {
         return this.pages.get(pageNum);
+    }
+
+    public List<Page> getAllPages() {
+        return pages;
     }
 
     public long insert(int width, int height, int additionalMargin, int fontRange) {
@@ -142,8 +148,8 @@ public class CaxtonAtlas implements AutoCloseable {
 
     @Override
     public void close() {
-        for (NativeImageBackedTexture texture : this.pages) {
-            texture.close();
+        for (Page page : this.pages) {
+            page.close();
         }
         this.pages.clear();
     }
@@ -153,12 +159,13 @@ public class CaxtonAtlas implements AutoCloseable {
         spaces.clear();
     }
 
-    public static class Page extends NativeImageBackedTexture {
+    public static class Page extends AbstractTexture {
         private final Identifier id;
         private final int range;
 
         public Page(CaxtonAtlas atlas, int pageNum, int range) {
-            super(new NativeImage(NativeImage.Format.RGBA, PAGE_SIZE, PAGE_SIZE, false));
+            super();
+            TextureUtil.prepareImage(NativeImage.InternalFormat.RGBA, this.getGlId(), PAGE_SIZE, PAGE_SIZE);
             this.id = new Identifier("caxton", "atlas/" + pageNum);
             this.range = range;
             atlas.textureManager.registerTexture(id, this);
@@ -170,6 +177,15 @@ public class CaxtonAtlas implements AutoCloseable {
 
         public int getRange() {
             return range;
+        }
+
+        @Override
+        public void load(ResourceManager manager) {
+        }
+
+        @Override
+        public void close() {
+            this.clearGlId();
         }
     }
 }

@@ -1,6 +1,7 @@
 use std::{mem, ops::Deref, path::PathBuf, ptr, slice};
 
 use anyhow::Context;
+use jni::sys::jstring;
 use jni::{
     objects::{JByteBuffer, JClass, JObject, JString, JValue, ReleaseMode},
     sys::{jcharArray, jint, jintArray, jlong, jobjectArray, jshortArray},
@@ -8,6 +9,7 @@ use jni::{
 };
 use rustybuzz::{Direction, UnicodeBuffer};
 use thiserror::Error;
+use ttf_parser::GlyphId;
 
 use crate::{
     cfont::{ConfiguredFont, ConfiguredFontSettings},
@@ -261,6 +263,36 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
         let ptr: *const image::Rgba<u8> = page.deref().as_ptr();
         Ok(ptr as i64)
     }
+}
+
+/// JNI wrapper for getting the glyph name of a glyph in a font.
+///
+/// # Safety
+///
+/// `addr` must have previously been returned by [`Java_xyz_flirora_caxton_dll_CaxtonInternal_createFont`]
+/// and must not have been previously passed into [`Java_xyz_flirora_caxton_dll_CaxtonInternal_destroyFont`].
+// public static native String fontGlyphName(long addr, int glyphId);
+#[no_mangle]
+pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontGlyphName(
+    env: JNIEnv,
+    class: JClass,
+    font_addr: jlong,
+    glyph_id: jint,
+) -> jstring {
+    let val = throw_as_exn! {
+        env;
+        if font_addr == 0 {
+            eprintln!("warn: was passed an address of 0; returning");
+            return Ok(JString::default());
+        }
+        let font = &*(font_addr as usize as *const Font);
+        let name = font.face.glyph_name(GlyphId(glyph_id as u16));
+        Ok(match name {
+            Some(name) => env.new_string(name)?,
+            None => JString::default(),
+        })
+    };
+    val.into_raw()
 }
 
 /// JNI wrapper for constructing a [`ConfiguredFont`].

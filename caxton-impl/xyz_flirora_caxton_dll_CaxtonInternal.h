@@ -73,6 +73,14 @@ JNIEXPORT jlong JNICALL Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtlasPage
 
 /*
  * Class:     xyz_flirora_caxton_dll_CaxtonInternal
+ * Method:    fontGlyphName
+ * Signature: (JI)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_xyz_flirora_caxton_dll_CaxtonInternal_fontGlyphName
+  (JNIEnv *, jclass, jlong, jint);
+
+/*
+ * Class:     xyz_flirora_caxton_dll_CaxtonInternal
  * Method:    configureFont
  * Signature: (JLjava/lang/String;)J
  */
