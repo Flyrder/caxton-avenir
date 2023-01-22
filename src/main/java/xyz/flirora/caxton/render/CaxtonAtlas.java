@@ -2,8 +2,10 @@ package xyz.flirora.caxton.render;
 
 import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.logging.LogUtils;
-import it.unimi.dsi.fastutil.longs.LongRBTreeSet;
-import it.unimi.dsi.fastutil.longs.LongSortedSet;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.TextureManager;
@@ -12,7 +14,6 @@ import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -24,7 +25,9 @@ public class CaxtonAtlas implements AutoCloseable {
     private static final Logger LOGGER = LogUtils.getLogger();
     public static int PAGE_SIZE = 4096;
     private final List<Page> pages = new ArrayList<>();
-    private final LongSortedSet spaces = new LongRBTreeSet(Comparator.comparingInt(CaxtonAtlas::getH));
+    // w is ignored for entries here; h is interpreted as range
+    private final List<LongList> shelves = new ArrayList<>();
+    private final IntList unallocatedSpaces = new IntArrayList();
     private final TextureManager textureManager;
 
     public CaxtonAtlas(TextureManager textureManager) {
@@ -55,6 +58,15 @@ public class CaxtonAtlas implements AutoCloseable {
         return ((long) x) | (((long) y) << 13) | (((long) w) << 26) | (((long) h) << 39) | (((long) page) << 52);
     }
 
+    private static int heightToBucketId(int height) {
+        assert height >= 1;
+        return ((height + 7) / 8) - 1;
+    }
+
+    private static int bucketIdToHeight(int bucket) {
+        return 8 * (bucket + 1);
+    }
+
     public Identifier getAtlasPage(int pageNum) {
         return this.pages.get(pageNum).id;
     }
@@ -68,6 +80,9 @@ public class CaxtonAtlas implements AutoCloseable {
     }
 
     public long insert(int width, int height, int additionalMargin, int fontRange) {
+        if (fontRange < 0 || fontRange >= 256) {
+            throw new IllegalArgumentException("fontRange must be in [0, 256)");
+        }
         if (width < 0) {
             throw new IllegalArgumentException("width must not be negative");
         }
@@ -87,63 +102,82 @@ public class CaxtonAtlas implements AutoCloseable {
         }
         long space;
         while (true) {
-            space = this.tryInsert(totalWidth, totalHeight, fontRange);
+            space = this.insertInternal(totalWidth, totalHeight, fontRange);
             if (space != -1) break;
-            this.addNewPage(fontRange);
+            throw new RuntimeException("Fuck!");
         }
         return space - ((long) additionalMargin) * ((1L << 26) | (1L << 39));
     }
 
-    private long tryInsert(int width, int height, int range) {
-        long space = chooseSpace(width, height, range);
-        if (space == -1) return -1;
-        return deductPortion(space, width, height);
-    }
-
-    private long chooseSpace(int width, int height, int range) {
-        var it = spaces.iterator(pack(0, 0, 0, Math.max(height - 1, 0), 0));
-        while (it.hasNext()) {
-            long space = it.nextLong();
-            if (getW(space) >= width && range == getAtlasPageTexture(getPage(space)).range) {
-                it.remove();
-                return space;
-            }
+    private long insertInternal(int width, int height, int range) {
+        int bucket = heightToBucketId(height);
+        while (bucket >= shelves.size()) {
+            shelves.add(new LongArrayList());
         }
-        return -1;
-    }
-
-    private long deductPortion(long space, int width, int height) {
-        int spaceX = getX(space), spaceY = getY(space);
-        int spaceW = getW(space), spaceH = getH(space);
-        int spacePage = getPage(space);
-        int excessW = spaceW - width, excessH = spaceH - height;
-        if (excessW == 0) {
-            if (excessH != 0) {
-                addSpace(spaceX, spaceY + height, spaceW, excessH, spacePage);
+        LongList shelvesInBucket = shelves.get(bucket);
+        for (int i = shelvesInBucket.size() - 1; i >= 0; --i) {
+            long shelf = shelvesInBucket.getLong(i);
+            int x = getX(shelf), y = getY(shelf);
+            int page = getPage(shelf);
+            if (x + width > PAGE_SIZE) continue; // Too narrow
+            if (getH(shelf) != range) continue; // Wrong range
+            long space = pack(x, y, width, height, page);
+            long remainingShelf = pack(x + width, y, 0, range, page);
+            shelvesInBucket.set(i, remainingShelf);
+            if (i > 0) {
+                long prev = shelvesInBucket.getLong(i - 1);
+                if (x + width > getW(prev)) {
+                    shelvesInBucket.set(i, prev);
+                    shelvesInBucket.set(i - 1, remainingShelf);
+                }
             }
-        } else if (excessH == 0) {
-            addSpace(spaceX + width, spaceY, excessW, spaceH, spacePage);
-        } else if (excessW > excessH) {
-            addSpace(spaceX + width, spaceY, excessW, spaceH, spacePage);
-            addSpace(spaceX, spaceY + height, width, excessH, spacePage);
-        } else {
-            addSpace(spaceX, spaceY + height, spaceW, excessH, spacePage);
-            addSpace(spaceX + width, spaceY, excessW, height, spacePage);
+            return space;
         }
-        return pack(spaceX, spaceY, width, height, spacePage);
+        {
+            long shelf = allocateShelf(bucket, range);
+            int x = getX(shelf), y = getY(shelf);
+            int page = getPage(shelf);
+            long remainingShelf = pack(width, y, 0, range, page);
+            shelvesInBucket.add(remainingShelf);
+            return pack(x, y, width, height, page);
+        }
     }
 
-    private void addSpace(int x, int y, int width, int height, int page) {
-        spaces.add(pack(x, y, width, height, page));
+    private long allocateShelf(int bucket, int range) {
+        int height = bucketIdToHeight(bucket);
+        int minHeight = bucketIdToHeight(0);
+        while (true) {
+            int len = unallocatedSpaces.size();
+            for (int i = 0; i < len; ++i) {
+                int space = unallocatedSpaces.getInt(i);
+                int y = (space & 0xFFF);
+                int page = (space >> 12) & 0xFFF;
+                int r = space >>> 24;
+                if (r != range) continue;
+                int y2 = y + height;
+                if (y2 > PAGE_SIZE) continue;
+                if (y2 + minHeight <= PAGE_SIZE) {
+                    unallocatedSpaces.set(i, y2 | (page << 12) | (range << 24));
+                } else {
+                    unallocatedSpaces.set(i, unallocatedSpaces.getInt(len - 1));
+                    unallocatedSpaces.removeInt(len - 1);
+                }
+                return pack(0, y, 0, range, page);
+            }
+            addNewPage(range);
+        }
     }
 
     private void addNewPage(int range) {
         int pageNum = pages.size();
+        if (pageNum >= 4096) {
+            throw new RuntimeException("Only 4096 pages are supported");
+        }
         LOGGER.info("I am {}", this);
         LOGGER.info("Adding a new page #{} with range {}", pageNum, range);
         Page page = new Page(this, pageNum, range);
         this.pages.add(page);
-        this.addSpace(0, 0, PAGE_SIZE, PAGE_SIZE, pageNum);
+        this.unallocatedSpaces.add((pageNum << 12) | (range << 24));
     }
 
     @Override
@@ -156,7 +190,8 @@ public class CaxtonAtlas implements AutoCloseable {
 
     public void clear() {
         this.close();
-        spaces.clear();
+        shelves.clear();
+        unallocatedSpaces.clear();
     }
 
     public static class Page extends AbstractTexture {
