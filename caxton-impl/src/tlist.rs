@@ -19,6 +19,18 @@ impl TLocation {
             packed: ((offset as u64) << 32) | (width as u64) | ((height as u64) << 16),
         }
     }
+
+    pub fn offset(self) -> u32 {
+        (self.packed >> 32) as u32
+    }
+
+    pub fn width(self) -> u16 {
+        self.packed as u16
+    }
+
+    pub fn height(self) -> u16 {
+        (self.packed >> 16) as u16
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -148,6 +160,18 @@ impl TList {
                 )
             };
             fh.read_exact(slice)?;
+        }
+
+        // Validate the tlist
+        for (i, location) in locations.iter().enumerate() {
+            let start = location.offset();
+            let end = start + (location.width() as u32) * (location.height() as u32);
+            if (end as u64) > (pixels.len() as u64) {
+                bail!(
+                    "location #{i} out of bounds: [{start}, {end}) is not within [0, {})",
+                    pixels.len()
+                );
+            }
         }
 
         Ok(Self { locations, pixels })
