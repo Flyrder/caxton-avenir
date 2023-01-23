@@ -57,17 +57,23 @@ impl<'de> Deserialize<'de> for CxVariation {
 #[serde(default)]
 pub struct FontOptions {
     pub shrinkage: f64,
-    pub margin: u32,
+    pub margin: Option<u32>,
     pub range: u32,
     pub invert: Option<bool>,
     pub variations: Vec<CxVariation>,
+}
+
+impl FontOptions {
+    fn margin(&self) -> u32 {
+        self.margin.unwrap_or(self.range)
+    }
 }
 
 impl Default for FontOptions {
     fn default() -> Self {
         Self {
             shrinkage: 32.0,
-            margin: 8,
+            margin: None,
             range: 4,
             invert: None,
             variations: Default::default(),
@@ -93,7 +99,7 @@ impl<'a> Font<'a> {
         sha.update(&format!(
             "{} {} {} {}",
             options.shrinkage,
-            options.margin,
+            options.margin(),
             options.range,
             match options.invert {
                 None => "auto",
@@ -203,12 +209,13 @@ fn dimensions_in_image(bounding_box: &Option<Rect>, options: &FontOptions) -> (u
     match bounding_box {
         None => (0, 0),
         Some(bounding_box) => {
+            let margin = options.margin();
             let width = (bounding_box.width().unsigned_abs() as f64 / options.shrinkage).ceil()
                 as u32
-                + 2 * options.margin;
+                + 2 * margin;
             let height = (bounding_box.height().unsigned_abs() as f64 / options.shrinkage).ceil()
                 as u32
-                + 2 * options.margin;
+                + 2 * margin;
             (width, height)
         }
     }
@@ -244,8 +251,8 @@ fn create_mtsdf(
             y: 1.0 / options.shrinkage,
         },
         Vector2 {
-            x: options.margin as f64 * options.shrinkage - bounding_box.x_min as f64,
-            y: options.margin as f64 * options.shrinkage - bounding_box.y_min as f64,
+            x: options.margin() as f64 * options.shrinkage - bounding_box.x_min as f64,
+            y: options.margin() as f64 * options.shrinkage - bounding_box.y_min as f64,
         },
     );
 

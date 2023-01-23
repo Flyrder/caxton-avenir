@@ -26,10 +26,10 @@ public record CaxtonFontOptions(
             throw new IllegalArgumentException("shrinkage must be positive");
         }
         if (margin < 0) {
-            throw new IllegalArgumentException("margin cannot be negative");
+            margin = range;
         }
-        if (range < 0) {
-            throw new IllegalArgumentException("range cannot be negative");
+        if (range <= 0) {
+            throw new IllegalArgumentException("range must be positive");
         }
         if (range >= 256) {
             throw new IllegalArgumentException("range cannot be greater than 255");
@@ -38,9 +38,9 @@ public record CaxtonFontOptions(
 
     public CaxtonFontOptions(JsonObject json) {
         this(
-                JsonHelper.getDouble(json, "shrinkage", 64.0),
-                JsonHelper.getInt(json, "margin", 4),
-                JsonHelper.getInt(json, "range", 2),
+                JsonHelper.getDouble(json, "shrinkage", 32.0),
+                JsonHelper.getInt(json, "margin", -1),
+                JsonHelper.getInt(json, "range", 4),
                 JsonHelper.getBoolean(json, "invert", true)
         );
     }

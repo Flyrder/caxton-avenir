@@ -92,10 +92,11 @@ rasterizing the font:
   // This can be set to a high value because the atlas is an MTSDF.
   "shrinkage": 32.0,
   // The number of pixels to leave around the glyph bounding box on each side.
-  // This should be larger than `range`.
-  "margin": 8,
+  // This should be larger than `range` and will default to `range` if left blank.
+  "margin": 4,
   // The width of the range around the glyph between the minimum and maximum
-  // representable signed distances.
+  // representable signed distances. This is a positive integer no greater
+  // than 255.
   // This also determines the width of the border drawn for glowing sign text.
   "range": 4,
   // Whether to invert the signed distance field (true or false).
