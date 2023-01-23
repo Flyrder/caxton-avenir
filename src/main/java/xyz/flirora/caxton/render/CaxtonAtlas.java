@@ -100,12 +100,7 @@ public class CaxtonAtlas implements AutoCloseable {
         if (width == 0 || height == 0) {
             return pack(0, 0, width, height, 0);
         }
-        long space;
-        while (true) {
-            space = this.insertInternal(totalWidth, totalHeight, fontRange);
-            if (space != -1) break;
-            throw new RuntimeException("Fuck!");
-        }
+        long space = this.insertInternal(totalWidth, totalHeight, fontRange);
         return space - ((long) additionalMargin) * ((1L << 26) | (1L << 39));
     }
 

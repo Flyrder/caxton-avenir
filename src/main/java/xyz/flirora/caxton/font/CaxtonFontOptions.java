@@ -14,7 +14,6 @@ import net.minecraft.util.JsonHelper;
  * @param margin    the number of extra pixels to add as margins around all sides of the glyph. This should be greater than or equal to {@code range}.
  * @param range     the pixel range between the minimum and maximum representable signed distance of the MSDF
  * @param invert    whether to invert the MSDF of each glyph
- * @param pageSize  the width and height of each atlas page in this font
  */
 @Environment(EnvType.CLIENT)
 public record CaxtonFontOptions(
@@ -31,6 +30,9 @@ public record CaxtonFontOptions(
         }
         if (range < 0) {
             throw new IllegalArgumentException("range cannot be negative");
+        }
+        if (range >= 256) {
+            throw new IllegalArgumentException("range cannot be greater than 255");
         }
     }
 
