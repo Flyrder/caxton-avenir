@@ -4,6 +4,9 @@ use std::path::Path;
 use std::{mem, slice};
 
 use anyhow::{bail, Context};
+use flate2::read::ZlibDecoder;
+use flate2::write::ZlibEncoder;
+use flate2::Compression;
 use io_ext::{ReadExt, WriteExt};
 use msdfgen::Bitmap;
 
@@ -39,6 +42,11 @@ pub struct TList {
     locations: Vec<TLocation>,
 }
 
+#[derive(Debug)]
+pub struct TListPendingEntry<'a> {
+    pixels: &'a mut [image::Rgba<u8>],
+}
+
 const VERSION: u32 = 2;
 
 impl TList {
@@ -49,32 +57,45 @@ impl TList {
         }
     }
 
-    pub fn add(&mut self, img: &Bitmap<msdfgen::Rgba<f32>>) -> TLocation {
-        let width = img.width() as u16;
-        let height = img.height() as u16;
-        let result = TLocation::new(self.pixels.len() as u32, width, height);
-        self.pixels.reserve((width * height) as usize);
-        let mtsdf_pixels = img.pixels();
-        for y in (0..height).rev() {
-            for x in 0..width {
-                let pixel = mtsdf_pixels[(x as usize) + (y as usize) * (width as usize)];
-                let pixel = image::Rgba([
-                    (pixel.r * 255.0) as u8,
-                    (pixel.g * 255.0) as u8,
-                    (pixel.b * 255.0) as u8,
-                    (pixel.a * 255.0) as u8,
-                ]);
-                self.pixels.push(pixel);
-            }
+    pub fn adds(
+        &mut self,
+        sizes: impl Iterator<Item = (u32, u32)>,
+    ) -> anyhow::Result<Vec<TListPendingEntry<'_>>> {
+        let first_index = self.pixels.len();
+        let mut pending_index = first_index;
+        let lengths = sizes
+            .map(|(w, h)| {
+                let w: u16 = w
+                    .try_into()
+                    .context("width must not be greater than 65535")?;
+                let h: u16 = h
+                    .try_into()
+                    .context("height must not be greater than 65535")?;
+                self.locations.push(TLocation::new(
+                    pending_index
+                        .try_into()
+                        .context("offset must not exceed u32::MAX")?,
+                    w,
+                    h,
+                ));
+                let pixel_count = (w as usize) * (h as usize);
+                pending_index += pixel_count;
+                anyhow::Result::Ok(pixel_count)
+            })
+            .collect::<anyhow::Result<Vec<_>>>()?;
+        let total_length: usize = lengths.iter().copied().sum();
+        self.pixels
+            .resize(first_index + total_length, image::Rgba::from([0; 4]));
+        let mut result = Vec::new();
+        pending_index = first_index;
+        let slice_ptr = self.pixels.as_mut_ptr();
+        for length in lengths {
+            let subslice =
+                unsafe { slice::from_raw_parts_mut(slice_ptr.add(pending_index), length) };
+            result.push(TListPendingEntry { pixels: subslice });
+            pending_index += length;
         }
-        self.locations.push(result);
-        result
-    }
-
-    pub fn add_empty(&mut self) -> TLocation {
-        let result = TLocation::new(self.pixels.len() as u32, 0, 0);
-        self.locations.push(result);
-        result
+        Ok(result)
     }
 
     pub fn locations(&self) -> &[TLocation] {
@@ -86,37 +107,36 @@ impl TList {
     }
 
     pub fn save(&self, dir: &'_ Path) -> anyhow::Result<()> {
+        let mut locations_file = dir.to_path_buf();
+        locations_file.push("locations.zst");
+        let fh = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(locations_file)
+            .context("failed to write to locations.bin")?;
+        let mut fh = ZlibEncoder::new(fh, Compression::default());
+        fh.write_u32_checked(VERSION)?;
+        fh.write_u32_checked(self.locations.len().try_into()?)?;
+        fh.write_u32_checked(self.pixels.len().try_into()?)?;
         {
-            let mut locations_file = dir.to_path_buf();
-            locations_file.push("locations.bin");
-            let mut fh = OpenOptions::new()
-                .write(true)
-                .create(true)
-                .open(locations_file)
-                .context("failed to write to locations.bin")?;
-            fh.write_u32_checked(VERSION)?;
-            fh.write_u32_checked(self.locations.len().try_into()?)?;
-            fh.write_u32_checked(self.pixels.len().try_into()?)?;
-            {
-                let slice = self.locations.as_slice();
-                let slice = unsafe {
-                    slice::from_raw_parts(
-                        slice.as_ptr().cast::<u8>(),
-                        mem::size_of::<TLocation>() * slice.len(),
-                    )
-                };
-                fh.write(slice)?;
-            }
-            {
-                let slice = self.pixels.as_slice();
-                let slice = unsafe {
-                    slice::from_raw_parts(
-                        slice.as_ptr().cast::<u8>(),
-                        mem::size_of::<image::Rgba<u8>>() * slice.len(),
-                    )
-                };
-                fh.write(slice)?;
-            }
+            let slice = self.locations.as_slice();
+            let slice = unsafe {
+                slice::from_raw_parts(
+                    slice.as_ptr().cast::<u8>(),
+                    mem::size_of::<TLocation>() * slice.len(),
+                )
+            };
+            fh.write_all(slice)?;
+        }
+        {
+            let slice = self.pixels.as_slice();
+            let slice = unsafe {
+                slice::from_raw_parts(
+                    slice.as_ptr().cast::<u8>(),
+                    mem::size_of::<image::Rgba<u8>>() * slice.len(),
+                )
+            };
+            fh.write_all(slice)?;
         }
 
         Ok(())
@@ -124,11 +144,12 @@ impl TList {
 
     pub fn load(dir: &'_ Path) -> anyhow::Result<Self> {
         let mut locations_file = dir.to_path_buf();
-        locations_file.push("locations.bin");
-        let mut fh = OpenOptions::new()
+        locations_file.push("locations.zst");
+        let fh = OpenOptions::new()
             .read(true)
             .open(locations_file)
             .context("failed to read locations.bin")?;
+        let mut fh = ZlibDecoder::new(fh);
 
         let version = fh.read_u32_checked()?;
         if version != VERSION {
@@ -175,5 +196,28 @@ impl TList {
         }
 
         Ok(Self { locations, pixels })
+    }
+}
+
+impl<'a> TListPendingEntry<'a> {
+    pub fn put(&mut self, img: &Bitmap<msdfgen::Rgba<f32>>) {
+        let width = img.width() as u16;
+        let height = img.height() as u16;
+        assert_eq!(self.pixels.len(), (width as usize) * (height as usize));
+        let mtsdf_pixels = img.pixels();
+        let mut i = 0;
+        for y in (0..height).rev() {
+            for x in 0..width {
+                let pixel = mtsdf_pixels[(x as usize) + (y as usize) * (width as usize)];
+                let pixel = image::Rgba([
+                    (pixel.r * 255.0) as u8,
+                    (pixel.g * 255.0) as u8,
+                    (pixel.b * 255.0) as u8,
+                    (pixel.a * 255.0) as u8,
+                ]);
+                self.pixels[i] = pixel;
+                i += 1;
+            }
+        }
     }
 }

@@ -8,7 +8,11 @@ use std::{
 use anyhow::{anyhow, Context};
 use base64::engine::general_purpose::URL_SAFE;
 use base64::Engine;
+use image::Rgba;
 use msdfgen::{Bitmap, FillRule, FontExt, Framing, MsdfGeneratorConfig, Pixel, Vector2};
+use rayon::iter::{
+    IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
+};
 use rustybuzz::{Face, Tag};
 use serde::{de, Deserialize};
 use sha2::{Digest, Sha256};
@@ -171,63 +175,90 @@ impl<'a> Font<'a> {
 }
 
 fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<TList> {
-    let msdf_config = MsdfGeneratorConfig::default();
-
     let mut tlist = TList::new();
 
-    let mut glyph_indices = (0..face.number_of_glyphs())
+    let glyph_indices = (0..face.number_of_glyphs())
         .map(|glyph_idx| (glyph_idx, face.glyph_bounding_box(GlyphId(glyph_idx))))
         .collect::<Vec<_>>();
-    glyph_indices.sort_by_key(|(_, bb)| bb.map(|bb| Reverse(bb.height())));
 
-    for glyph_index in 0..face.number_of_glyphs() {
-        let glyph_id = GlyphId(glyph_index);
-        let bounding_box = face.glyph_bounding_box(glyph_id);
+    let pending_entries = tlist.adds(
+        glyph_indices
+            .iter()
+            .map(|(_, bbox)| dimensions_in_image(bbox, options)),
+    )?;
 
-        let bounding_box = match bounding_box {
-            Some(s) => s,
-            None => {
-                tlist.add_empty();
-                continue;
-            }
-        };
-
-        let width = (bounding_box.width().unsigned_abs() as f64 / options.shrinkage).ceil() as u32
-            + 2 * options.margin;
-        let height = (bounding_box.height().unsigned_abs() as f64 / options.shrinkage).ceil()
-            as u32
-            + 2 * options.margin;
-
-        let mut shape = face
-            .as_ref()
-            .glyph_shape(glyph_id)
-            .ok_or_else(|| anyhow!("could not load glyph #{glyph_index}"))?;
-        shape.edge_coloring_simple(3.0, 69);
-        let framing: Framing<f64> = Framing::new(
-            options.range as f64 * options.shrinkage,
-            Vector2 {
-                x: 1.0 / options.shrinkage,
-                y: 1.0 / options.shrinkage,
-            },
-            Vector2 {
-                x: options.margin as f64 * options.shrinkage - bounding_box.x_min as f64,
-                y: options.margin as f64 * options.shrinkage - bounding_box.y_min as f64,
-            },
-        );
-
-        let mut mtsdf: Bitmap<msdfgen::Rgba<f32>> = Bitmap::new(width, height);
-        shape.generate_mtsdf(&mut mtsdf, &framing, &msdf_config);
-        if options.invert.is_none() {
-            shape.correct_sign(&mut mtsdf, &framing, FillRule::NonZero);
-        }
-
-        let mtsdf_pixels = mtsdf.pixels_mut();
-        if options.invert == Some(true) {
-            mtsdf_pixels.iter_mut().for_each(|pixel| pixel.invert());
-        }
-
-        tlist.add(&mtsdf);
-    }
+    glyph_indices
+        .into_par_iter()
+        .zip_eq(pending_entries.into_par_iter())
+        .try_for_each(|((glyph_idx, bbox), mut pe)| -> anyhow::Result<()> {
+            let mtsdf = create_mtsdf(face, GlyphId(glyph_idx), bbox, options)?;
+            pe.put(&mtsdf);
+            anyhow::Result::Ok(())
+        })?;
 
     Ok(tlist)
+}
+
+fn dimensions_in_image(bounding_box: &Option<Rect>, options: &FontOptions) -> (u32, u32) {
+    match bounding_box {
+        None => (0, 0),
+        Some(bounding_box) => {
+            let width = (bounding_box.width().unsigned_abs() as f64 / options.shrinkage).ceil()
+                as u32
+                + 2 * options.margin;
+            let height = (bounding_box.height().unsigned_abs() as f64 / options.shrinkage).ceil()
+                as u32
+                + 2 * options.margin;
+            (width, height)
+        }
+    }
+}
+
+fn create_mtsdf(
+    face: &Face,
+    glyph_id: GlyphId,
+    bounding_box: Option<Rect>,
+    options: &FontOptions,
+) -> anyhow::Result<Bitmap<msdfgen::Rgba<f32>>> {
+    // This should be passed as a parameter, but MsdfGeneratorConfig isn’t Sync
+    let msdf_config = MsdfGeneratorConfig::default();
+
+    let bounding_box = match bounding_box {
+        Some(s) => s,
+        None => {
+            return Ok(Bitmap::new(0, 0));
+        }
+    };
+
+    let (width, height) = dimensions_in_image(&Some(bounding_box), options);
+
+    let mut shape = face
+        .as_ref()
+        .glyph_shape(glyph_id)
+        .ok_or_else(|| anyhow!("could not load glyph #{}", glyph_id.0))?;
+    shape.edge_coloring_simple(3.0, 69);
+    let framing: Framing<f64> = Framing::new(
+        options.range as f64 * options.shrinkage,
+        Vector2 {
+            x: 1.0 / options.shrinkage,
+            y: 1.0 / options.shrinkage,
+        },
+        Vector2 {
+            x: options.margin as f64 * options.shrinkage - bounding_box.x_min as f64,
+            y: options.margin as f64 * options.shrinkage - bounding_box.y_min as f64,
+        },
+    );
+
+    let mut mtsdf: Bitmap<msdfgen::Rgba<f32>> = Bitmap::new(width, height);
+    shape.generate_mtsdf(&mut mtsdf, &framing, &msdf_config);
+    if options.invert.is_none() {
+        shape.correct_sign(&mut mtsdf, &framing, FillRule::NonZero);
+    }
+
+    let mtsdf_pixels = mtsdf.pixels_mut();
+    if options.invert == Some(true) {
+        mtsdf_pixels.iter_mut().for_each(|pixel| pixel.invert());
+    }
+
+    Ok(mtsdf)
 }
