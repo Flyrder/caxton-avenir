@@ -105,7 +105,10 @@ rasterizing the font:
   // This option is used to set variation axis coordinates in variable fonts.
   // Each element has the following format:
   // { "axis": <axis type>, "value": <axis value> }
-  "variations": []
+  "variations": [],
+  // The index of the font face to use in a font collection.
+  // Leave this as 0 if you’re not sure.
+  "face_index": 0
 }
 ```
 

@@ -61,6 +61,7 @@ pub struct FontOptions {
     pub range: u32,
     pub invert: Option<bool>,
     pub variations: Vec<CxVariation>,
+    pub face_index: u32,
 }
 
 impl FontOptions {
@@ -77,6 +78,7 @@ impl Default for FontOptions {
             range: 4,
             invert: None,
             variations: Default::default(),
+            face_index: 0,
         }
     }
 }
@@ -116,7 +118,8 @@ impl<'a> Font<'a> {
         let mut this_cache = cache_dir.to_path_buf();
         this_cache.push(URL_SAFE.encode(sha));
 
-        let mut face = Face::from_slice(contents, 0).context("failed to parse font")?;
+        let mut face =
+            Face::from_slice(contents, options.face_index).context("failed to parse font")?;
         for var in &options.variations {
             face.set_variation(var.0.axis, var.0.value)
                 .ok_or_else(|| anyhow!("axis {} not found", var.0.axis))?;
