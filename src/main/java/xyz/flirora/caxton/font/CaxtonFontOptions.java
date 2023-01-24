@@ -1,9 +1,12 @@
 package xyz.flirora.caxton.font;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.util.JsonHelper;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Options for rendering text in a {@link CaxtonFont}.
@@ -20,7 +23,7 @@ public record CaxtonFontOptions(
         double shrinkage,
         int margin,
         int range,
-        boolean invert) {
+        Invert invert) {
     public CaxtonFontOptions {
         if (shrinkage <= 0.0) {
             throw new IllegalArgumentException("shrinkage must be positive");
@@ -41,7 +44,25 @@ public record CaxtonFontOptions(
                 JsonHelper.getDouble(json, "shrinkage", 32.0),
                 JsonHelper.getInt(json, "margin", -1),
                 JsonHelper.getInt(json, "range", 4),
-                JsonHelper.getBoolean(json, "invert", true)
+                Invert.fromJson(json.get("invert"))
         );
+    }
+
+    public enum Invert {
+        UNSET,
+        FALSE,
+        TRUE;
+
+        public static Invert fromJson(@Nullable JsonElement json) {
+            if (json == null || json.isJsonNull()) {
+                return UNSET;
+            }
+            try {
+                boolean b = json.getAsBoolean();
+                return b ? TRUE : FALSE;
+            } catch (Exception e) {
+                throw new JsonSyntaxException("invert must be true, false, or null", e);
+            }
+        }
     }
 }
