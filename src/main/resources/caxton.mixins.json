@@ -28,6 +28,7 @@
     "gui.BookEditScreenPageContentMixin",
     "gui.BookEditScreenPositionAccessor",
     "gui.ChatInputSuggestorMixin",
+    "gui.EditBoxMixin",
     "gui.TextFieldWidgetMixin"
   ],
   "injectors": {

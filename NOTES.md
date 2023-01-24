@@ -200,8 +200,7 @@ Vanilla Minecraft exhibits the following behavior on `setSelectionEnd`:
 For `EditBox`, we need to
 edit `TextHandler#wrapLines(String text, int maxWidth, Style style, boolean retainTrailingWordSplit, LineWrappingConsumer consumer)`
 to allow the text to rewrap properly. `EditBox#moveCursorLine` and `EditBox#moveCursor` also need to be edited to use
-proper x-position
-calculations.
+proper x-position calculations.
 
 For `EditBoxWidget`, we need to edit `getRenderContents`.
 
