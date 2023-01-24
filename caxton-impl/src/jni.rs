@@ -275,7 +275,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
 #[no_mangle]
 pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontGlyphName(
     env: JNIEnv,
-    class: JClass,
+    _class: JClass,
     font_addr: jlong,
     glyph_id: jint,
 ) -> jstring {
