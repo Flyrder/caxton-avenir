@@ -97,7 +97,6 @@ public class CaxtonTextRenderer {
         TextRenderer.Drawer outlineDrawer = vanillaTextRenderer.new Drawer(vertexConsumers, 0.0f, 0.0f, effectiveOutlineColor, false, matrix, TextRenderer.TextLayerType.NORMAL, light);
         TextRenderer.Drawer centralDrawer = vanillaTextRenderer.new Drawer(vertexConsumers, x, y, effectiveColor, false, matrix, TextRenderer.TextLayerType.POLYGON_OFFSET, light);
 
-        float origX = x;
         for (RunGroup runGroup : runGroups.runGroups()) {
             ConfiguredCaxtonFont font = runGroup.getFont();
             if (font == null) {
