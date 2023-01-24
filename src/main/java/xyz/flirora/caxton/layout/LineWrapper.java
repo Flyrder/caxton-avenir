@@ -35,7 +35,9 @@ public class LineWrapper {
     public LineWrapper(CaxtonText text, Bidi bidi, TextHandler.WidthRetriever widthRetriever, float maxWidth, boolean breakAnywhere) {
         this.text = text;
         this.bidi = bidi;
-        this.maxWidth = maxWidth;
+        // Some mods such as IBE Editor pass negative `maxWidth` values to `TextHandler.wrapLines`. We do what
+        // `LineBreakingVisitor` does and set it to a minimum of 1 font unit.
+        this.maxWidth = Math.max(maxWidth, 1.0f);
         this.contents = text.getContents();
         if (breakAnywhere) {
             this.bi = null;
@@ -159,7 +161,7 @@ public class LineWrapper {
             }
             prevIndex = index;
         }
-        return index;
+        return index == -1 ? nextIndex(currentLineStart) : index;
     }
 
     private int nextEligibleBreakPoint() {

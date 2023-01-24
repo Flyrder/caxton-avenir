@@ -341,7 +341,6 @@ public class CaxtonTextHandler {
             TextHandler.LineWrappingConsumer consumer) {
         // Apparently, vanilla uses TextVisitFactory.visitFormatted for this.
         CaxtonText.Full caxtonText = CaxtonText.fromFormattedFull(text, fontStorageAccessor, style, false, false, cache, formattingCodeStarts);
-//        System.err.println(text);
         wrapLines(caxtonText.text(), caxtonText.bidi(), maxWidth, consumer, formattingCodeStarts, retainTrailingWordSplit);
     }
 
