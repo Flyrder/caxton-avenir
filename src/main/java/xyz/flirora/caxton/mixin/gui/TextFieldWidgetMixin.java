@@ -69,6 +69,8 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     private BiFunction<String, Integer, OrderedText> renderTextProvider;
     @Shadow
     private @Nullable String suggestion;
+    @Shadow
+    private @Nullable Text placeholder;
 
     public TextFieldWidgetMixin(int x, int y, int width, int height, Text message) {
         super(x, y, width, height, message);
@@ -158,6 +160,10 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
 
         if (!cursorInBounds) {
             cursorX = cursorLocation > 0 ? x + width : x;
+        }
+
+        if (this.placeholder != null && text.isEmpty() && !this.isFocused()) {
+            textRenderer.drawWithShadow(matrices, this.placeholder, cursorX, y, color);
         }
 
         if (showCursor) {
