@@ -21,6 +21,7 @@ public class CaxtonConfig {
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeNulls().setLenient().create();
     public @Nullable String rustTarget = null;
     public boolean fatalOnBrokenMethodCall = false;
+    public boolean debugRefcountChanges = false;
 
     public static CaxtonConfig readFromFile() {
         try (FileReader fh = new FileReader(CONFIG_PATH, StandardCharsets.UTF_8)) {

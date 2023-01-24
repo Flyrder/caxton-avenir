@@ -15,6 +15,7 @@ import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
+import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.dll.CaxtonInternal;
 
 import java.io.File;
@@ -34,7 +35,6 @@ import java.util.List;
 @Environment(EnvType.CLIENT)
 public class CaxtonFont implements AutoCloseable {
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static final boolean DEBUG_REFCOUNT_CHANGES = false;
     private static String cacheDir = null;
     private final Identifier id;
     private final short[] metrics;
@@ -86,7 +86,7 @@ public class CaxtonFont implements AutoCloseable {
                 this.glyphsByWidth.computeIfAbsent(width, w -> new IntArrayList())
                         .add(glyphId);
             }
-            this.changes = DEBUG_REFCOUNT_CHANGES ? new ArrayList<>() : null;
+            this.changes = CaxtonModClient.CONFIG.debugRefcountChanges ? new ArrayList<>() : null;
         } catch (Exception e) {
             try {
                 this.cloneReference();

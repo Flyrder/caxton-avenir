@@ -119,8 +119,12 @@ The following options are available in `config/caxton.json`:
   // If this is null, then Caxton will determine the correct value for your platform, so it is recommended to change this only when necessary.
   "rustTarget": null,
   // Some text handling methods are inherently broken and unsupported by Caxton. Caxton will log a warning whenever these methods are called. If this option is set to true, then Caxton will throw an exception instead.
-  // This option is primarily useful for debugging.
-  "fatalOnBrokenMethodCall": false
+  // This option is primarily useful for debugging. If in doubt, set this to false.
+  "fatalOnBrokenMethodCall": false,
+  // Track information about when a Caxton font object has a reference added or
+  // removed for debugging purposes.
+  // If in doubt, set this to false.
+  "debugRefcountChanges": false
 }
 ```
 
