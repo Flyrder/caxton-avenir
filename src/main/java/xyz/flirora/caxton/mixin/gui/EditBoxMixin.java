@@ -2,9 +2,7 @@ package xyz.flirora.caxton.mixin.gui;
 
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.EditBox;
-import net.minecraft.client.input.CursorMovement;
 import net.minecraft.text.Style;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -16,32 +14,15 @@ import xyz.flirora.caxton.layout.DirectionSetting;
 import xyz.flirora.caxton.render.CaxtonTextRenderer;
 import xyz.flirora.caxton.render.HasCaxtonTextRenderer;
 
-import java.util.List;
-
 @Mixin(EditBox.class)
 public abstract class EditBoxMixin {
-    @Shadow
-    @Final
-    private TextRenderer textRenderer;
-
-    @Shadow
-    private String text;
     @Shadow
     private int cursor;
     @Unique
     private int ttwLength;
-    @Shadow
-    @Final
-    private List<EditBox.Substring> lines;
 
     @Shadow
     protected abstract EditBox.Substring getCurrentLine();
-
-    @Shadow
-    protected abstract EditBox.Substring getOffsetLine(int offsetFromCurrent);
-
-    @Shadow
-    public abstract void moveCursor(CursorMovement movement, int amount);
 
     @ModifyArg(method = "moveCursorLine", at = @At(value = "INVOKE", target = "Ljava/lang/String;substring(II)Ljava/lang/String;", ordinal = 0), index = 1)
     private int forceEntireLine(int cursor) {

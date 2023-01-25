@@ -1,5 +1,6 @@
 package xyz.flirora.caxton.render;
 
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
@@ -46,6 +47,30 @@ public class Voepfxo {
         BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
         RenderSystem.enableTexture();
         RenderSystem.disableBlend();
+    }
+
+    public static void drawSelection(MatrixStack matrices, float left, float top, float right, float bottom) {
+        Matrix4f matrix = matrices.peek().getPositionMatrix();
+        drawSelection(matrix, left, top, right, bottom);
+    }
+
+    public static void drawSelection(Matrix4f matrix, float left, float top, float right, float bottom) {
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder bufferBuilder = tessellator.getBuffer();
+        RenderSystem.setShader(GameRenderer::getPositionProgram);
+        RenderSystem.setShaderColor(0.0f, 0.0f, 1.0f, 1.0f);
+        RenderSystem.disableTexture();
+        RenderSystem.enableColorLogicOp();
+        RenderSystem.logicOp(GlStateManager.LogicOp.OR_REVERSE);
+        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
+        bufferBuilder.vertex(matrix, left, bottom, 0.0f).next();
+        bufferBuilder.vertex(matrix, right, bottom, 0.0f).next();
+        bufferBuilder.vertex(matrix, right, top, 0.0f).next();
+        bufferBuilder.vertex(matrix, left, top, 0.0f).next();
+        tessellator.draw();
+        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+        RenderSystem.disableColorLogicOp();
+        RenderSystem.enableTexture();
     }
 
     public static int sus(int codePoint) {
