@@ -1,5 +1,6 @@
 package xyz.flirora.caxton.render;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.api.EnvType;
@@ -12,9 +13,11 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.util.Window;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.random.Random;
 import org.apache.commons.lang3.mutable.MutableFloat;
 import org.joml.Matrix4f;
@@ -65,6 +68,20 @@ public class CaxtonTextRenderer {
         return argb;
     }
 
+    private static float getMinThickness(Matrix4f modelView) {
+        // I don’t want to have to deal with computing this for every underlined character
+        if (modelView.isAffine()) {
+            Window window = MinecraftClient.getInstance().getWindow();
+            Vector3f v = new Vector3f(0, 1, 0);
+            modelView.transformDirection(v);
+            RenderSystem.getProjectionMatrix().transformDirection(v);
+            v.mul(window.getWidth() / 2.0f, window.getHeight() / 2.0f, 0);
+            float fontUnitYPx = MathHelper.sqrt(v.x * v.x + v.y * v.y);
+            return 1.0f / fontUnitYPx;
+        }
+        return 0.0f;
+    }
+
     public Function<Identifier, FontStorage> getFontStorageAccessor() {
         return fontStorageAccessor;
     }
@@ -76,7 +93,7 @@ public class CaxtonTextRenderer {
     public float drawLayer(String text, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider, boolean seeThrough, int backgroundColor, int light, int leftmostCodePoint, float maxWidth) {
         TextRenderer.TextLayerType layerType = seeThrough ? TextRenderer.TextLayerType.SEE_THROUGH : TextRenderer.TextLayerType.NORMAL;
         CaxtonText runGroups = CaxtonText.fromFormatted(text, fontStorageAccessor, Style.EMPTY, false, this.rtl, handler.getCache());
-        float newX = drawRunGroups(x, y, color, shadow, matrix, vertexConsumerProvider, layerType, backgroundColor, light, runGroups, leftmostCodePoint, maxWidth);
+        float newX = drawRunGroups(x, y, color, shadow, matrix, vertexConsumerProvider, layerType, backgroundColor, light, runGroups, leftmostCodePoint, maxWidth, getMinThickness(matrix));
         if (!shadow) this.rtl = false;
         return newX;
     }
@@ -84,11 +101,12 @@ public class CaxtonTextRenderer {
     public float drawLayer(OrderedText text, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider, boolean seeThrough, int backgroundColor, int light, int leftmostCodePoint, float maxWidth) {
         TextRenderer.TextLayerType layerType = seeThrough ? TextRenderer.TextLayerType.SEE_THROUGH : TextRenderer.TextLayerType.NORMAL;
         CaxtonText runGroups = CaxtonText.from(text, fontStorageAccessor, false, this.rtl, handler.getCache());
-        return drawRunGroups(x, y, color, shadow, matrix, vertexConsumerProvider, layerType, backgroundColor, light, runGroups, leftmostCodePoint, maxWidth);
+        return drawRunGroups(x, y, color, shadow, matrix, vertexConsumerProvider, layerType, backgroundColor, light, runGroups, leftmostCodePoint, maxWidth, getMinThickness(matrix));
     }
 
     public void drawWithOutline(OrderedText text, float x, float y, int color, int outlineColor, Matrix4f matrix, VertexConsumerProvider vertexConsumers, int light) {
         Threshold NO_THRESHOLD = new Threshold(-1);
+        float minThickness = getMinThickness(matrix);
 
         CaxtonText runGroups = CaxtonText.from(text, fontStorageAccessor, false, this.rtl, handler.getCache());
         int effectiveOutlineColor = tweakTransparency(outlineColor);
@@ -131,21 +149,22 @@ public class CaxtonTextRenderer {
 
                 for (int i = 0; i < shapingResults.length; i++) {
                     ShapingResult shapingResult = shapingResults[i];
-                    x = drawShapedRun(shapingResult, runGroup, i, x, y, effectiveColor, effectiveOutlineColor, false, matrix, vertexConsumers, TextRenderer.TextLayerType.POLYGON_OFFSET, light, outlineDrawer, NO_THRESHOLD, Float.POSITIVE_INFINITY);
+                    x = drawShapedRun(shapingResult, runGroup, i, x, y, effectiveColor, effectiveOutlineColor, false, matrix, vertexConsumers, TextRenderer.TextLayerType.POLYGON_OFFSET, light, outlineDrawer, NO_THRESHOLD, Float.POSITIVE_INFINITY, minThickness);
                 }
             }
         }
     }
 
     public float draw(CaxtonText text, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider, boolean seeThrough, int backgroundColor, int light, int leftmostCodePoint, float maxWidth) {
+        float minThickness = getMinThickness(matrix);
         TextRenderer.TextLayerType layerType = seeThrough ? TextRenderer.TextLayerType.SEE_THROUGH : TextRenderer.TextLayerType.NORMAL;
         color = tweakTransparency(color);
         Matrix4f matrix4f = new Matrix4f(matrix);
         if (shadow) {
-            this.drawRunGroups(x, y, color, true, matrix, vertexConsumerProvider, layerType, backgroundColor, light, text, leftmostCodePoint, maxWidth);
+            this.drawRunGroups(x, y, color, true, matrix, vertexConsumerProvider, layerType, backgroundColor, light, text, leftmostCodePoint, maxWidth, minThickness);
             matrix4f.translate(FORWARD_SHIFT);
         }
-        x = this.drawRunGroups(x, y, color, false, matrix4f, vertexConsumerProvider, layerType, backgroundColor, light, text, leftmostCodePoint, maxWidth);
+        x = this.drawRunGroups(x, y, color, false, matrix4f, vertexConsumerProvider, layerType, backgroundColor, light, text, leftmostCodePoint, maxWidth, minThickness);
         return (int) x + (shadow ? 1 : 0);
     }
 
@@ -154,7 +173,7 @@ public class CaxtonTextRenderer {
             int color, boolean shadow,
             Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider,
             TextRenderer.TextLayerType layerType, int backgroundColor, int light,
-            CaxtonText text, int leftmostCodePoint, float maxWidth) {
+            CaxtonText text, int leftmostCodePoint, float maxWidth, float minThickness) {
 //        System.err.println(text);
         Threshold threshold = new Threshold(leftmostCodePoint);
         float origX = x;
@@ -182,7 +201,7 @@ public class CaxtonTextRenderer {
 
                 for (int index = 0; index < shapingResults.length; ++index) {
                     ShapingResult shapingResult = shapingResults[index];
-                    x = drawShapedRun(shapingResult, runGroup, index, x, y, color, 0, shadow, matrix, vertexConsumerProvider, layerType, light, drawer, threshold, maxX);
+                    x = drawShapedRun(shapingResult, runGroup, index, x, y, color, 0, shadow, matrix, vertexConsumerProvider, layerType, light, drawer, threshold, maxX, minThickness);
                 }
             }
         }
@@ -200,7 +219,7 @@ public class CaxtonTextRenderer {
             Matrix4f matrix, VertexConsumerProvider vertexConsumers,
             TextRenderer.TextLayerType layerType, int light,
             TextRenderer.Drawer drawer,
-            Threshold threshold, float maxX) {
+            Threshold threshold, float maxX, float minThickness) {
         if (x >= maxX) return x;
 
         ConfiguredCaxtonFont configuredFont = runGroup.getFont();
@@ -223,10 +242,21 @@ public class CaxtonTextRenderer {
         float scale = configuredFont.getScale();
         float baselineY = y + 7.0f;
 
-        float y0u = baselineY - (underlinePosition - 0.5f * underlineThickness) * scale;
-        float y1u = baselineY - (underlinePosition + 0.5f * underlineThickness) * scale;
-        float y0s = baselineY - (strikeoutPosition - 0.5f * strikeoutThickness) * scale;
-        float y1s = baselineY - (strikeoutPosition + 0.5f * strikeoutThickness) * scale;
+        float yu = baselineY - underlinePosition * scale;
+        float ys = baselineY - strikeoutPosition * scale;
+        float dyu = underlineThickness * scale;
+        float dys = strikeoutThickness * scale;
+
+        // I don’t want to have to deal with computing this for every underlined character
+        if (matrix.isAffine()) {
+            if (dyu < minThickness) dyu = minThickness;
+            if (dys < minThickness) dys = minThickness;
+        }
+
+        float y0u = yu + 0.5f * dyu;
+        float y1u = yu - 0.5f * dyu;
+        float y0s = ys + 0.5f * dys;
+        float y1s = ys - 0.5f * dys;
 
         float brightnessMultiplier = shadow ? 0.25f : 1.0f;
         float baseBlue = (color & 0xFF) / 255.0f * brightnessMultiplier;
