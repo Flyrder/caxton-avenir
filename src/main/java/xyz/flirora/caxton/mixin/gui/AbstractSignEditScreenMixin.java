@@ -1,23 +1,25 @@
 package xyz.flirora.caxton.mixin.gui;
 
-import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.llamalad7.mixinextras.injector.ModifyReceiver;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.AbstractSignEditScreen;
-import net.minecraft.client.render.*;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.SelectionManager;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import xyz.flirora.caxton.layout.CaxtonText;
 import xyz.flirora.caxton.layout.CaxtonTextHandler;
 import xyz.flirora.caxton.layout.DirectionSetting;
@@ -36,104 +38,95 @@ public abstract class AbstractSignEditScreenMixin
     @Final
     protected String[] text;
     @Shadow
-    private int ticksSinceOpened;
-    @Shadow
     private SelectionManager selectionManager;
     @Shadow
     private int currentRow;
+    private CaxtonText rowText;
 
     protected AbstractSignEditScreenMixin(Text title) {
         super(title);
     }
 
-    @Shadow
-    protected abstract Vector3f getTextScale();
-
-    /**
-     * @author +merlan #flirora
-     * @reason cursed
-     */
-    @Overwrite
-    private void renderSignText(MatrixStack matrices, VertexConsumerProvider.Immediate vertexConsumers) {
+    // Use the more precise CaxtonTextHandler.getWidth instead of TextHandler.getWidth
+    @ModifyArg(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/font/TextRenderer;draw(Ljava/lang/String;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;ZIIZ)I", ordinal = 0), index = 1)
+    private float modifyXForDrawingRow(float x) {
         CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
         CaxtonTextHandler cth = ctr.getHandler();
+        String currentLine = this.text[this.currentRow];
+        this.rowText = CaxtonText.fromFormatted(currentLine, ctr.getFontStorageAccessor(), Style.EMPTY, false, this.textRenderer.isRightToLeft(), cth.getCache());
+        return -cth.getWidth(rowText) / 2.0f;
+    }
 
-        matrices.translate(0.0f, 0.0f, 4.0f);
-        Vector3f textScale = getTextScale();
-        matrices.scale(textScale.x(), textScale.y(), textScale.z());
+    // Use the more precise CaxtonTextHandler.getWidth instead of TextHandler.getWidth
+    @ModifyArg(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/font/TextRenderer;draw(Ljava/lang/String;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;ZIIZ)I", ordinal = 1), index = 1)
+    private float modifyXForDrawingEndCursor(float x) {
+        CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
+        CaxtonTextHandler cth = ctr.getHandler();
+        return cth.getWidth(rowText) / 2.0f;
+    }
 
-        int signColor = blockEntity.getTextColor().getSignColor();
-        boolean showCursor = ticksSinceOpened / 6 % 2 == 0;
-        int selectionStart = selectionManager.getSelectionStart();
-        int selectionEnd = selectionManager.getSelectionEnd();
+    @Redirect(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ingame/AbstractSignEditScreen;fill(Lnet/minecraft/client/util/math/MatrixStack;IIIII)V"))
+    private void fillProxy(MatrixStack matrixStack, int x1, int y1, int x2, int y2, int color) {
+        CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
+        CaxtonTextHandler cth = ctr.getHandler();
+        String currentLine = this.text[this.currentRow];
+        int selectionStart = this.selectionManager.getSelectionStart();
         int yAdj = 4 * this.blockEntity.getTextLineHeight() / 2;
         int lineY = currentRow * this.blockEntity.getTextLineHeight() - yAdj;
+
+        this.rowText = CaxtonText.fromFormatted(currentLine, ctr.getFontStorageAccessor(), Style.EMPTY, false, this.textRenderer.isRightToLeft(), cth.getCache());
+
+        float x = cth.getWidth(rowText) / 2;
+        float cursorOffset = cth.getOffsetAtIndex(rowText, Math.min(selectionStart, currentLine.length()), DirectionSetting.AUTO);
+        float cursorX = cursorOffset - x;
+        Voepfxo.fill(
+                matrixStack,
+                cursorX, lineY - 1,
+                cursorX + 1, lineY + this.blockEntity.getTextLineHeight(),
+                0xFF000000 | color);
+    }
+
+    @Redirect(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/BufferBuilder;vertex(Lorg/joml/Matrix4f;FFF)Lnet/minecraft/client/render/VertexConsumer;"), require = 4, allow = 4)
+    private VertexConsumer vertexStub(BufferBuilder instance, Matrix4f matrix4f, float x, float y, float z) {
+        return instance;
+    }
+
+    @Redirect(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/VertexConsumer;color(IIII)Lnet/minecraft/client/render/VertexConsumer;"), require = 4, allow = 4)
+    private VertexConsumer colorStub(VertexConsumer instance, int r, int g, int b, int a) {
+        return instance;
+    }
+
+    @Redirect(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/VertexConsumer;next()V"), require = 4, allow = 4)
+    private void nextStub(VertexConsumer instance) {
+    }
+
+    @ModifyReceiver(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/BufferBuilder;end()Lnet/minecraft/client/render/BufferBuilder$BuiltBuffer;"))
+    private BufferBuilder addHighlightsBeforeEnd(BufferBuilder bufferBuilder, MatrixStack matrices, VertexConsumerProvider.Immediate vertexConsumers) {
+        CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
+        CaxtonTextHandler cth = ctr.getHandler();
         Matrix4f positionMatrix = matrices.peek().getPositionMatrix();
 
-        for (int row = 0; row < text.length; ++row) {
-            String line = text[row];
-            if (line == null) continue;
+        int selectionStart = selectionManager.getSelectionStart();
+        int selectionEnd = selectionManager.getSelectionEnd();
+        float x = cth.getWidth(this.rowText) / 2;
+        int yAdj = 4 * this.blockEntity.getTextLineHeight() / 2;
+        int lineY = currentRow * this.blockEntity.getTextLineHeight() - yAdj;
 
-            CaxtonText ct = CaxtonText.fromFormatted(line, ctr.getFontStorageAccessor(), Style.EMPTY, false, this.textRenderer.isRightToLeft(), cth.getCache());
+        cth.getHighlightRanges(rowText, Math.min(selectionStart, selectionEnd), Math.max(selectionStart, selectionEnd), (start, end) -> {
+            bufferBuilder.vertex(positionMatrix, start - x, lineY + this.blockEntity.getTextLineHeight(), 0.0f)
+                    .color(0, 0, 255, 255)
+                    .next();
+            bufferBuilder.vertex(positionMatrix, end - x, lineY + this.blockEntity.getTextLineHeight(), 0.0f)
+                    .color(0, 0, 255, 255)
+                    .next();
+            bufferBuilder.vertex(positionMatrix, end - x, lineY, 0.0f)
+                    .color(0, 0, 255, 255)
+                    .next();
+            bufferBuilder.vertex(positionMatrix, start - x, lineY, 0.0f)
+                    .color(0, 0, 255, 255)
+                    .next();
+        });
 
-            float x = -cth.getWidth(ct) / 2.0f;
-            ctr.draw(ct,
-                    x, row * this.blockEntity.getTextLineHeight() - yAdj,
-                    signColor, false,
-                    positionMatrix, vertexConsumers,
-                    false, 0, 0xF000F0, -1, Float.POSITIVE_INFINITY);
-            if (row != this.currentRow || selectionStart < line.length() || !showCursor) continue;
-            // Draw ending cursor
-            float cursorX = -x;
-            this.client.textRenderer.draw("_", cursorX, lineY, signColor, false, positionMatrix, vertexConsumers, false, 0, 0xF000F0, false);
-        }
-        vertexConsumers.draw();
-
-
-        String currentLine = this.text[currentRow];
-        if (currentLine != null && selectionStart >= 0) {
-            CaxtonText ct = CaxtonText.fromFormatted(currentLine, ctr.getFontStorageAccessor(), Style.EMPTY, false, this.textRenderer.isRightToLeft(), cth.getCache());
-
-            float x = cth.getWidth(ct) / 2;
-            float cursorOffset = cth.getOffsetAtIndex(ct, Math.min(selectionStart, currentLine.length()), DirectionSetting.AUTO);
-            float cursorX = cursorOffset - x;
-            if (showCursor && selectionStart < currentLine.length()) {
-                Voepfxo.fill(
-                        matrices,
-                        cursorX, lineY - 1,
-                        cursorX + 1, lineY + this.blockEntity.getTextLineHeight(),
-                        0xFF000000 | signColor);
-            }
-
-            if (selectionEnd != selectionStart) {
-                int selectionMin = Math.min(selectionStart, selectionEnd);
-                int selectionMax = Math.max(selectionStart, selectionEnd);
-
-                Tessellator tessellator = Tessellator.getInstance();
-                BufferBuilder bufferBuilder = tessellator.getBuffer();
-                RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-                RenderSystem.disableTexture();
-                RenderSystem.enableColorLogicOp();
-                RenderSystem.logicOp(GlStateManager.LogicOp.OR_REVERSE);
-                bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
-                cth.getHighlightRanges(ct, selectionMin, selectionMax, (start, end) -> {
-                    bufferBuilder.vertex(positionMatrix, start - x, lineY + this.blockEntity.getTextLineHeight(), 0.0f)
-                            .color(0, 0, 255, 255)
-                            .next();
-                    bufferBuilder.vertex(positionMatrix, end - x, lineY + this.blockEntity.getTextLineHeight(), 0.0f)
-                            .color(0, 0, 255, 255)
-                            .next();
-                    bufferBuilder.vertex(positionMatrix, end - x, lineY, 0.0f)
-                            .color(0, 0, 255, 255)
-                            .next();
-                    bufferBuilder.vertex(positionMatrix, start - x, lineY, 0.0f)
-                            .color(0, 0, 255, 255)
-                            .next();
-                });
-                BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
-                RenderSystem.disableColorLogicOp();
-                RenderSystem.enableTexture();
-            }
-        }
+        return bufferBuilder;
     }
 }

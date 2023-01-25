@@ -13,7 +13,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import xyz.flirora.caxton.render.CaxtonGlyphCache;
@@ -41,10 +40,10 @@ public class TextRendererMixin implements HasCaxtonTextRenderer {
     // Note that we can’t simply ask rustybuzz to shape text as if it were
     // left-to-right; see <https://harfbuzz.github.io/harfbuzz-hb-buffer.html#hb-buffer-set-direction>
     // for more details.
-    @Redirect(method = "drawInternal(Ljava/lang/String;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;ZIIZ)I", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/font/TextRenderer;mirror(Ljava/lang/String;)Ljava/lang/String;"))
-    private String onMirror(TextRenderer instance, String text) {
+    @Inject(method = "mirror", at = @At("HEAD"), cancellable = true)
+    private void onMirror(String text, CallbackInfoReturnable<String> cir) {
         caxtonRenderer.rtl = true;
-        return text;
+        cir.setReturnValue(text);
     }
 
     @Inject(at = @At("HEAD"), method = "drawLayer(Ljava/lang/String;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;ZII)F", cancellable = true)
