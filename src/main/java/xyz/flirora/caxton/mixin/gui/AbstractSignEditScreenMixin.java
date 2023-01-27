@@ -17,6 +17,7 @@ import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -41,6 +42,7 @@ public abstract class AbstractSignEditScreenMixin
     private SelectionManager selectionManager;
     @Shadow
     private int currentRow;
+    @Unique
     private CaxtonText rowText;
 
     protected AbstractSignEditScreenMixin(Text title) {
@@ -49,10 +51,9 @@ public abstract class AbstractSignEditScreenMixin
 
     // Use the more precise CaxtonTextHandler.getWidth instead of TextHandler.getWidth
     @ModifyArg(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/font/TextRenderer;draw(Ljava/lang/String;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;ZIIZ)I", ordinal = 0), index = 1)
-    private float modifyXForDrawingRow(float x) {
+    private float modifyXForDrawingRow(String currentLine, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumers, boolean seeThrough, int backgroundColor, int light, boolean rightToLeft) {
         CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
         CaxtonTextHandler cth = ctr.getHandler();
-        String currentLine = this.text[this.currentRow];
         this.rowText = CaxtonText.fromFormatted(currentLine, ctr.getFontStorageAccessor(), Style.EMPTY, false, this.textRenderer.isRightToLeft(), cth.getCache());
         return -cth.getWidth(rowText) / 2.0f;
     }
@@ -101,7 +102,7 @@ public abstract class AbstractSignEditScreenMixin
     }
 
     @ModifyReceiver(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/BufferBuilder;end()Lnet/minecraft/client/render/BufferBuilder$BuiltBuffer;"))
-    private BufferBuilder addHighlightsBeforeEnd(BufferBuilder bufferBuilder, MatrixStack matrices, VertexConsumerProvider.Immediate vertexConsumers) {
+    private BufferBuilder addHighlightsBeforeEnd(BufferBuilder bufferBuilder, MatrixStack matrices) {
         CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
         CaxtonTextHandler cth = ctr.getHandler();
         Matrix4f positionMatrix = matrices.peek().getPositionMatrix();
