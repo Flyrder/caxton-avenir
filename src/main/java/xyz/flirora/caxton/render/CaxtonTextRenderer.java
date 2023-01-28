@@ -248,10 +248,8 @@ public class CaxtonTextRenderer {
         float dys = strikeoutThickness * scale;
 
         // I don’t want to have to deal with computing this for every underlined character
-        if (matrix.isAffine()) {
-            if (dyu < minThickness) dyu = minThickness;
-            if (dys < minThickness) dys = minThickness;
-        }
+        if (dyu < minThickness) dyu = minThickness;
+        if (dys < minThickness) dys = minThickness;
 
         float y0u = yu + 0.5f * dyu;
         float y1u = yu - 0.5f * dyu;
