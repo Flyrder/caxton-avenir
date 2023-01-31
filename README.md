@@ -69,8 +69,12 @@ key `file` specifies the path:
 {
   // The only required element.
   "file": "<namespace>:<path>",
+  // The factor by which to scale the font from the default size.
+  // If this is 1.0, then the font is scaled so that the ascent is scaled to 7
+  // pixels of the default bitmap font.
+  "scale_factor": 1.0,
   // The shadow offset, as a multiple of the memefont pixel size.
-  "shadow_offset": 0.5,
+  "shadow_offset": 1.0,
   // A list of OpenType feature tags. See below for the syntax:
   // https://docs.rs/rustybuzz/0.6.0/rustybuzz/struct.Feature.html#method.from_str
   "features": [],

@@ -22,7 +22,8 @@ import xyz.flirora.caxton.layout.ShapingResult;
  * @see ConfiguredCaxtonFont
  */
 @Environment(EnvType.CLIENT)
-public record ConfiguredCaxtonFont(CaxtonFont font, long ptr, float shadowOffset) implements AutoCloseable {
+public record ConfiguredCaxtonFont(CaxtonFont font, long ptr, float shadowOffset,
+                                   float computedScaleFactor) implements AutoCloseable {
     /**
      * Loads a {@link ConfiguredCaxtonFont} from its settings.
      *
@@ -38,7 +39,9 @@ public record ConfiguredCaxtonFont(CaxtonFont font, long ptr, float shadowOffset
         long ptr = CaxtonInternal.configureFont(font.getFontPtr(), config);
         float shadowOffset = settings.settings == null ? 1.0f :
                 JsonHelper.getFloat(settings.settings, "shadow_offset", 1.0f);
-        return new ConfiguredCaxtonFont(font, ptr, shadowOffset);
+        double scaleFactor = settings.settings == null ? 1.0f : JsonHelper.getDouble(settings.settings, "scale_factor", 1.0f);
+        float computedScaleFactor = (float) (7.0 * scaleFactor / font.getMetrics(CaxtonFont.Metrics.ASCENDER));
+        return new ConfiguredCaxtonFont(font, ptr, shadowOffset, computedScaleFactor);
     }
 
     /**
@@ -58,7 +61,7 @@ public record ConfiguredCaxtonFont(CaxtonFont font, long ptr, float shadowOffset
      * @return the factor to multiply font units by to get GUI units
      */
     public float getScale() {
-        return 7.0f / font.getMetrics(CaxtonFont.Metrics.ASCENDER);
+        return computedScaleFactor;
     }
 
     /**
