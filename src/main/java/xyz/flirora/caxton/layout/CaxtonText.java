@@ -24,11 +24,11 @@ import java.util.stream.Collectors;
  * @param rtl         true if this text was treated as right-to-left
  */
 @Environment(EnvType.CLIENT)
-public record CaxtonText(List<RunGroup> runGroups, int totalLength, boolean rtl) {
-    public static final CaxtonText EMPTY = new CaxtonText(ImmutableList.of(), 0, false);
+public record CaxtonText(List<RunGroup> runGroups, int totalLength, boolean rtl, String contents) {
+    public static final CaxtonText EMPTY = new CaxtonText(ImmutableList.of(), 0, false, "");
 
-    public CaxtonText(List<RunGroup> runGroups, boolean rtl) {
-        this(runGroups, runGroups.stream().mapToInt(RunGroup::getTotalLength).sum(), rtl);
+    public CaxtonText(List<RunGroup> runGroups, boolean rtl, String contents) {
+        this(runGroups, runGroups.stream().mapToInt(RunGroup::getTotalLength).sum(), rtl, contents);
     }
 
     @NotNull
@@ -118,8 +118,9 @@ public record CaxtonText(List<RunGroup> runGroups, int totalLength, boolean rtl)
     @NotNull
     private static Full computeFromRuns(List<Run> runs, boolean rtl, LayoutCache cache) {
         // Perform bidi analysis on the entire string.
+        String contents = runs.stream().map(Run::text).collect(Collectors.joining());
         Bidi bidi = new Bidi(
-                runs.stream().map(Run::text).collect(Collectors.joining()),
+                contents,
                 rtl ? Bidi.DIRECTION_DEFAULT_RIGHT_TO_LEFT
                         : Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT);
 
@@ -199,7 +200,7 @@ public record CaxtonText(List<RunGroup> runGroups, int totalLength, boolean rtl)
                 ++currentBidiRun;
         }
         return new Full(
-                new CaxtonText(reorderRunGroups(groups), bidi.getParaLevel() % 2 != 0),
+                new CaxtonText(reorderRunGroups(groups), bidi.getParaLevel() % 2 != 0, contents),
                 bidi);
     }
 
@@ -240,14 +241,6 @@ public record CaxtonText(List<RunGroup> runGroups, int totalLength, boolean rtl)
 
     private static boolean areRunsCompatible(Run a, Run b) {
         return a.font() == b.font();
-    }
-
-    public String getContents() {
-        StringBuilder buffer = new StringBuilder();
-        for (RunGroup runGroup : runGroups) {
-            buffer.append(runGroup.getJoined());
-        }
-        return buffer.toString();
     }
 
     public record Full(CaxtonText text, Bidi bidi) {

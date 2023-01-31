@@ -38,7 +38,7 @@ public class LineWrapper {
         // Some mods such as IBE Editor pass negative `maxWidth` values to `TextHandler.wrapLines`. We do what
         // `LineBreakingVisitor` does and set it to a minimum of 1 font unit.
         this.maxWidth = Math.max(maxWidth, 1.0f);
-        this.contents = text.getContents();
+        this.contents = text.contents();
         if (breakAnywhere) {
             this.bi = null;
         } else {
