@@ -8,6 +8,7 @@
   "client": [
     "BufferBuilderStorageMixin",
     "FontManagerResourceReloaderMixin",
+    "FontManagerResourceReloadListenerMixin",
     "FontStorageMixin",
     "GameRendererMixin",
     "NativeImageAccessor",

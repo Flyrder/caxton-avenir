@@ -16,17 +16,14 @@ Available on [Modrinth](https://modrinth.com/mod/caxton)!
 * **Arabic shaping in legacy fonts is not currently supported.** Making this work in the presence of styling and proper
   bidirectional text handling is complicated as we cannot use ICU4J’s API for this. If you want Arabic text to render
   properly, then you’ll have to use a font with Arabic support under Caxton.
-* Generating MTSDFs from fonts is expensive; it takes about 3 minutes to load 4 families of Inter. For this reason,
-  Caxton will cache the results after this is first done.
-* Not all handler calculations are currently aware of text in Caxton fonts.
-    * In addition, many UI elements in Minecraft make incorrect assumptions about text rendering. Making them aware of
-      bidirectional text – let alone matters such as ligatures – will be a major undertaking, and patches in this area
-      are welcome.
-        * Text input fields and the book editor have been patched to account for this, but the displayed text is aligned
-          to the left regardless of its base direction.
-        * The comment edit box in the chat report screen has not been patched.
+* Generating MTSDFs from fonts is expensive. For this reason, Caxton will parallelize this process and cache the results
+  after it is first done.
+* Many UI elements, both in Minecraft and in mods, make incorrect assumptions about text rendering. Making them aware of
+  bidirectional text – let alone matters such as ligatures – will be a major undertaking, and patches in this area
+  are welcome.
+    * GUI elements have been patched to account for this, but the displayed text is aligned to the left regardless
+      of its base direction.
 * Font hinting will probably never be supported.
-* Currently, all glyphs are uploaded to VRAM eagerly.
 
 #### Mod compatibility
 
@@ -35,6 +32,15 @@ Caxton has been confirmed to work with [Sodium] and [ImmediatelyFast].
 If [Exordium]’s sign buffering feature is enabled, then [text on signs will look pixelated]. If this happens, then
 disable sign buffering for Exordium.
 
+The following mods are known to handle text layout incorrectly. They should not crash the game, but GUI elements from
+these mods might have unexpected behavior and might cause warnings to be printed about unsupported text handling
+methods.
+
+* [IBE Editor] uses a custom text field widget
+  that [clones most of vanilla Minecraft’s rendering code](https://github.com/Franckyi/IBE-Editor/issues/73).
+* [Roughly Enough Items]
+  uses [unsupported methods in some of its widgets](https://github.com/shedaniel/RoughlyEnoughItems/search?q=plainSubstrByWidth).
+
 [Sodium]: https://modrinth.com/mod/sodium
 
 [ImmediatelyFast]: https://modrinth.com/mod/immediatelyfast
@@ -42,6 +48,10 @@ disable sign buffering for Exordium.
 [Exordium]: https://modrinth.com/mod/exordium
 
 [text on signs will look pixelated]: https://github.com/tr7zw/Exordium/issues/48
+
+[IBE Editor]: https://modrinth.com/mod/ibe-editor
+
+[Roughly Enough Items]: https://modrinth.com/mod/roughly-enough-items
 
 ## OS support
 
@@ -59,6 +69,11 @@ Note that as there is not a single Mac in my house, I cannot build binaries for 
 
 Caxton currently comes with two built-in resource packs for fonts. The first font included is [Inter], while the second
 is [Open Sans].
+
+If neither of these suit your needs, you can use your own font using a resource pack. **Before distributing a resource
+pack that contains a font file, read the font’s license to make sure that you have the right to distribute that font.**
+
+### Adding fonts via resource packs
 
 Caxton adds a font provider of type `caxton`, which supports the keys `regular`, `bold`, `italic`, and `bold_italic`.
 Each of these can be set to an identifier, where `<namespace>:<path>` resolves
@@ -81,7 +96,11 @@ key `file` specifies the path:
 }
 ```
 
-You also need to add the file `assets/<namespace>/textures/font/<path>.json`, which contains settings for
+If an object exists at the key `caxton_providers` in the font JSON file, then it will be used in place of `providers` if
+Caxton is installed. This can be used to load a Caxton font while having a fallback if Caxton is not installed.
+If `caxton_providers` is not specified, then `providers` will be used instead.
+
+You can also add the file `assets/<namespace>/textures/font/<path>.json`, which contains settings for
 rasterizing the font:
 
 ```json5
