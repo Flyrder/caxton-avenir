@@ -1,5 +1,6 @@
 package xyz.flirora.caxton;
 
+import com.google.common.collect.ImmutableSet;
 import com.mojang.logging.LogUtils;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
@@ -9,6 +10,8 @@ import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
+import net.minecraft.client.font.TextHandler;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
@@ -17,12 +20,18 @@ import xyz.flirora.caxton.dll.LibraryLoading;
 
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Environment(EnvType.CLIENT)
 public class CaxtonModClient implements ClientModInitializer {
     public static final String MOD_ID = "caxton";
     public static final Logger LOGGER = LogUtils.getLogger();
     public static final boolean APRIL_FOOLS = isAprilFools();
+    private static final Set<String> CALLSITE_BLACKLIST = ImmutableSet.of(TextHandler.class.getName(), TextRenderer.class.getName());
+    private static final ConcurrentMap<StackTraceElement, StackTraceElement> PREVIOUS_BROKEN_METHOD_CALLERS = new ConcurrentHashMap<>();
+
     public static CaxtonConfig CONFIG = null;
 
     private static boolean isAprilFools() {
@@ -33,6 +42,15 @@ public class CaxtonModClient implements ClientModInitializer {
     // This is meant to be called from a mixin method injecting into a Minecraft method.
     public static void onBrokenMethod() {
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        for (int i = 4; i < stackTrace.length; ++i) {
+            String className = stackTrace[i].getClassName();
+            if (CALLSITE_BLACKLIST.contains(className)) continue;
+            if (PREVIOUS_BROKEN_METHOD_CALLERS.put(stackTrace[i], stackTrace[i]) != null) {
+                return;
+            }
+            break;
+        }
+
         LOGGER.warn("Use of {}.{} detected.", stackTrace[3].getClassName(), stackTrace[3].getMethodName());
         for (int i = 3; i < stackTrace.length; ++i) {
             LOGGER.warn("    at " + stackTrace[i].toString());
