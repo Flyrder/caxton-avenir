@@ -106,14 +106,7 @@ impl TList {
         &self.pixels
     }
 
-    pub fn save(&self, dir: &'_ Path) -> anyhow::Result<()> {
-        let mut locations_file = dir.to_path_buf();
-        locations_file.push("locations.zst");
-        let fh = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .open(locations_file)
-            .context("failed to write to locations.bin")?;
+    pub fn save(&self, fh: &mut impl Write) -> anyhow::Result<()> {
         let mut fh = ZlibEncoder::new(fh, Compression::default());
         fh.write_u32_checked(VERSION)?;
         fh.write_u32_checked(self.locations.len().try_into()?)?;
@@ -142,13 +135,7 @@ impl TList {
         Ok(())
     }
 
-    pub fn load(dir: &'_ Path) -> anyhow::Result<Self> {
-        let mut locations_file = dir.to_path_buf();
-        locations_file.push("locations.zst");
-        let fh = OpenOptions::new()
-            .read(true)
-            .open(locations_file)
-            .context("failed to read locations.bin")?;
+    pub fn load(fh: &mut impl Read) -> anyhow::Result<Self> {
         let mut fh = ZlibDecoder::new(fh);
 
         let version = fh.read_u32_checked()?;

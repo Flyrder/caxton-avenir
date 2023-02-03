@@ -1,5 +1,5 @@
 use std::{
-    fs::{self, DirBuilder},
+    fs::{self, OpenOptions},
     path::Path,
     time::Instant,
 };
@@ -112,7 +112,7 @@ impl<'a> Font<'a> {
         let sha = sha.finalize();
 
         let mut this_cache = cache_dir.to_path_buf();
-        this_cache.push(URL_SAFE.encode(sha));
+        this_cache.push(URL_SAFE.encode(sha) + ".zst");
 
         let mut face =
             Face::from_slice(contents, options.face_index).context("failed to parse font")?;
@@ -137,8 +137,9 @@ impl<'a> Font<'a> {
             .collect();
 
         let tlist = (|| -> anyhow::Result<_> {
-            if this_cache.exists() && this_cache.is_dir() {
-                match TList::load(&this_cache) {
+            let mut fh = OpenOptions::new().read(true).open(&this_cache);
+            if let Ok(mut fh) = fh {
+                match TList::load(&mut fh) {
                     Ok(atlas) => return Ok(atlas),
                     Err(e) => {
                         eprintln!("warn: loading atlas failed; regenerating");
@@ -158,15 +159,19 @@ impl<'a> Font<'a> {
                 "Built atlas in {} ms! ^_^",
                 (after_atlas_construction - before_atlas_construction).as_millis()
             );
-            if this_cache.exists() {
-                fs::remove_file(&this_cache)
-                    .or_else(|_| fs::remove_dir_all(&this_cache))
-                    .context("failed to remove old cache data")?;
-            }
-            DirBuilder::new().recursive(true).create(&this_cache)?;
             eprintln!("saving atlas to {}...", this_cache.display());
-            if let Err(e) = tlist.save(&this_cache) {
-                eprintln!("warn: failed to save cached atlas: {e}")
+            fs::create_dir_all(cache_dir)?;
+            let mut fh = OpenOptions::new()
+                .write(true)
+                .create(true)
+                .open(&this_cache);
+            match fh {
+                Ok(mut fh) => {
+                    if let Err(e) = tlist.save(&mut fh) {
+                        eprintln!("warn: failed to save cached atlas: {e}")
+                    }
+                }
+                Err(e) => eprintln!("warn: failed to save cached atlas: {e}"),
             }
             Ok(tlist)
         })()?;
