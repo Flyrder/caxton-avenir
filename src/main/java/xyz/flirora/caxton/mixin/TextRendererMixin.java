@@ -58,7 +58,7 @@ public class TextRendererMixin implements HasCaxtonTextRenderer {
 
     @Inject(at = @At("HEAD"), method = "drawWithOutline", cancellable = true)
     private void onDrawWithOutline(OrderedText text, float x, float y, int color, int outlineColor, Matrix4f matrix, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
-        caxtonRenderer.drawWithOutline(text, x, y, color, outlineColor, matrix, vertexConsumers, light);
+        caxtonRenderer.drawWithOutline(text, x, y, color, outlineColor, matrix, vertexConsumers, light, true);
         ci.cancel();
     }
 

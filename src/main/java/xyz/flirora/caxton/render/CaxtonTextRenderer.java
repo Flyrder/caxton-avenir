@@ -104,7 +104,7 @@ public class CaxtonTextRenderer {
         return drawRunGroups(x, y, color, shadow, matrix, vertexConsumerProvider, layerType, backgroundColor, light, runGroups, leftmostCodePoint, maxWidth, getMinThickness(matrix));
     }
 
-    public void drawWithOutline(OrderedText text, float x, float y, int color, int outlineColor, Matrix4f matrix, VertexConsumerProvider vertexConsumers, int light) {
+    public void drawWithOutline(OrderedText text, float x, float y, int color, int outlineColor, Matrix4f matrix, VertexConsumerProvider vertexConsumers, int light, boolean addCorners) {
         Threshold NO_THRESHOLD = new Threshold(-1);
         float minThickness = getMinThickness(matrix);
 
@@ -122,6 +122,7 @@ public class CaxtonTextRenderer {
                 for (int dx = -1; dx <= 1; ++dx) {
                     for (int dy = -1; dy <= 1; ++dy) {
                         if (dx == 0 && dy == 0) continue;
+                        if (!addCorners && dx != 0 && dy != 0) continue;
                         xBox.setValue(x);
                         int dxf = dx, dyf = dy;
                         runGroup.acceptRender((index, style, codePoint) -> {

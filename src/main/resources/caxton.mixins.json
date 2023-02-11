@@ -11,6 +11,7 @@
     "FontManagerResourceReloadListenerMixin",
     "FontStorageMixin",
     "GameRendererMixin",
+    "InGameHudMixin",
     "NativeImageAccessor",
     "RenderPhaseAccessor",
     "ShaderMixin",

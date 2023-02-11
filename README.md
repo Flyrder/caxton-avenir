@@ -144,6 +144,13 @@ The following options are available in `config/caxton.json`:
   // One of the Rust platform names (https://doc.rust-lang.org/nightly/rustc/platform-support.html) corresponding to your platform.
   // If this is null, then Caxton will determine the correct value for your platform, so it is recommended to change this only when necessary.
   "rustTarget": null,
+  // Use a different method of drawing the level text on the experience bar:
+  // For Caxton fonts, this draws the text with an outline shader, instead of
+  // drawing four offset copies in the outline color followed by the main text
+  // in the fill color. This acts as a workaround for a misrendering issue when
+  // ImmediatelyFast is present (https://gitlab.com/Kyarei/caxton/-/issues/31).
+  // Non-Caxton fonts are not affected.
+  "tweakExpText": true,
   // Some text handling methods are inherently broken and unsupported by Caxton. Caxton will log a warning whenever these methods are called. If this option is set to true, then Caxton will throw an exception instead.
   // This option is primarily useful for debugging. If in doubt, set this to false.
   "fatalOnBrokenMethodCall": false,

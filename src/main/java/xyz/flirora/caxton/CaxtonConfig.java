@@ -20,6 +20,7 @@ public class CaxtonConfig {
     public static final String CONFIG_PATH = "config/caxton.json";
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeNulls().setLenient().create();
     public @Nullable String rustTarget = null;
+    public boolean tweakExpText = true;
     public boolean fatalOnBrokenMethodCall = false;
     public boolean debugRefcountChanges = false;
 
