@@ -54,8 +54,9 @@ public class CaxtonGlyphCache {
             this.entry = entry;
         }
 
-        public long getOrCreateAtlasLocation(CaxtonFont font, int glyphId, long tlLoc) {
+        public long getOrCreateAtlasLocation(CaxtonFont font, int glyphId) {
             return entry.computeIfAbsent(glyphId, id -> {
+                long tlLoc = font.getTlistLocation(glyphId, 0);
                 int width = (int) (tlLoc & 0xFFFF);
                 int height = (int) ((tlLoc >> 16) & 0xFFFF);
                 int offset = (int) (tlLoc >>> 32);
@@ -65,7 +66,7 @@ public class CaxtonGlyphCache {
                 GlStateManager._pixelStore(GlConst.GL_UNPACK_SKIP_PIXELS, 0);
                 GlStateManager._pixelStore(GlConst.GL_UNPACK_SKIP_ROWS, 0);
                 GlStateManager._pixelStore(GlConst.GL_UNPACK_ALIGNMENT, NativeImage.Format.RGBA.getChannelCount());
-                GlStateManager._texSubImage2D(GlConst.GL_TEXTURE_2D, 0, CaxtonAtlas.getX(location), CaxtonAtlas.getY(location), width, height, NativeImage.Format.RGBA.toGl(), GlConst.GL_UNSIGNED_BYTE, font.getPixelData() + 4 * Integer.toUnsignedLong(offset));
+                GlStateManager._texSubImage2D(GlConst.GL_TEXTURE_2D, 0, CaxtonAtlas.getX(location), CaxtonAtlas.getY(location), width, height, NativeImage.Format.RGBA.toGl(), GlConst.GL_UNSIGNED_BYTE, font.getPixelData(0) + 4 * Integer.toUnsignedLong(offset));
                 return location;
             });
         }

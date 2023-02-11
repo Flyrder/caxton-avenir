@@ -39,12 +39,12 @@ public class CaxtonFont implements AutoCloseable {
     private final Identifier id;
     private final short[] metrics;
     private final int glyphCount;
-    private final long tlistLocations;
+    private final long[] tlistLocations;
     private final long bboxes;
     private final CaxtonFontOptions options;
     private final Int2ObjectMap<IntList> glyphsByWidth;
     private final List<Pair<StackTraceElement[], Boolean>> changes;
-    private final long pixelData;
+    private final long[] pixelData;
     private ByteBuffer fontData;
     private long fontPtr;
     private boolean registered = false;
@@ -78,13 +78,23 @@ public class CaxtonFont implements AutoCloseable {
             bboxes = CaxtonInternal.fontBboxes(fontPtr);
 
             int mipmapLayers = CaxtonInternal.fontMipmapLayers(fontPtr);
-            tlistLocations = CaxtonInternal.fontAtlasLocations(fontPtr, 0);
-            pixelData = CaxtonInternal.fontAtlasPage(fontPtr, 0);
+            if (mipmapLayers <= 0) {
+                throw new IllegalArgumentException("mipmapLayers must be at least 1");
+            }
+            if (mipmapLayers > 4) {
+                throw new IllegalArgumentException("mipmapLayers must be at most 4");
+            }
+            tlistLocations = new long[mipmapLayers];
+            pixelData = new long[mipmapLayers];
+            for (int i = 0; i < mipmapLayers; ++i) {
+                tlistLocations[i] = CaxtonInternal.fontAtlasLocations(fontPtr, i);
+                pixelData[i] = CaxtonInternal.fontAtlasPage(fontPtr, i);
+            }
 
             this.options = new CaxtonFontOptions(options);
             this.glyphsByWidth = new Int2ObjectOpenHashMap<>();
             for (int glyphId = 0; glyphId < glyphCount; ++glyphId) {
-                long tlLoc = MemoryUtil.memGetLong(tlistLocations + 8 * Integer.toUnsignedLong(glyphId));
+                long tlLoc = MemoryUtil.memGetLong(tlistLocations[0] + 8 * Integer.toUnsignedLong(glyphId));
                 int width = (int) (tlLoc & 0xFFFF);
                 this.glyphsByWidth.computeIfAbsent(width, w -> new IntArrayList())
                         .add(glyphId);
@@ -195,19 +205,20 @@ public class CaxtonFont implements AutoCloseable {
      * <ul>
      *     <li><b>Bits 0 – 15:</b> The width of this image, in pixels.</li>
      *     <li><b>Bits 16 – 31:</b> The height of this image, in pixels.</li>
-     *     <li><b>Bits 32  63:</b> The offset of this image relative to {@link CaxtonFont#getPixelData()}.</li>
+     *     <li><b>Bits 32  63:</b> The offset of this image relative to {@link CaxtonFont#getPixelData(int)}.</li>
      * </ul>
      * <p>
      * In addition, the glyph atlas leaves a margin of {@code getOptions().margin()} pixels on all sides of the glyph itself. This margin is reflected in the returned value.
      *
      * @param glyphId the ID of the glyph to retrieve the atlas location for
+     * @param mipmap  the mipmap layer to retrieve the atlas location for
      * @return a packed atlas location value
      */
-    public long getTlistLocation(int glyphId) {
+    public long getTlistLocation(int glyphId, int mipmap) {
         if (glyphId < 0 || glyphId >= glyphCount) {
             throw new IndexOutOfBoundsException("i must be in [0, " + glyphCount + ") (got " + glyphId + ")");
         }
-        return MemoryUtil.memGetLong(tlistLocations + 8 * Integer.toUnsignedLong(glyphId));
+        return MemoryUtil.memGetLong(tlistLocations[mipmap] + 8 * Integer.toUnsignedLong(glyphId));
     }
 
     /**
@@ -222,7 +233,7 @@ public class CaxtonFont implements AutoCloseable {
      *     <li><b>Bits 48 – 63:</b> The maximum <var>y</var>-coordinate of the bounding box.</li>
      * </ul>
      * <p>
-     * Unlike the coordinates returned by {@link CaxtonFont#getTlistLocation(int)}, the coordinates here have the <var>y</var>-axis pointing up; that is, higher <var>y</var>-coordinates correspond to points farther up.
+     * Unlike the coordinates returned by {@link CaxtonFont#getTlistLocation(int, int)}, the coordinates here have the <var>y</var>-axis pointing up; that is, higher <var>y</var>-coordinates correspond to points farther up.
      *
      * @param glyphId the ID of the glyph to retrieve the atlas location for
      * @return a packed bounding box for the glyph
@@ -237,16 +248,17 @@ public class CaxtonFont implements AutoCloseable {
     /**
      * Gets the pointer to the pixel data.
      *
+     * @param mipmap the mipmap layer to retrieve the pixel data for
      * @return the pointer to the pixel data.
      */
-    public long getPixelData() {
-        return this.pixelData;
+    public long getPixelData(int mipmap) {
+        return this.pixelData[mipmap];
     }
 
     /**
      * Returns a map from width values to glyph IDs.
      * <p>
-     * In particular, the atlas bounding box width from {@link CaxtonFont#getTlistLocation(int)} is used, not the value from {@link CaxtonFont#getBbox(int)}.
+     * In particular, the atlas bounding box width from {@link CaxtonFont#getTlistLocation(int, int)} (with {@code mipmap} = 0) is used, not the value from {@link CaxtonFont#getBbox(int)}.
      *
      * @return a map from width values to glyph IDs
      */
