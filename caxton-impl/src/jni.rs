@@ -180,6 +180,26 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontMet
     }
 }
 
+/// JNI wrapper for the number of mipmap layers defined by the font metadata.
+///
+/// # Safety
+///
+/// `addr` must have previously been returned by [`Java_xyz_flirora_caxton_dll_CaxtonInternal_createFont`]
+/// and must not have been previously passed into [`Java_xyz_flirora_caxton_dll_CaxtonInternal_destroyFont`].
+// public static native int fontMipmapLayers(long addr)
+#[no_mangle]
+pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontMipmapLayers(
+    _env: JNIEnv,
+    _class: JClass,
+    addr: jlong,
+) -> jint {
+    if addr == 0 {
+        eprintln!("warn: was passed an address of 0; returning");
+        return 0;
+    }
+    (*(addr as usize as *const Font)).num_mipmap_layers() as i32
+}
+
 /// JNI wrapper for the number of atlas locations.
 ///
 /// # Safety

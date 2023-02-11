@@ -7,6 +7,7 @@ use std::{
 use anyhow::{anyhow, Context};
 use base64::engine::general_purpose::URL_SAFE;
 use base64::Engine;
+use jni::sys::jint;
 use msdfgen::{Bitmap, FillRule, FontExt, Framing, MsdfGeneratorConfig, Pixel, Vector2};
 use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
 use rustybuzz::{Face, Tag};
@@ -181,6 +182,10 @@ impl<'a> Font<'a> {
             tlist,
             bboxes,
         })
+    }
+
+    pub fn num_mipmap_layers(&self) -> usize {
+        1
     }
 }
 

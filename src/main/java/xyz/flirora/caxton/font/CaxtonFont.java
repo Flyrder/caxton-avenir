@@ -75,9 +75,12 @@ public class CaxtonFont implements AutoCloseable {
                     options.toString());
             metrics = CaxtonInternal.fontMetrics(fontPtr);
             glyphCount = CaxtonInternal.fontAtlasSize(fontPtr);
-            tlistLocations = CaxtonInternal.fontAtlasLocations(fontPtr);
             bboxes = CaxtonInternal.fontBboxes(fontPtr);
+
+            int mipmapLayers = CaxtonInternal.fontMipmapLayers(fontPtr);
+            tlistLocations = CaxtonInternal.fontAtlasLocations(fontPtr);
             pixelData = CaxtonInternal.fontAtlasPage(fontPtr);
+
             this.options = new CaxtonFontOptions(options);
             this.glyphsByWidth = new Int2ObjectOpenHashMap<>();
             for (int glyphId = 0; glyphId < glyphCount; ++glyphId) {

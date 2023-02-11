@@ -41,6 +41,14 @@ JNIEXPORT jshortArray JNICALL Java_xyz_flirora_caxton_dll_CaxtonInternal_fontMet
 
 /*
  * Class:     xyz_flirora_caxton_dll_CaxtonInternal
+ * Method:    fontMipmapLayers
+ * Signature: (J)I
+ */
+JNIEXPORT jint JNICALL Java_xyz_flirora_caxton_dll_CaxtonInternal_fontMipmapLayers
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     xyz_flirora_caxton_dll_CaxtonInternal
  * Method:    fontAtlasSize
  * Signature: (J)I
  */
