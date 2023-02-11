@@ -1,6 +1,4 @@
-use std::fs::OpenOptions;
 use std::io::{Read, Write};
-use std::path::Path;
 use std::{mem, slice};
 
 use anyhow::{bail, Context};

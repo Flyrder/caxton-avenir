@@ -137,7 +137,7 @@ impl<'a> Font<'a> {
             .collect();
 
         let tlist = (|| -> anyhow::Result<_> {
-            let mut fh = OpenOptions::new().read(true).open(&this_cache);
+            let fh = OpenOptions::new().read(true).open(&this_cache);
             if let Ok(mut fh) = fh {
                 match TList::load(&mut fh) {
                     Ok(atlas) => return Ok(atlas),
@@ -161,7 +161,7 @@ impl<'a> Font<'a> {
             );
             eprintln!("saving atlas to {}...", this_cache.display());
             fs::create_dir_all(cache_dir)?;
-            let mut fh = OpenOptions::new()
+            let fh = OpenOptions::new()
                 .write(true)
                 .create(true)
                 .open(&this_cache);
