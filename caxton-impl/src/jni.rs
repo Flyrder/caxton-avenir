@@ -217,7 +217,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
         eprintln!("warn: was passed an address of 0; returning");
         return 0;
     }
-    (*(addr as usize as *const Font)).tlist.locations().len() as i32
+    (*(addr as usize as *const Font)).num_atlas_locations as i32
 }
 
 /// JNI wrapper for accessing atlas locations.
@@ -232,12 +232,15 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
     _env: JNIEnv,
     _class: JClass,
     addr: jlong,
+    mipmap: jint,
 ) -> jlong {
     if addr == 0 {
         eprintln!("warn: was passed an address of 0; returning");
         return 0;
     }
-    (*(addr as usize as *const Font)).tlist.locations().as_ptr() as usize as i64
+    (*(addr as usize as *const Font)).tlist[mipmap as usize]
+        .locations()
+        .as_ptr() as usize as i64
 }
 
 /// JNI wrapper for accessing bounding box data.
@@ -272,6 +275,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
     env: JNIEnv,
     _class: JClass,
     addr: jlong,
+    mipmap: jint,
 ) -> jlong {
     if addr == 0 {
         eprintln!("warn: was passed an address of 0; returning");
@@ -279,7 +283,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
     }
     throw_as_exn! {
         env;
-        let page = (*(addr as usize as *const Font)).tlist.data();
+        let page = (*(addr as usize as *const Font)).tlist[mipmap as usize].data();
         let ptr: *const image::Rgba<u8> = page.deref().as_ptr();
         Ok(ptr as i64)
     }

@@ -7,7 +7,6 @@ use std::{
 use anyhow::{anyhow, Context};
 use base64::engine::general_purpose::URL_SAFE;
 use base64::Engine;
-use jni::sys::jint;
 use msdfgen::{Bitmap, FillRule, FontExt, Framing, MsdfGeneratorConfig, Pixel, Vector2};
 use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
 use rustybuzz::{Face, Tag};
@@ -83,8 +82,9 @@ impl Default for FontOptions {
 /// Font information used to render text by Caxton.
 pub struct Font<'a> {
     pub face: Face<'a>,
-    pub tlist: TList,
+    pub tlist: Vec<TList>,
     pub bboxes: Vec<u64>,
+    pub num_atlas_locations: usize,
 }
 
 impl<'a> Font<'a> {
@@ -122,7 +122,8 @@ impl<'a> Font<'a> {
                 .ok_or_else(|| anyhow!("axis {} not found", var.0.axis))?;
         }
 
-        let bboxes = (0..face.number_of_glyphs())
+        let num_glyphs = face.number_of_glyphs();
+        let bboxes = (0..num_glyphs)
             .map(|i| {
                 let rect = face.glyph_bounding_box(GlyphId(i)).unwrap_or(Rect {
                     x_min: 0,
@@ -151,7 +152,7 @@ impl<'a> Font<'a> {
 
             eprintln!(
                 "Building atlas for {} glyphs; this might take a while",
-                face.number_of_glyphs()
+                num_glyphs
             );
             let before_atlas_construction = Instant::now();
             let tlist = create_atlas(&face, options)?;
@@ -179,13 +180,14 @@ impl<'a> Font<'a> {
 
         Ok(Font {
             face,
-            tlist,
+            tlist: vec![tlist],
             bboxes,
+            num_atlas_locations: num_glyphs as usize,
         })
     }
 
     pub fn num_mipmap_layers(&self) -> usize {
-        1
+        self.tlist.len()
     }
 }
 

@@ -21,11 +21,11 @@ public class CaxtonInternal {
 
     public static native int fontAtlasSize(long addr);
 
-    public static native long fontAtlasLocations(long addr);
+    public static native long fontAtlasLocations(long addr, int mipmap);
 
     public static native long fontBboxes(long addr);
 
-    public static native long fontAtlasPage(long addr);
+    public static native long fontAtlasPage(long addr, int mipmap);
 
     public static native String fontGlyphName(long addr, int glyphId);
 
