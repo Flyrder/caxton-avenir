@@ -174,7 +174,7 @@ public class CaxtonAtlas implements AutoCloseable {
             throw new RuntimeException("Only 4096 pages are supported");
         }
         LOGGER.info("I am {}", this);
-        LOGGER.info("Adding a new page #{} with range {}", pageNum, range);
+        LOGGER.info("Adding a new page #{} with range {} and {} mipmap levels", pageNum, range, numMipmapLevels);
         Page page = new Page(this, pageNum, range, numMipmapLevels);
         this.pages.add(page);
         this.unallocatedSpaces.add(pageNum << 12);

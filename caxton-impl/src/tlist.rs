@@ -105,9 +105,7 @@ impl TList {
         &self.pixels
     }
 
-    pub fn save(&self, fh: &mut impl Write) -> anyhow::Result<()> {
-        let mut fh = ZlibEncoder::new(fh, Compression::default());
-        fh.write_u32_checked(VERSION)?;
+    fn save1(&self, fh: &mut impl Write) -> anyhow::Result<()> {
         fh.write_u32_checked(self.locations.len().try_into()?)?;
         fh.write_u32_checked((self.pixels.len() >> 2).try_into()?)?;
         {
@@ -129,14 +127,18 @@ impl TList {
         Ok(())
     }
 
-    pub fn load(fh: &mut impl Read) -> anyhow::Result<Self> {
-        let mut fh = ZlibDecoder::new(fh);
-
-        let version = fh.read_u32_checked()?;
-        if version != VERSION {
-            bail!("version mismatch (expected version {VERSION}; found {version}");
+    pub fn save(tlists: &[TList], fh: &mut impl Write) -> anyhow::Result<()> {
+        let mut fh = ZlibEncoder::new(fh, Compression::default());
+        fh.write_u32_checked(VERSION)?;
+        fh.write_u8_checked(tlists.len().try_into()?)?;
+        for tlist in tlists {
+            tlist.save1(&mut fh)?;
         }
 
+        Ok(())
+    }
+
+    fn load1(fh: &mut impl Read) -> anyhow::Result<Self> {
         let num_locations = fh.read_u32_checked()?;
         let num_pixels = fh.read_u32_checked()?;
 
@@ -178,6 +180,21 @@ impl TList {
         }
 
         Ok(Self { locations, pixels })
+    }
+
+    pub fn load(fh: &mut impl Read, expected_len: usize) -> anyhow::Result<Vec<Self>> {
+        let mut fh = ZlibDecoder::new(fh);
+
+        let version = fh.read_u32_checked()?;
+        if version != VERSION {
+            bail!("version mismatch (expected version {VERSION}; found {version}");
+        }
+        let len = fh.read_u8_checked()? as usize;
+        if len != expected_len {
+            bail!("expected {expected_len} elements; got {len} elements");
+        }
+
+        (0..len).map(|_| Self::load1(&mut fh)).collect()
     }
 }
 

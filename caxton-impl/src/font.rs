@@ -69,7 +69,7 @@ pub struct FontOptions {
     pub invert: Option<bool>,
     pub variations: Vec<CxVariation>,
     pub face_index: u32,
-    pub max_mipmap: u32,
+    pub max_mipmap: usize,
 }
 
 impl FontOptions {
@@ -171,7 +171,7 @@ impl<'a> Font<'a> {
         let tlist = (|| -> anyhow::Result<_> {
             let fh = OpenOptions::new().read(true).open(&this_cache);
             if let Ok(mut fh) = fh {
-                match TList::load(&mut fh) {
+                match TList::load(&mut fh, options.max_mipmap + 1) {
                     Ok(atlas) => return Ok(atlas),
                     Err(e) => {
                         eprintln!("warn: loading atlas failed; regenerating");
@@ -199,7 +199,7 @@ impl<'a> Font<'a> {
                 .open(&this_cache);
             match fh {
                 Ok(mut fh) => {
-                    if let Err(e) = tlist.save(&mut fh) {
+                    if let Err(e) = TList::save(&tlist, &mut fh) {
                         eprintln!("warn: failed to save cached atlas: {e}")
                     }
                 }
@@ -210,7 +210,7 @@ impl<'a> Font<'a> {
 
         Ok(Font {
             face,
-            tlist: vec![tlist],
+            tlist: tlist,
             bboxes,
             num_atlas_locations: num_glyphs as usize,
         })
@@ -221,7 +221,11 @@ impl<'a> Font<'a> {
     }
 }
 
-fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<TList> {
+fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Vec<TList>> {
+    if options.max_mipmap > 0 {
+        eprintln!("multiple mipmap layers are not yet implemented");
+    }
+
     let mut tlist = TList::new();
 
     let glyph_indices = (0..face.number_of_glyphs())
@@ -244,7 +248,7 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<TList> {
             anyhow::Result::Ok(())
         })?;
 
-    Ok(tlist)
+    Ok(vec![tlist])
 }
 
 fn dimensions_in_image(bounding_box: &Option<Rect>, options: &FontOptions) -> (u32, u32) {
