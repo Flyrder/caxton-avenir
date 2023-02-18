@@ -30,7 +30,7 @@ public class RustPlatform {
             case "x86", "i686" -> "i686";
             case "aarch64" -> "aarch64";
             default ->
-                    throw new UnsupportedPlatformException("Cannot determine Rust platform name: unrecognized architecture name" + osArch);
+                    throw new UnsupportedPlatformException("Cannot determine Rust platform name: unrecognized architecture name " + osArch);
         };
 
         return osArch3 + "-" + osName3;

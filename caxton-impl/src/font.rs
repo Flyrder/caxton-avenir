@@ -236,10 +236,6 @@ impl<'a> Font<'a> {
 }
 
 fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Vec<TList>> {
-    if options.max_mipmap > 0 {
-        eprintln!("multiple mipmap layers are not yet implemented");
-    }
-
     let glyph_indices = (0..face.number_of_glyphs())
         .map(|glyph_idx| (glyph_idx, face.glyph_bounding_box(GlyphId(glyph_idx))))
         .collect::<Vec<_>>();
@@ -250,9 +246,10 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Vec<TList>
 
             let pending_entries = tlist.adds(
                 options.tech.bytes_per_pixel(),
-                glyph_indices
-                    .iter()
-                    .map(|(_, bbox)| dimensions_in_image(bbox, options)),
+                glyph_indices.iter().map(|(_, bbox)| {
+                    let (width, height) = dimensions_in_image(bbox, options);
+                    (adjust_dims(width, mipmap), adjust_dims(height, mipmap))
+                }),
             )?;
 
             glyph_indices
@@ -260,8 +257,16 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Vec<TList>
                 .copied()
                 .zip_eq(pending_entries.into_par_iter())
                 .try_for_each(|((glyph_idx, bbox), mut pe)| -> anyhow::Result<()> {
-                    let mtsdf = create_mtsdf(face, GlyphId(glyph_idx), bbox, options, mipmap)?;
-                    pe.put(&mtsdf);
+                    match options.tech {
+                        FontTech::Msdf => {
+                            let mtsdf =
+                                create_mtsdf(face, GlyphId(glyph_idx), bbox, options, mipmap)?;
+                            pe.put(&mtsdf);
+                        }
+                        FontTech::Raster => {
+                            todo!("rasterization NYI");
+                        }
+                    }
                     anyhow::Result::Ok(())
                 })?;
 

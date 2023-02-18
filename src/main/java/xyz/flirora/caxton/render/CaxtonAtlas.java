@@ -105,7 +105,13 @@ public class CaxtonAtlas implements AutoCloseable {
             return pack(0, 0, width, height, 0);
         }
         long space = this.insertInternal(totalWidth, totalHeight, fontRange, numMipmapLevels, format);
-        return space - ((long) additionalMargin) * ((1L << 26) | (1L << 39));
+        return pack(
+                getX(space),
+                getY(space),
+                width,
+                height,
+                getPage(space)
+        );
     }
 
     private long insertInternal(int width, int height, int range, int numMipmapLevels, NativeImage.Format format) {

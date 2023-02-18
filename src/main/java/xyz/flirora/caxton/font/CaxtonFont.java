@@ -83,8 +83,8 @@ public class CaxtonFont implements AutoCloseable {
             if (mipmapLayers <= 0) {
                 throw new IllegalArgumentException("mipmapLayers must be at least 1");
             }
-            if (mipmapLayers > 4) {
-                throw new IllegalArgumentException("mipmapLayers must be at most 4");
+            if (mipmapLayers > 5) {
+                throw new IllegalArgumentException("mipmapLayers must be at most 5");
             }
             tlistLocations = new long[mipmapLayers];
             pixelData = new long[mipmapLayers];
