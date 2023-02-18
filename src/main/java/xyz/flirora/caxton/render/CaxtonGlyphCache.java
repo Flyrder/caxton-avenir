@@ -54,19 +54,33 @@ public class CaxtonGlyphCache {
             this.entry = entry;
         }
 
-        public long getOrCreateAtlasLocation(CaxtonFont font, int glyphId) {
+        public long getOrCreateAtlasLocation(int glyphId) {
             return entry.computeIfAbsent(glyphId, id -> {
                 long tlLoc = font.getTlistLocation(glyphId, 0);
                 int width = (int) (tlLoc & 0xFFFF);
                 int height = (int) ((tlLoc >> 16) & 0xFFFF);
-                int offset = (int) (tlLoc >>> 32);
-                long location = CaxtonGlyphCache.this.atlas.insert(width, height, 1, font.getOptions().range());
-                atlas.getAtlasPageTexture(CaxtonAtlas.getPage(location)).bindTexture();
-                GlStateManager._pixelStore(GlConst.GL_UNPACK_ROW_LENGTH, 0);
-                GlStateManager._pixelStore(GlConst.GL_UNPACK_SKIP_PIXELS, 0);
-                GlStateManager._pixelStore(GlConst.GL_UNPACK_SKIP_ROWS, 0);
-                GlStateManager._pixelStore(GlConst.GL_UNPACK_ALIGNMENT, NativeImage.Format.RGBA.getChannelCount());
-                GlStateManager._texSubImage2D(GlConst.GL_TEXTURE_2D, 0, CaxtonAtlas.getX(location), CaxtonAtlas.getY(location), width, height, NativeImage.Format.RGBA.toGl(), GlConst.GL_UNSIGNED_BYTE, font.getPixelData(0) + 4 * Integer.toUnsignedLong(offset));
+                int numMipmapLevels = font.getNumMipmapLevels();
+                long location = CaxtonGlyphCache.this.atlas.insert(width, height, 1, font.getOptions().range(), numMipmapLevels);
+
+                for (int mipmap = 0; mipmap < numMipmapLevels; ++mipmap) {
+                    tlLoc = font.getTlistLocation(glyphId, mipmap);
+                    width = (int) (tlLoc & 0xFFFF);
+                    height = (int) ((tlLoc >> 16) & 0xFFFF);
+                    int offset = (int) (tlLoc >>> 32);
+                    atlas.getAtlasPageTexture(CaxtonAtlas.getPage(location)).bindTexture();
+                    GlStateManager._pixelStore(GlConst.GL_UNPACK_ROW_LENGTH, 0);
+                    GlStateManager._pixelStore(GlConst.GL_UNPACK_SKIP_PIXELS, 0);
+                    GlStateManager._pixelStore(GlConst.GL_UNPACK_SKIP_ROWS, 0);
+                    GlStateManager._pixelStore(GlConst.GL_UNPACK_ALIGNMENT, NativeImage.Format.RGBA.getChannelCount());
+                    GlStateManager._texSubImage2D(
+                            GlConst.GL_TEXTURE_2D,
+                            mipmap,
+                            CaxtonAtlas.getX(location) >> mipmap, CaxtonAtlas.getY(location) >> mipmap,
+                            width, height,
+                            NativeImage.Format.RGBA.toGl(),
+                            GlConst.GL_UNSIGNED_BYTE,
+                            font.getPixelData(mipmap) + 4 * Integer.toUnsignedLong(offset));
+                }
                 return location;
             });
         }

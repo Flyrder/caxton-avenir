@@ -197,6 +197,10 @@ public class CaxtonFont implements AutoCloseable {
         return fontPtr;
     }
 
+    public int getNumMipmapLevels() {
+        return this.tlistLocations.length;
+    }
+
     /**
      * Gets the location of glyph number {@code glyphId} in the glyph storage.
      * <p>

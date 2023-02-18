@@ -301,7 +301,7 @@ public class CaxtonTextRenderer {
             int gx = cumulAdvanceX + offsetX;
 
             {
-                long atlasLoc = cacheForFont.getOrCreateAtlasLocation(font, glyphId);
+                long atlasLoc = cacheForFont.getOrCreateAtlasLocation(glyphId);
                 int atlasX = CaxtonAtlas.getX(atlasLoc);
                 int atlasY = CaxtonAtlas.getY(atlasLoc);
                 int atlasWidth = CaxtonAtlas.getW(atlasLoc);

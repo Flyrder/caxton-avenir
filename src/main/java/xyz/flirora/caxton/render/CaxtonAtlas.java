@@ -25,7 +25,7 @@ public class CaxtonAtlas implements AutoCloseable {
     private static final Logger LOGGER = LogUtils.getLogger();
     public static int PAGE_SIZE = 4096;
     private final List<Page> pages = new ArrayList<>();
-    // w is ignored for entries here; h is interpreted as range
+    // w is interpreted as number of mipmap levels; h is interpreted as range
     private final List<LongList> shelves = new ArrayList<>();
     private final IntList unallocatedSpaces = new IntArrayList();
     private final TextureManager textureManager;
@@ -67,6 +67,10 @@ public class CaxtonAtlas implements AutoCloseable {
         return 8 * (bucket + 1);
     }
 
+    private int roundToNextPowerOf2(int n, int p) {
+        return (n + ((1 << p) - 1)) >> p << p;
+    }
+
     public Identifier getAtlasPage(int pageNum) {
         return this.pages.get(pageNum).id;
     }
@@ -79,7 +83,7 @@ public class CaxtonAtlas implements AutoCloseable {
         return pages;
     }
 
-    public long insert(int width, int height, int additionalMargin, int fontRange) {
+    public long insert(int width, int height, int additionalMargin, int fontRange, int numMipmapLevels) {
         if (fontRange < 0 || fontRange >= 256) {
             throw new IllegalArgumentException("fontRange must be in [0, 256)");
         }
@@ -89,8 +93,8 @@ public class CaxtonAtlas implements AutoCloseable {
         if (height < 0) {
             throw new IllegalArgumentException("height must not be negative");
         }
-        int totalWidth = width + additionalMargin;
-        int totalHeight = height + additionalMargin;
+        int totalWidth = roundToNextPowerOf2(width + additionalMargin, numMipmapLevels - 1);
+        int totalHeight = roundToNextPowerOf2(height + additionalMargin, numMipmapLevels - 1);
         if (totalWidth > PAGE_SIZE) {
             throw new IllegalArgumentException("width + additionalMargin must not be greater than 4096");
         }
@@ -100,11 +104,11 @@ public class CaxtonAtlas implements AutoCloseable {
         if (width == 0 || height == 0) {
             return pack(0, 0, width, height, 0);
         }
-        long space = this.insertInternal(totalWidth, totalHeight, fontRange);
+        long space = this.insertInternal(totalWidth, totalHeight, fontRange, numMipmapLevels);
         return space - ((long) additionalMargin) * ((1L << 26) | (1L << 39));
     }
 
-    private long insertInternal(int width, int height, int range) {
+    private long insertInternal(int width, int height, int range, int numMipmapLevels) {
         int bucket = heightToBucketId(height);
         while (bucket >= shelves.size()) {
             shelves.add(new LongArrayList());
@@ -115,9 +119,10 @@ public class CaxtonAtlas implements AutoCloseable {
             int x = getX(shelf), y = getY(shelf);
             int page = getPage(shelf);
             if (x + width > PAGE_SIZE) continue; // Too narrow
+            if (getW(shelf) != numMipmapLevels) continue; // Wrong # mipmap levels
             if (getH(shelf) != range) continue; // Wrong range
             long space = pack(x, y, width, height, page);
-            long remainingShelf = pack(x + width, y, 0, range, page);
+            long remainingShelf = pack(x + width, y, numMipmapLevels, range, page);
             shelvesInBucket.set(i, remainingShelf);
             if (i > 0) {
                 long prev = shelvesInBucket.getLong(i - 1);
@@ -129,16 +134,16 @@ public class CaxtonAtlas implements AutoCloseable {
             return space;
         }
         {
-            long shelf = allocateShelf(bucket, range);
+            long shelf = allocateShelf(bucket, range, numMipmapLevels);
             int x = getX(shelf), y = getY(shelf);
             int page = getPage(shelf);
-            long remainingShelf = pack(width, y, 0, range, page);
+            long remainingShelf = pack(width, y, numMipmapLevels, range, page);
             shelvesInBucket.add(remainingShelf);
             return pack(x, y, width, height, page);
         }
     }
 
-    private long allocateShelf(int bucket, int range) {
+    private long allocateShelf(int bucket, int range, int numMipmapLevels) {
         int height = bucketIdToHeight(bucket);
         int minHeight = bucketIdToHeight(0);
         while (true) {
@@ -147,32 +152,32 @@ public class CaxtonAtlas implements AutoCloseable {
                 int space = unallocatedSpaces.getInt(i);
                 int y = (space & 0xFFF);
                 int page = (space >> 12) & 0xFFF;
-                int r = space >>> 24;
-                if (r != range) continue;
+                Page pageTex = this.getAtlasPageTexture(page);
+                if (pageTex.range != range || pageTex.numMipmapLevels != numMipmapLevels) continue;
                 int y2 = y + height;
                 if (y2 > PAGE_SIZE) continue;
                 if (y2 + minHeight <= PAGE_SIZE) {
-                    unallocatedSpaces.set(i, y2 | (page << 12) | (range << 24));
+                    unallocatedSpaces.set(i, y2 | (page << 12));
                 } else {
                     unallocatedSpaces.set(i, unallocatedSpaces.getInt(len - 1));
                     unallocatedSpaces.removeInt(len - 1);
                 }
-                return pack(0, y, 0, range, page);
+                return pack(0, y, numMipmapLevels, range, page);
             }
-            addNewPage(range);
+            addNewPage(range, numMipmapLevels);
         }
     }
 
-    private void addNewPage(int range) {
+    private void addNewPage(int range, int numMipmapLevels) {
         int pageNum = pages.size();
         if (pageNum >= 4096) {
             throw new RuntimeException("Only 4096 pages are supported");
         }
         LOGGER.info("I am {}", this);
         LOGGER.info("Adding a new page #{} with range {}", pageNum, range);
-        Page page = new Page(this, pageNum, range);
+        Page page = new Page(this, pageNum, range, numMipmapLevels);
         this.pages.add(page);
-        this.unallocatedSpaces.add((pageNum << 12) | (range << 24));
+        this.unallocatedSpaces.add(pageNum << 12);
     }
 
     @Override
@@ -192,12 +197,14 @@ public class CaxtonAtlas implements AutoCloseable {
     public static class Page extends AbstractTexture {
         private final Identifier id;
         private final int range;
+        private final int numMipmapLevels;
 
-        public Page(CaxtonAtlas atlas, int pageNum, int range) {
+        public Page(CaxtonAtlas atlas, int pageNum, int range, int numMipmapLevels) {
             super();
-            TextureUtil.prepareImage(NativeImage.InternalFormat.RGBA, this.getGlId(), PAGE_SIZE, PAGE_SIZE);
+            TextureUtil.prepareImage(NativeImage.InternalFormat.RGBA, this.getGlId(), numMipmapLevels - 1, PAGE_SIZE, PAGE_SIZE);
             this.id = new Identifier("caxton", "atlas/" + pageNum);
             this.range = range;
+            this.numMipmapLevels = numMipmapLevels;
             atlas.textureManager.registerTexture(id, this);
         }
 
@@ -207,6 +214,10 @@ public class CaxtonAtlas implements AutoCloseable {
 
         public int getRange() {
             return range;
+        }
+
+        public int getNumMipmapLevels() {
+            return numMipmapLevels;
         }
 
         @Override
