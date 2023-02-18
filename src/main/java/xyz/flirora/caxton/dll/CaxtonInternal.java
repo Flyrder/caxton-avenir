@@ -27,6 +27,8 @@ public class CaxtonInternal {
 
     public static native long fontAtlasPage(long addr, int mipmap);
 
+    public static native int fontBytesPerPixel(long addr);
+
     public static native String fontGlyphName(long addr, int glyphId);
 
     public static native long configureFont(long fontAddr, String settings);

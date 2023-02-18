@@ -289,6 +289,26 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
     }
 }
 
+/// JNI wrapper for accessing the pixel format.
+///
+/// # Safety
+///
+/// `addr` must have previously been returned by [`Java_xyz_flirora_caxton_dll_CaxtonInternal_createFont`]
+/// and must not have been previously passed into [`Java_xyz_flirora_caxton_dll_CaxtonInternal_destroyFont`].
+// public static native int fontBytesPerPixel(long addr);
+#[no_mangle]
+pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontBytesPerPixel(
+    _env: JNIEnv,
+    _class: JClass,
+    addr: jlong,
+) -> jint {
+    if addr == 0 {
+        eprintln!("warn: was passed an address of 0; returning");
+        return 0;
+    }
+    unsafe { (*(addr as usize as *const Font)).bytes_per_pixel as i32 }
+}
+
 /// JNI wrapper for getting the glyph name of a glyph in a font.
 ///
 /// # Safety

@@ -118,11 +118,7 @@ impl TList {
             };
             fh.write_all(slice)?;
         }
-        {
-            let slice = self.pixels.as_slice();
-            let slice = unsafe { slice::from_raw_parts(slice.as_ptr().cast::<u8>(), slice.len()) };
-            fh.write_all(slice)?;
-        }
+        fh.write_all(self.pixels.as_slice())?;
 
         Ok(())
     }
@@ -156,16 +152,7 @@ impl TList {
 
         //
         let mut pixels = vec![0u8; (num_pixels as usize) << 2];
-        {
-            let slice = pixels.as_mut_slice();
-            let slice = unsafe {
-                slice::from_raw_parts_mut(
-                    slice.as_mut_ptr().cast::<u8>(),
-                    mem::size_of::<image::Rgba<u8>>() * slice.len(),
-                )
-            };
-            fh.read_exact(slice)?;
-        }
+        fh.read_exact(&mut pixels)?;
 
         // Validate the tlist
         for (i, location) in locations.iter().enumerate() {

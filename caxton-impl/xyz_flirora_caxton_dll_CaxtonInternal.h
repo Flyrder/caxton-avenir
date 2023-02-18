@@ -58,10 +58,10 @@ JNIEXPORT jint JNICALL Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtlasSize
 /*
  * Class:     xyz_flirora_caxton_dll_CaxtonInternal
  * Method:    fontAtlasLocations
- * Signature: (J)J
+ * Signature: (JI)J
  */
 JNIEXPORT jlong JNICALL Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtlasLocations
-  (JNIEnv *, jclass, jlong);
+  (JNIEnv *, jclass, jlong, jint);
 
 /*
  * Class:     xyz_flirora_caxton_dll_CaxtonInternal
@@ -74,9 +74,17 @@ JNIEXPORT jlong JNICALL Java_xyz_flirora_caxton_dll_CaxtonInternal_fontBboxes
 /*
  * Class:     xyz_flirora_caxton_dll_CaxtonInternal
  * Method:    fontAtlasPage
- * Signature: (J)J
+ * Signature: (JI)J
  */
 JNIEXPORT jlong JNICALL Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtlasPage
+  (JNIEnv *, jclass, jlong, jint);
+
+/*
+ * Class:     xyz_flirora_caxton_dll_CaxtonInternal
+ * Method:    fontBytesPerPixel
+ * Signature: (J)I
+ */
+JNIEXPORT jint JNICALL Java_xyz_flirora_caxton_dll_CaxtonInternal_fontBytesPerPixel
   (JNIEnv *, jclass, jlong);
 
 /*

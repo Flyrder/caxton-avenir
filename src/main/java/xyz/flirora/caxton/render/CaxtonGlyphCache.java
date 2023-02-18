@@ -4,7 +4,6 @@ import com.mojang.blaze3d.platform.GlConst;
 import com.mojang.blaze3d.platform.GlStateManager;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
-import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.util.Identifier;
 import xyz.flirora.caxton.font.CaxtonFont;
@@ -60,7 +59,7 @@ public class CaxtonGlyphCache {
                 int width = (int) (tlLoc & 0xFFFF);
                 int height = (int) ((tlLoc >> 16) & 0xFFFF);
                 int numMipmapLevels = font.getNumMipmapLevels();
-                long location = CaxtonGlyphCache.this.atlas.insert(width, height, 1, font.getOptions().range(), numMipmapLevels);
+                long location = CaxtonGlyphCache.this.atlas.insert(width, height, 1, font.getOptions().range(), numMipmapLevels, font.getPixelFormat());
 
                 for (int mipmap = 0; mipmap < numMipmapLevels; ++mipmap) {
                     tlLoc = font.getTlistLocation(glyphId, mipmap);
@@ -71,13 +70,13 @@ public class CaxtonGlyphCache {
                     GlStateManager._pixelStore(GlConst.GL_UNPACK_ROW_LENGTH, 0);
                     GlStateManager._pixelStore(GlConst.GL_UNPACK_SKIP_PIXELS, 0);
                     GlStateManager._pixelStore(GlConst.GL_UNPACK_SKIP_ROWS, 0);
-                    GlStateManager._pixelStore(GlConst.GL_UNPACK_ALIGNMENT, NativeImage.Format.RGBA.getChannelCount());
+                    GlStateManager._pixelStore(GlConst.GL_UNPACK_ALIGNMENT, font.getPixelFormat().getChannelCount());
                     GlStateManager._texSubImage2D(
                             GlConst.GL_TEXTURE_2D,
                             mipmap,
                             CaxtonAtlas.getX(location) >> mipmap, CaxtonAtlas.getY(location) >> mipmap,
                             width, height,
-                            NativeImage.Format.RGBA.toGl(),
+                            font.getPixelFormat().toGl(),
                             GlConst.GL_UNSIGNED_BYTE,
                             font.getPixelData(mipmap) + 4 * Integer.toUnsignedLong(offset));
                 }

@@ -8,7 +8,9 @@ use anyhow::{anyhow, Context};
 use base64::engine::general_purpose::URL_SAFE;
 use base64::Engine;
 use msdfgen::{Bitmap, FillRule, FontExt, Framing, MsdfGeneratorConfig, Pixel, Vector2};
-use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
+use rayon::iter::{
+    IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
+};
 use rustybuzz::{Face, Tag};
 use serde::{de, Deserialize};
 use sha2::{Digest, Sha256};
@@ -58,6 +60,15 @@ pub enum FontTech {
     Raster,
 }
 
+impl FontTech {
+    pub fn bytes_per_pixel(self) -> usize {
+        match self {
+            FontTech::Msdf => 4,
+            FontTech::Raster => 1,
+        }
+    }
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 pub struct FontOptions {
@@ -69,7 +80,7 @@ pub struct FontOptions {
     pub invert: Option<bool>,
     pub variations: Vec<CxVariation>,
     pub face_index: u32,
-    pub max_mipmap: usize,
+    pub max_mipmap: u32,
 }
 
 impl FontOptions {
@@ -81,7 +92,7 @@ impl FontOptions {
         let mut sha = Sha256::new();
         sha.update(contents);
         sha.update(&format!(
-            "{} {} {} {}{:?}",
+            "{} {} {} {} {}{:?}",
             self.shrinkage,
             self.margin(),
             self.range,
@@ -90,6 +101,7 @@ impl FontOptions {
                 Some(true) => "true",
                 Some(false) => "false",
             },
+            self.max_mipmap,
             match self.tech {
                 FontTech::Msdf => "",
                 FontTech::Raster => " for Robin",
@@ -124,6 +136,7 @@ pub struct Font<'a> {
     pub tlist: Vec<TList>,
     pub bboxes: Vec<u64>,
     pub num_atlas_locations: usize,
+    pub bytes_per_pixel: usize,
 }
 
 impl<'a> Font<'a> {
@@ -171,7 +184,7 @@ impl<'a> Font<'a> {
         let tlist = (|| -> anyhow::Result<_> {
             let fh = OpenOptions::new().read(true).open(&this_cache);
             if let Ok(mut fh) = fh {
-                match TList::load(&mut fh, options.max_mipmap + 1) {
+                match TList::load(&mut fh, (options.max_mipmap as usize) + 1) {
                     Ok(atlas) => return Ok(atlas),
                     Err(e) => {
                         eprintln!("warn: loading atlas failed; regenerating");
@@ -213,6 +226,7 @@ impl<'a> Font<'a> {
             tlist: tlist,
             bboxes,
             num_atlas_locations: num_glyphs as usize,
+            bytes_per_pixel: options.tech.bytes_per_pixel(),
         })
     }
 
@@ -226,29 +240,34 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Vec<TList>
         eprintln!("multiple mipmap layers are not yet implemented");
     }
 
-    let mut tlist = TList::new();
-
     let glyph_indices = (0..face.number_of_glyphs())
         .map(|glyph_idx| (glyph_idx, face.glyph_bounding_box(GlyphId(glyph_idx))))
         .collect::<Vec<_>>();
 
-    let pending_entries = tlist.adds(
-        4,
-        glyph_indices
-            .iter()
-            .map(|(_, bbox)| dimensions_in_image(bbox, options)),
-    )?;
+    (0..=options.max_mipmap)
+        .map(|mipmap| {
+            let mut tlist = TList::new();
 
-    glyph_indices
-        .into_par_iter()
-        .zip_eq(pending_entries.into_par_iter())
-        .try_for_each(|((glyph_idx, bbox), mut pe)| -> anyhow::Result<()> {
-            let mtsdf = create_mtsdf(face, GlyphId(glyph_idx), bbox, options)?;
-            pe.put(&mtsdf);
-            anyhow::Result::Ok(())
-        })?;
+            let pending_entries = tlist.adds(
+                options.tech.bytes_per_pixel(),
+                glyph_indices
+                    .iter()
+                    .map(|(_, bbox)| dimensions_in_image(bbox, options)),
+            )?;
 
-    Ok(vec![tlist])
+            glyph_indices
+                .par_iter()
+                .copied()
+                .zip_eq(pending_entries.into_par_iter())
+                .try_for_each(|((glyph_idx, bbox), mut pe)| -> anyhow::Result<()> {
+                    let mtsdf = create_mtsdf(face, GlyphId(glyph_idx), bbox, options, mipmap)?;
+                    pe.put(&mtsdf);
+                    anyhow::Result::Ok(())
+                })?;
+
+            Ok(tlist)
+        })
+        .collect()
 }
 
 fn dimensions_in_image(bounding_box: &Option<Rect>, options: &FontOptions) -> (u32, u32) {
@@ -272,6 +291,7 @@ fn create_mtsdf(
     glyph_id: GlyphId,
     bounding_box: Option<Rect>,
     options: &FontOptions,
+    mipmap: u32,
 ) -> anyhow::Result<Bitmap<msdfgen::Rgba<f32>>> {
     // This should be passed as a parameter, but MsdfGeneratorConfig isn’t Sync
     let msdf_config = MsdfGeneratorConfig::default();
@@ -284,6 +304,10 @@ fn create_mtsdf(
     };
 
     let (width, height) = dimensions_in_image(&Some(bounding_box), options);
+    let width = adjust_dims(width, mipmap);
+    let height = adjust_dims(height, mipmap);
+
+    let scale = (-(mipmap as f64)).exp2() / options.shrinkage;
 
     let mut shape = face
         .as_ref()
@@ -292,10 +316,7 @@ fn create_mtsdf(
     shape.edge_coloring_simple(3.0, 69);
     let framing: Framing<f64> = Framing::new(
         options.range as f64 * options.shrinkage,
-        Vector2 {
-            x: 1.0 / options.shrinkage,
-            y: 1.0 / options.shrinkage,
-        },
+        Vector2 { x: scale, y: scale },
         Vector2 {
             x: options.margin() as f64 * options.shrinkage - bounding_box.x_min as f64,
             y: options.margin() as f64 * options.shrinkage - bounding_box.y_min as f64,
@@ -314,4 +335,8 @@ fn create_mtsdf(
     }
 
     Ok(mtsdf)
+}
+
+fn adjust_dims(n: u32, p: u32) -> u32 {
+    (n + ((1 << p) - 1)) >> p << p
 }

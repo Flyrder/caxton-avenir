@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +46,7 @@ public class CaxtonFont implements AutoCloseable {
     private final Int2ObjectMap<IntList> glyphsByWidth;
     private final List<Pair<StackTraceElement[], Boolean>> changes;
     private final long[] pixelData;
+    private final NativeImage.Format format;
     private ByteBuffer fontData;
     private long fontPtr;
     private boolean registered = false;
@@ -90,6 +92,14 @@ public class CaxtonFont implements AutoCloseable {
                 tlistLocations[i] = CaxtonInternal.fontAtlasLocations(fontPtr, i);
                 pixelData[i] = CaxtonInternal.fontAtlasPage(fontPtr, i);
             }
+            this.format = switch (CaxtonInternal.fontBytesPerPixel(fontPtr)) {
+                case 1 -> NativeImage.Format.LUMINANCE;
+                case 2 -> NativeImage.Format.LUMINANCE_ALPHA;
+                case 3 -> NativeImage.Format.RGB;
+                case 4 -> NativeImage.Format.RGBA;
+                default ->
+                        throw new UnsupportedOperationException("caxton_impl returned an unsupported value for bytes per pixel");
+            };
 
             this.options = new CaxtonFontOptions(options);
             this.glyphsByWidth = new Int2ObjectOpenHashMap<>();
@@ -257,6 +267,10 @@ public class CaxtonFont implements AutoCloseable {
      */
     public long getPixelData(int mipmap) {
         return this.pixelData[mipmap];
+    }
+
+    public NativeImage.Format getPixelFormat() {
+        return format;
     }
 
     /**
