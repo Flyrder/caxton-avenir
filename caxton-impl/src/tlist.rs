@@ -36,16 +36,16 @@ impl TLocation {
 
 #[derive(Clone, Debug)]
 pub struct TList {
-    pixels: Vec<image::Rgba<u8>>,
+    pixels: Vec<u8>,
     locations: Vec<TLocation>,
 }
 
 #[derive(Debug)]
 pub struct TListPendingEntry<'a> {
-    pixels: &'a mut [image::Rgba<u8>],
+    pixels: &'a mut [u8],
 }
 
-const VERSION: u32 = 2;
+const VERSION: u32 = 3;
 
 impl TList {
     pub fn new() -> Self {
@@ -57,6 +57,7 @@ impl TList {
 
     pub fn adds(
         &mut self,
+        bit_depth: usize,
         sizes: impl Iterator<Item = (u32, u32)>,
     ) -> anyhow::Result<Vec<TListPendingEntry<'_>>> {
         let first_index = self.pixels.len();
@@ -70,20 +71,20 @@ impl TList {
                     .try_into()
                     .context("height must not be greater than 65535")?;
                 self.locations.push(TLocation::new(
-                    pending_index
+                    (pending_index >> 2)
                         .try_into()
                         .context("offset must not exceed u32::MAX")?,
                     w,
                     h,
                 ));
-                let pixel_count = (w as usize) * (h as usize);
+                let pixel_count = bit_depth * (w as usize) * (h as usize);
+                let pixel_count = (pixel_count + 3) >> 2 << 2;
                 pending_index += pixel_count;
                 anyhow::Result::Ok(pixel_count)
             })
             .collect::<anyhow::Result<Vec<_>>>()?;
         let total_length: usize = lengths.iter().copied().sum();
-        self.pixels
-            .resize(first_index + total_length, image::Rgba::from([0; 4]));
+        self.pixels.resize(first_index + total_length, 0);
         let mut result = Vec::new();
         pending_index = first_index;
         let slice_ptr = self.pixels.as_mut_ptr();
@@ -100,7 +101,7 @@ impl TList {
         &self.locations
     }
 
-    pub fn data(&self) -> &[image::Rgba<u8>] {
+    pub fn data(&self) -> &[u8] {
         &self.pixels
     }
 
@@ -108,7 +109,7 @@ impl TList {
         let mut fh = ZlibEncoder::new(fh, Compression::default());
         fh.write_u32_checked(VERSION)?;
         fh.write_u32_checked(self.locations.len().try_into()?)?;
-        fh.write_u32_checked(self.pixels.len().try_into()?)?;
+        fh.write_u32_checked((self.pixels.len() >> 2).try_into()?)?;
         {
             let slice = self.locations.as_slice();
             let slice = unsafe {
@@ -121,12 +122,7 @@ impl TList {
         }
         {
             let slice = self.pixels.as_slice();
-            let slice = unsafe {
-                slice::from_raw_parts(
-                    slice.as_ptr().cast::<u8>(),
-                    mem::size_of::<image::Rgba<u8>>() * slice.len(),
-                )
-            };
+            let slice = unsafe { slice::from_raw_parts(slice.as_ptr().cast::<u8>(), slice.len()) };
             fh.write_all(slice)?;
         }
 
@@ -156,7 +152,8 @@ impl TList {
             fh.read_exact(slice)?;
         }
 
-        let mut pixels = vec![image::Rgba::from([0; 4]); num_pixels as usize];
+        //
+        let mut pixels = vec![0u8; (num_pixels as usize) << 2];
         {
             let slice = pixels.as_mut_slice();
             let slice = unsafe {
@@ -188,20 +185,17 @@ impl<'a> TListPendingEntry<'a> {
     pub fn put(&mut self, img: &Bitmap<msdfgen::Rgba<f32>>) {
         let width = img.width() as u16;
         let height = img.height() as u16;
-        assert_eq!(self.pixels.len(), (width as usize) * (height as usize));
+        assert_eq!(self.pixels.len(), 4 * (width as usize) * (height as usize));
         let mtsdf_pixels = img.pixels();
         let mut i = 0;
         for y in (0..height).rev() {
             for x in 0..width {
                 let pixel = mtsdf_pixels[(x as usize) + (y as usize) * (width as usize)];
-                let pixel = image::Rgba([
-                    (pixel.r * 255.0) as u8,
-                    (pixel.g * 255.0) as u8,
-                    (pixel.b * 255.0) as u8,
-                    (pixel.a * 255.0) as u8,
-                ]);
-                self.pixels[i] = pixel;
-                i += 1;
+                self.pixels[i] = (pixel.r * 255.0) as u8;
+                self.pixels[i + 1] = (pixel.g * 255.0) as u8;
+                self.pixels[i + 2] = (pixel.b * 255.0) as u8;
+                self.pixels[i + 3] = (pixel.a * 255.0) as u8;
+                i += 4;
             }
         }
     }

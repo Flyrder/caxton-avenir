@@ -284,7 +284,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
     throw_as_exn! {
         env;
         let page = (*(addr as usize as *const Font)).tlist[mipmap as usize].data();
-        let ptr: *const image::Rgba<u8> = page.deref().as_ptr();
+        let ptr: *const u8 = page.deref().as_ptr();
         Ok(ptr as i64)
     }
 }

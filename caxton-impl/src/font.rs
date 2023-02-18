@@ -229,6 +229,7 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<TList> {
         .collect::<Vec<_>>();
 
     let pending_entries = tlist.adds(
+        4,
         glyph_indices
             .iter()
             .map(|(_, bbox)| dimensions_in_image(bbox, options)),
