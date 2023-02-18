@@ -243,6 +243,8 @@ Caxton would not have been possible without the following projects:
 * [msdfgen] (Chlumsky, MIT) and the [msdfgen-rs] bindings (Kayo Phoenix, MIT)
     * Versions 0.2.3 and earlier used the [msdf-rs] bindings (Penple, MIT) instead.
 * [JNI bindings for Rust] (MIT/Apache-2.0)
+* [flate2] (MIT/Apache-2.0)
+* [Rayon] (MIT/Apache-2.0)
 * [Cross] (MIT/Apache-2.0)
 * [Fabric-ASM] (Chocohead, MPL-2.0)
 * [MixinExtras] (LlamaLad7, MIT)
@@ -267,6 +269,10 @@ Caxton would not have been possible without the following projects:
 [msdfgen-rs]: https://github.com/katyo/msdfgen-rs
 
 [JNI bindings for Rust]: https://github.com/jni-rs/jni-rs
+
+[flate2]: https://github.com/rust-lang/flate2-rs
+
+[Rayon]: https://github.com/rayon-rs/rayon
 
 [Cross]: https://github.com/cross-rs/cross/
 
