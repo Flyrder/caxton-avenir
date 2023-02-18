@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @Environment(EnvType.CLIENT)
 public record CaxtonFontOptions(
+        FontTech fontTech,
         double shrinkage,
         int margin,
         int range,
@@ -41,6 +42,7 @@ public record CaxtonFontOptions(
 
     public CaxtonFontOptions(JsonObject json) {
         this(
+                FontTech.fromName(JsonHelper.getString(json, "tech", "msdf")),
                 JsonHelper.getDouble(json, "shrinkage", 32.0),
                 JsonHelper.getInt(json, "margin", -1),
                 JsonHelper.getInt(json, "range", 4),

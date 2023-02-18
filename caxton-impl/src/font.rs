@@ -49,32 +49,71 @@ impl<'de> Deserialize<'de> for CxVariation {
     }
 }
 
+#[derive(Deserialize, Debug, Default, Copy, Clone, Eq, PartialEq)]
+pub enum FontTech {
+    #[default]
+    #[serde(rename = "msdf")]
+    Msdf,
+    #[serde(rename = "raster")]
+    Raster,
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 pub struct FontOptions {
+    pub tech: FontTech,
+    // TODO: implement alternative ways to specify scale?
     pub shrinkage: f64,
     pub margin: Option<u32>,
     pub range: u32,
     pub invert: Option<bool>,
     pub variations: Vec<CxVariation>,
     pub face_index: u32,
+    pub max_mipmap: u32,
 }
 
 impl FontOptions {
     fn margin(&self) -> u32 {
         self.margin.unwrap_or(self.range)
     }
+
+    fn calculate_sha(&self, contents: &[u8]) -> [u8; 32] {
+        let mut sha = Sha256::new();
+        sha.update(contents);
+        sha.update(&format!(
+            "{} {} {} {}{:?}",
+            self.shrinkage,
+            self.margin(),
+            self.range,
+            match self.invert {
+                None => "auto",
+                Some(true) => "true",
+                Some(false) => "false",
+            },
+            match self.tech {
+                FontTech::Msdf => "",
+                FontTech::Raster => " for Robin",
+            },
+        ));
+        for var in &self.variations {
+            sha.update(&format!(" {} {}", var.0.axis, var.0.value));
+        }
+        sha.update(SALT);
+        sha.finalize().into()
+    }
 }
 
 impl Default for FontOptions {
     fn default() -> Self {
         Self {
+            tech: FontTech::Msdf,
             shrinkage: 32.0,
             margin: None,
             range: 4,
             invert: None,
             variations: Default::default(),
             face_index: 0,
+            max_mipmap: 0,
         }
     }
 }
@@ -93,24 +132,13 @@ impl<'a> Font<'a> {
         cache_dir: &'_ Path,
         options: &FontOptions,
     ) -> anyhow::Result<Self> {
-        let mut sha = Sha256::new();
-        sha.update(contents);
-        sha.update(&format!(
-            "{} {} {} {}",
-            options.shrinkage,
-            options.margin(),
-            options.range,
-            match options.invert {
-                None => "auto",
-                Some(true) => "true",
-                Some(false) => "false",
-            },
-        ));
-        for var in &options.variations {
-            sha.update(&format!(" {} {}", var.0.axis, var.0.value));
+        if options.tech != FontTech::Msdf {
+            eprintln!("font tech {:?} is NYI", options.tech);
+        } else if options.max_mipmap > 0 {
+            eprintln!("adding mipmap layers for MSDF fonts is not recommended");
         }
-        sha.update(SALT);
-        let sha = sha.finalize();
+
+        let sha = options.calculate_sha(contents);
 
         let mut this_cache = cache_dir.to_path_buf();
         this_cache.push(URL_SAFE.encode(sha) + ".zst");
@@ -138,6 +166,8 @@ impl<'a> Font<'a> {
             })
             .collect();
 
+        // TODO: generate multiple mipmap layers when requested;
+        // implement conventional rasterization
         let tlist = (|| -> anyhow::Result<_> {
             let fh = OpenOptions::new().read(true).open(&this_cache);
             if let Ok(mut fh) = fh {
