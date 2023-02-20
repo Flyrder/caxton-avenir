@@ -31,7 +31,8 @@ public class CaxtonGlyphCache {
         return atlas.getAtlasPageTexture(pageNum);
     }
 
-    public void clear() {
+    // Hack to avoid crashing when loading a server resource pack.
+    public synchronized void clear() {
         atlas.clear();
         cache.clear();
     }
