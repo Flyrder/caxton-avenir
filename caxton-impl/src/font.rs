@@ -17,7 +17,7 @@ use serde::{de, Deserialize};
 use sha2::{Digest, Sha256};
 use ttf_parser::{GlyphId, OutlineBuilder, Rect, Variation};
 
-use crate::tlist::TList;
+use crate::tlist::{TList, TListPendingEntry};
 
 const SALT: [u8; 4] = [0xE6, 0x26, 0x69, 0x11];
 
@@ -259,31 +259,10 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Vec<TList>
                     let glyph_id = GlyphId(glyph_idx);
                     match options.tech {
                         FontTech::Msdf => {
-                            let mtsdf = create_mtsdf(face, glyph_id, bbox, options, mipmap)?;
-                            pe.put(&mtsdf);
+                            create_mtsdf(face, glyph_id, bbox, options, mipmap, &mut pe)?;
                         }
                         FontTech::Raster => {
-                            let Some(bounding_box) = bbox else { return Ok(()); };
-                            let (width, height) = dimensions_in_image(&Some(bounding_box), options);
-                            let width = adjust_dims(width, mipmap);
-                            let height = adjust_dims(height, mipmap);
-                            let mut rasterizer = Rasterizer::new(width as usize, height as usize);
-                            face.outline_glyph(
-                                glyph_id,
-                                &mut AbOutlineBuilder {
-                                    rasterizer: &mut rasterizer,
-                                    last_point: None,
-                                    bbox: &bounding_box,
-                                    options: &options,
-                                    scale: (-(mipmap as f64)).exp2(),
-                                },
-                            );
-                            let slice = pe.as_slice_mut();
-                            rasterizer.for_each_pixel_2d(|x, y, alpha| {
-                                let index =
-                                    (x as usize) + ((height - 1 - y) as usize) * (width as usize);
-                                slice[index] = (alpha * 255.0) as u8;
-                            });
+                            create_bitmap(face, glyph_id, bbox, options, mipmap, &mut pe)?;
                         }
                     }
                     anyhow::Result::Ok(())
@@ -316,11 +295,12 @@ fn create_mtsdf(
     bounding_box: Option<Rect>,
     options: &FontOptions,
     mipmap: u32,
-) -> anyhow::Result<Bitmap<msdfgen::Rgba<f32>>> {
+    pe: &mut TListPendingEntry,
+) -> anyhow::Result<()> {
     // This should be passed as a parameter, but MsdfGeneratorConfig isn’t Sync
     let msdf_config = MsdfGeneratorConfig::default();
 
-    let Some(bounding_box) = bounding_box else { return Ok(Bitmap::new(0, 0)); };
+    let Some(bounding_box) = bounding_box else { return Ok(()); };
 
     let (width, height) = dimensions_in_image(&Some(bounding_box), options);
     let width = adjust_dims(width, mipmap);
@@ -353,7 +333,40 @@ fn create_mtsdf(
         mtsdf_pixels.iter_mut().for_each(|pixel| pixel.invert());
     }
 
-    Ok(mtsdf)
+    pe.put(&mtsdf);
+
+    Ok(())
+}
+
+fn create_bitmap(
+    face: &Face,
+    glyph_id: GlyphId,
+    bounding_box: Option<Rect>,
+    options: &FontOptions,
+    mipmap: u32,
+    pe: &mut TListPendingEntry,
+) -> anyhow::Result<()> {
+    let Some(bounding_box) = bounding_box else { return Ok(()); };
+    let (width, height) = dimensions_in_image(&Some(bounding_box), options);
+    let width = adjust_dims(width, mipmap);
+    let height = adjust_dims(height, mipmap);
+    let mut rasterizer = Rasterizer::new(width as usize, height as usize);
+    face.outline_glyph(
+        glyph_id,
+        &mut AbOutlineBuilder {
+            rasterizer: &mut rasterizer,
+            last_point: None,
+            bbox: &bounding_box,
+            options: &options,
+            scale: (-(mipmap as f64)).exp2(),
+        },
+    );
+    let slice = pe.as_slice_mut();
+    rasterizer.for_each_pixel_2d(|x, y, alpha| {
+        let index = (x as usize) + ((height - 1 - y) as usize) * (width as usize);
+        slice[index] = (alpha * 255.0) as u8;
+    });
+    Ok(())
 }
 
 fn adjust_dims(n: u32, p: u32) -> u32 {
