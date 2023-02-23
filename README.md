@@ -131,7 +131,22 @@ rasterizing the font:
   "variations": [],
   // The index of the font face to use in a font collection.
   // Leave this as 0 if you’re not sure.
-  "face_index": 0
+  "face_index": 0,
+  // Specifies whether to use the MSDF-based rendering method ("msdf") or
+  // to use glyph bitmaps ("raster").
+  // "msdf" is recommended for most fonts, but "raster" is more suitable for
+  // pixel fonts.
+  // Neither method is currently compatible with Iris Shaders, but support for
+  // "raster" when a shader is present is planned.
+  "tech": "msdf",
+  // Whether to interpolate texels in the bitmap (NOT YET IMPLEMENTED).
+  // Only has an effect on raster tech.
+  "blur": false,
+  // The maximum mipmap level (0 – 4).
+  // This is pointless to set if you’re using the MSDF rendering tech.
+  // However, it can be useful for non-pixel fonts when you’re using the raster
+  // rendering tech.
+  "max_mipmap": 0
 }
 ```
 
@@ -242,6 +257,7 @@ Caxton would not have been possible without the following projects:
 * [ttf-parser] (RazrFalcon, MIT/Apache-2.0)
 * [msdfgen] (Chlumsky, MIT) and the [msdfgen-rs] bindings (Kayo Phoenix, MIT)
     * Versions 0.2.3 and earlier used the [msdf-rs] bindings (Penple, MIT) instead.
+* [ab-glyph-rasterizer] (alexheretic, Apache-2.0)
 * [JNI bindings for Rust] (MIT/Apache-2.0)
 * [flate2] (MIT/Apache-2.0)
 * [Rayon] (MIT/Apache-2.0)
@@ -267,6 +283,8 @@ Caxton would not have been possible without the following projects:
 [msdf-rs]: https://github.com/Penple/msdf-rs
 
 [msdfgen-rs]: https://github.com/katyo/msdfgen-rs
+
+[ab-glyph-rasterizer]: https://github.com/alexheretic/ab-glyph
 
 [JNI bindings for Rust]: https://github.com/jni-rs/jni-rs
 
