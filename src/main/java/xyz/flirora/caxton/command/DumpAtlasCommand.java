@@ -49,14 +49,20 @@ public class DumpAtlasCommand {
             List<CaxtonAtlas.Page> pages = cache.getAtlas().getAllPages();
             for (int i = 0; i < pages.size(); i++) {
                 CaxtonAtlas.Page page = pages.get(i);
+                int numMipmaps = page.getNumMipmapLevels();
                 GlStateManager._bindTexture(page.getGlId());
-                File imageOut = new File(outputDir, "page" + i + ".png");
-                try (NativeImage image = new NativeImage(CaxtonAtlas.PAGE_SIZE, CaxtonAtlas.PAGE_SIZE, false)) {
-                    image.loadFromTextureImage(0, false);
-                    image.writeTo(imageOut);
-                } catch (Exception exception) {
-                    LOGGER.warn("Couldn’t save atlas page #" + i, exception);
-                    context.getSource().sendError(Text.translatable("caxton.command.caxtondumpatlas.atlasFailed", i));
+                for (int mipmap = 0; mipmap < numMipmaps; ++mipmap) {
+                    String name = mipmap > 0 ?
+                            "page" + i + "_lv" + mipmap + ".png" :
+                            "page" + i + ".png";
+                    File imageOut = new File(outputDir, name);
+                    try (NativeImage image = new NativeImage(CaxtonAtlas.PAGE_SIZE >> mipmap, CaxtonAtlas.PAGE_SIZE >> mipmap, false)) {
+                        image.loadFromTextureImage(mipmap, false);
+                        image.writeTo(imageOut);
+                    } catch (Exception exception) {
+                        LOGGER.warn("Couldn’t save atlas page #" + i + ", level " + mipmap, exception);
+                        context.getSource().sendError(Text.translatable("caxton.command.caxtondumpatlas.atlasFailed", i));
+                    }
                 }
             }
 

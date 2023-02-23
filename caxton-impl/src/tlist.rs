@@ -203,4 +203,12 @@ impl<'a> TListPendingEntry<'a> {
             }
         }
     }
+
+    pub fn as_slice(&self) -> &[u8] {
+        self.pixels
+    }
+
+    pub fn as_slice_mut(&mut self) -> &mut [u8] {
+        self.pixels
+    }
 }

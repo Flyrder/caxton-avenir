@@ -216,7 +216,13 @@ public class CaxtonAtlas implements AutoCloseable {
         public Page(CaxtonAtlas atlas, int pageNum, int range, int numMipmapLevels, NativeImage.Format format) {
             super();
             this.format = format;
-            TextureUtil.prepareImage(NativeImage.InternalFormat.RGBA, this.getGlId(), numMipmapLevels - 1, PAGE_SIZE, PAGE_SIZE);
+            NativeImage.InternalFormat internalFormat = switch (format) {
+                case RGBA -> NativeImage.InternalFormat.RGBA;
+                case RGB -> NativeImage.InternalFormat.RGB;
+                case LUMINANCE_ALPHA -> NativeImage.InternalFormat.RG;
+                case LUMINANCE -> NativeImage.InternalFormat.RED;
+            };
+            TextureUtil.prepareImage(internalFormat, this.getGlId(), numMipmapLevels - 1, PAGE_SIZE, PAGE_SIZE);
             this.id = new Identifier("caxton", "atlas/" + pageNum);
             this.range = range;
             this.numMipmapLevels = numMipmapLevels;

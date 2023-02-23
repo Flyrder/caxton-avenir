@@ -8,29 +8,62 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderPhase;
 import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormats;
+import xyz.flirora.caxton.font.FontTech;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 @Environment(EnvType.CLIENT)
 public class CaxtonTextRenderLayers {
-    private final ConcurrentHashMap<CaxtonAtlas.Page, RenderLayer> text = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<CaxtonAtlas.Page, RenderLayer> textSeeThrough = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<CaxtonAtlas.Page, RenderLayer> textOutline = new ConcurrentHashMap<>();
+    private final Group msdf = new Group(
+            RenderLayerFunctions::ofText,
+            RenderLayerFunctions::ofTextSeeThrough,
+            RenderLayerFunctions::ofTextOutline);
+    private final Group raster = new Group(
+            RenderLayerFunctions::ofTextR,
+            RenderLayerFunctions::ofTextSeeThroughR,
+            RenderLayerFunctions::ofTextOutlineR);
 
     public void clear() {
-        text.clear();
-        textSeeThrough.clear();
-        textOutline.clear();
+        msdf.clear();
+        raster.clear();
     }
 
-    public RenderLayer text(CaxtonAtlas.Page page, TextRenderer.TextLayerType layerType) {
-        return (switch (layerType) {
-            case NORMAL -> text.computeIfAbsent(page, RenderLayerFunctions::ofText);
-            case SEE_THROUGH -> textSeeThrough.computeIfAbsent(page, RenderLayerFunctions::ofTextSeeThrough);
-            case POLYGON_OFFSET -> textOutline.computeIfAbsent(page, RenderLayerFunctions::ofTextOutline);
+    public RenderLayer text(CaxtonAtlas.Page page, TextRenderer.TextLayerType layerType, FontTech tech) {
+        return (switch (tech) {
+            case MSDF -> msdf.text(page, layerType);
+            case RASTER -> raster.text(page, layerType);
         });
+    }
+
+
+    public static class Group {
+        private final ConcurrentHashMap<CaxtonAtlas.Page, RenderLayer> text = new ConcurrentHashMap<>();
+        private final ConcurrentHashMap<CaxtonAtlas.Page, RenderLayer> textSeeThrough = new ConcurrentHashMap<>();
+        private final ConcurrentHashMap<CaxtonAtlas.Page, RenderLayer> textOutline = new ConcurrentHashMap<>();
+        private final Function<CaxtonAtlas.Page, RenderLayer> ofText, ofTextSeeThrough, ofTextOutline;
+
+        public Group(Function<CaxtonAtlas.Page, RenderLayer> ofText, Function<CaxtonAtlas.Page, RenderLayer> ofTextSeeThrough, Function<CaxtonAtlas.Page, RenderLayer> ofTextOutline) {
+            this.ofText = ofText;
+            this.ofTextSeeThrough = ofTextSeeThrough;
+            this.ofTextOutline = ofTextOutline;
+        }
+
+        public void clear() {
+            text.clear();
+            textSeeThrough.clear();
+            textOutline.clear();
+        }
+
+        public RenderLayer text(CaxtonAtlas.Page page, TextRenderer.TextLayerType layerType) {
+            return switch (layerType) {
+                case NORMAL -> text.computeIfAbsent(page, this.ofText);
+                case SEE_THROUGH -> textSeeThrough.computeIfAbsent(page, this.ofTextSeeThrough);
+                case POLYGON_OFFSET -> textOutline.computeIfAbsent(page, this.ofTextOutline);
+            };
+        }
     }
 
     private static class RenderLayerFunctions extends RenderLayer {
@@ -39,70 +72,48 @@ public class CaxtonTextRenderLayers {
             super(name, vertexFormat, drawMode, expectedBufferSize, hasCrumbling, translucent, startAction, endAction);
         }
 
-        private static RenderLayer ofText(CaxtonAtlas.Page page) {
+        private static RenderLayer make(String name, net.minecraft.client.gl.ShaderProgram shader, CaxtonAtlas.Page page, boolean outline, boolean rasterized) {
             return RenderLayer.of(
-                    "caxton_text",
-                    VertexFormats.POSITION_COLOR_TEXTURE_LIGHT,
+                    name,
+                    outline ?
+                            CaxtonVertexFormats.POSITION_COLOR_COLOR_TEXTURE_LIGHT :
+                            VertexFormats.POSITION_COLOR_TEXTURE_LIGHT,
                     VertexFormat.DrawMode.QUADS,
                     256,
                     false,
                     true,
                     RenderLayer.MultiPhaseParameters.builder()
-                            .program(textShader(page))
-                            .texture(new RenderPhase.Texture(page.getId(), true, false))
+                            .program(new Shayder(
+                                    () -> shader,
+                                    handleTextShader(page)))
+                            .texture(new RenderPhase.Texture(page.getId(), !rasterized, page.getNumMipmapLevels() > 1))
                             .transparency(TRANSLUCENT_TRANSPARENCY)
                             .lightmap(ENABLE_LIGHTMAP)
                             .build(false));
+        }
+
+        private static RenderLayer ofText(CaxtonAtlas.Page page) {
+            return make("caxton_text", CaxtonShaders.caxtonTextShader, page, false, false);
         }
 
         private static RenderLayer ofTextSeeThrough(CaxtonAtlas.Page page) {
-            return RenderLayer.of(
-                    "caxton_text_see_through",
-                    VertexFormats.POSITION_COLOR_TEXTURE_LIGHT,
-                    VertexFormat.DrawMode.QUADS,
-                    256,
-                    false,
-                    true,
-                    RenderLayer.MultiPhaseParameters.builder()
-                            .program(transparentTextShader(page))
-                            .texture(new RenderPhase.Texture(page.getId(), true, false))
-                            .transparency(TRANSLUCENT_TRANSPARENCY)
-                            .lightmap(ENABLE_LIGHTMAP)
-                            .build(false));
+            return make("caxton_text_see_through", CaxtonShaders.caxtonTextSeeThroughShader, page, false, false);
         }
 
         private static RenderLayer ofTextOutline(CaxtonAtlas.Page page) {
-            return RenderLayer.of(
-                    "caxton_text_outline",
-                    CaxtonVertexFormats.POSITION_COLOR_COLOR_TEXTURE_LIGHT,
-                    VertexFormat.DrawMode.QUADS,
-                    256,
-                    false,
-                    true,
-                    RenderLayer.MultiPhaseParameters.builder()
-                            .program(textOutlineShader(page))
-                            .texture(new RenderPhase.Texture(page.getId(), true, false))
-                            .transparency(TRANSLUCENT_TRANSPARENCY)
-                            .lightmap(ENABLE_LIGHTMAP)
-                            .build(false));
+            return make("caxton_text_outline", CaxtonShaders.caxtonTextOutlineShader, page, true, false);
         }
 
-        private static ShaderProgram textShader(CaxtonAtlas.Page texId) {
-            return new Shayder(
-                    () -> CaxtonShaders.caxtonTextShader,
-                    handleTextShader(texId));
+        private static RenderLayer ofTextR(CaxtonAtlas.Page page) {
+            return make("caxton_text_raster", CaxtonShaders.caxtonTextShaderR, page, false, true);
         }
 
-        private static ShaderProgram transparentTextShader(CaxtonAtlas.Page texId) {
-            return new Shayder(
-                    () -> CaxtonShaders.caxtonTextSeeThroughShader,
-                    handleTextShader(texId));
+        private static RenderLayer ofTextSeeThroughR(CaxtonAtlas.Page page) {
+            return make("caxton_text_see_through_raster", CaxtonShaders.caxtonTextSeeThroughShaderR, page, false, true);
         }
 
-        private static ShaderProgram textOutlineShader(CaxtonAtlas.Page texId) {
-            return new Shayder(
-                    () -> CaxtonShaders.caxtonTextOutlineShader,
-                    handleTextShader(texId));
+        private static RenderLayer ofTextOutlineR(CaxtonAtlas.Page page) {
+            return make("caxton_text_outline_raster", CaxtonShaders.caxtonTextOutlineShaderR, page, true, true);
         }
 
         private static Consumer<net.minecraft.client.gl.ShaderProgram> handleTextShader(CaxtonAtlas.Page texId) {

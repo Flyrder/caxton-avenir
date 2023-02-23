@@ -24,6 +24,7 @@ thiserror = "1.0.38"
 ttf-parser = "0.18.1"
 flate2 = "1.0.25"
 rayon = "1.6.1"
+ab_glyph_rasterizer = "0.1.8"
 
 [lib]
 crate_type = ["cdylib"]

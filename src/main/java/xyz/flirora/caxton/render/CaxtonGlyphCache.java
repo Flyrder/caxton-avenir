@@ -56,22 +56,26 @@ public class CaxtonGlyphCache {
 
         public long getOrCreateAtlasLocation(int glyphId) {
             return entry.computeIfAbsent(glyphId, id -> {
+                System.err.println("adding glyph #" + glyphId);
                 long tlLoc = font.getTlistLocation(glyphId, 0);
                 int width = (int) (tlLoc & 0xFFFF);
                 int height = (int) ((tlLoc >> 16) & 0xFFFF);
                 int numMipmapLevels = font.getNumMipmapLevels();
                 long location = CaxtonGlyphCache.this.atlas.insert(width, height, 1, font.getOptions().range(), numMipmapLevels, font.getPixelFormat());
+                System.err.println("location = " + Long.toHexString(location));
+
+                atlas.getAtlasPageTexture(CaxtonAtlas.getPage(location)).bindTexture();
+                GlStateManager._pixelStore(GlConst.GL_UNPACK_ROW_LENGTH, 0);
+                GlStateManager._pixelStore(GlConst.GL_UNPACK_SKIP_PIXELS, 0);
+                GlStateManager._pixelStore(GlConst.GL_UNPACK_SKIP_ROWS, 0);
+                GlStateManager._pixelStore(GlConst.GL_UNPACK_ALIGNMENT, font.getPixelFormat().getChannelCount());
 
                 for (int mipmap = 0; mipmap < numMipmapLevels; ++mipmap) {
                     tlLoc = font.getTlistLocation(glyphId, mipmap);
                     width = (int) (tlLoc & 0xFFFF);
                     height = (int) ((tlLoc >> 16) & 0xFFFF);
                     int offset = (int) (tlLoc >>> 32);
-                    atlas.getAtlasPageTexture(CaxtonAtlas.getPage(location)).bindTexture();
-                    GlStateManager._pixelStore(GlConst.GL_UNPACK_ROW_LENGTH, 0);
-                    GlStateManager._pixelStore(GlConst.GL_UNPACK_SKIP_PIXELS, 0);
-                    GlStateManager._pixelStore(GlConst.GL_UNPACK_SKIP_ROWS, 0);
-                    GlStateManager._pixelStore(GlConst.GL_UNPACK_ALIGNMENT, font.getPixelFormat().getChannelCount());
+                    System.err.println("mm" + mipmap + ": " + Long.toHexString(tlLoc) + " (" + width + ", " + height + ", " + offset + ")");
                     GlStateManager._texSubImage2D(
                             GlConst.GL_TEXTURE_2D,
                             mipmap,

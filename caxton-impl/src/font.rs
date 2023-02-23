@@ -4,6 +4,7 @@ use std::{
     time::Instant,
 };
 
+use ab_glyph_rasterizer::{Point, Rasterizer};
 use anyhow::{anyhow, Context};
 use base64::engine::general_purpose::URL_SAFE;
 use base64::Engine;
@@ -14,7 +15,7 @@ use rayon::iter::{
 use rustybuzz::{Face, Tag};
 use serde::{de, Deserialize};
 use sha2::{Digest, Sha256};
-use ttf_parser::{GlyphId, Rect, Variation};
+use ttf_parser::{GlyphId, OutlineBuilder, Rect, Variation};
 
 use crate::tlist::TList;
 
@@ -145,9 +146,7 @@ impl<'a> Font<'a> {
         cache_dir: &'_ Path,
         options: &FontOptions,
     ) -> anyhow::Result<Self> {
-        if options.tech != FontTech::Msdf {
-            eprintln!("font tech {:?} is NYI", options.tech);
-        } else if options.max_mipmap > 0 {
+        if options.tech == FontTech::Msdf && options.max_mipmap > 0 {
             eprintln!("adding mipmap layers for MSDF fonts is not recommended");
         }
 
@@ -257,14 +256,34 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Vec<TList>
                 .copied()
                 .zip_eq(pending_entries.into_par_iter())
                 .try_for_each(|((glyph_idx, bbox), mut pe)| -> anyhow::Result<()> {
+                    let glyph_id = GlyphId(glyph_idx);
                     match options.tech {
                         FontTech::Msdf => {
-                            let mtsdf =
-                                create_mtsdf(face, GlyphId(glyph_idx), bbox, options, mipmap)?;
+                            let mtsdf = create_mtsdf(face, glyph_id, bbox, options, mipmap)?;
                             pe.put(&mtsdf);
                         }
                         FontTech::Raster => {
-                            todo!("rasterization NYI");
+                            let Some(bounding_box) = bbox else { return Ok(()); };
+                            let (width, height) = dimensions_in_image(&Some(bounding_box), options);
+                            let width = adjust_dims(width, mipmap);
+                            let height = adjust_dims(height, mipmap);
+                            let mut rasterizer = Rasterizer::new(width as usize, height as usize);
+                            face.outline_glyph(
+                                glyph_id,
+                                &mut AbOutlineBuilder {
+                                    rasterizer: &mut rasterizer,
+                                    last_point: None,
+                                    bbox: &bounding_box,
+                                    options: &options,
+                                    scale: (-(mipmap as f64)).exp2(),
+                                },
+                            );
+                            let slice = pe.as_slice_mut();
+                            rasterizer.for_each_pixel_2d(|x, y, alpha| {
+                                let index =
+                                    (x as usize) + ((height - 1 - y) as usize) * (width as usize);
+                                slice[index] = (alpha * 255.0) as u8;
+                            });
                         }
                     }
                     anyhow::Result::Ok(())
@@ -301,12 +320,7 @@ fn create_mtsdf(
     // This should be passed as a parameter, but MsdfGeneratorConfig isn’t Sync
     let msdf_config = MsdfGeneratorConfig::default();
 
-    let bounding_box = match bounding_box {
-        Some(s) => s,
-        None => {
-            return Ok(Bitmap::new(0, 0));
-        }
-    };
+    let Some(bounding_box) = bounding_box else { return Ok(Bitmap::new(0, 0)); };
 
     let (width, height) = dimensions_in_image(&Some(bounding_box), options);
     let width = adjust_dims(width, mipmap);
@@ -343,5 +357,59 @@ fn create_mtsdf(
 }
 
 fn adjust_dims(n: u32, p: u32) -> u32 {
-    (n + ((1 << p) - 1)) >> p << p
+    (n + ((1 << p) - 1)) >> p
+}
+
+#[derive(Debug)]
+struct AbOutlineBuilder<'a> {
+    rasterizer: &'a mut Rasterizer,
+    last_point: Option<Point>,
+    bbox: &'a Rect,
+    options: &'a FontOptions,
+    scale: f64,
+}
+
+impl<'a> AbOutlineBuilder<'a> {
+    fn point(&self, x: f32, y: f32) -> Point {
+        let xp = ((x - (self.bbox.x_min as f32)) as f64) / self.options.shrinkage
+            + self.options.margin() as f64;
+        let yp = ((y - (self.bbox.y_min as f32)) as f64) / self.options.shrinkage
+            + self.options.margin() as f64;
+        let xp = (xp * self.scale) as f32;
+        let yp = (yp * self.scale) as f32;
+        (xp, yp).into()
+    }
+}
+
+impl<'a> OutlineBuilder for AbOutlineBuilder<'a> {
+    fn move_to(&mut self, x: f32, y: f32) {
+        self.last_point = Some(self.point(x, y));
+    }
+
+    fn line_to(&mut self, x: f32, y: f32) {
+        self.rasterizer
+            .draw_line(self.last_point.unwrap(), self.point(x, y));
+        self.last_point = Some(self.point(x, y));
+    }
+
+    fn quad_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
+        self.rasterizer.draw_quad(
+            self.last_point.unwrap(),
+            self.point(x1, y1),
+            self.point(x, y),
+        );
+        self.last_point = Some(self.point(x, y));
+    }
+
+    fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
+        self.rasterizer.draw_cubic(
+            self.last_point.unwrap(),
+            self.point(x1, y1),
+            self.point(x2, y2),
+            self.point(x, y),
+        );
+        self.last_point = Some(self.point(x, y));
+    }
+
+    fn close(&mut self) {}
 }
