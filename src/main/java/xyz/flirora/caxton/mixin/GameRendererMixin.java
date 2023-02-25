@@ -42,15 +42,6 @@ public abstract class GameRendererMixin {
         shaders.add(Pair.of(new ShaderProgram(factory, "caxton_rendertype_text_outline", CaxtonVertexFormats.POSITION_COLOR_COLOR_TEXTURE_LIGHT), shader -> {
             CaxtonShaders.caxtonTextOutlineShader = shader;
         }));
-        shaders.add(Pair.of(new ShaderProgram(factory, "caxton_rendertype_text_raster", VertexFormats.POSITION_COLOR_TEXTURE_LIGHT), shader -> {
-            CaxtonShaders.caxtonTextShaderR = shader;
-        }));
-        shaders.add(Pair.of(new ShaderProgram(factory, "caxton_rendertype_text_see_through_raster", VertexFormats.POSITION_COLOR_TEXTURE_LIGHT), shader -> {
-            CaxtonShaders.caxtonTextSeeThroughShaderR = shader;
-        }));
-        shaders.add(Pair.of(new ShaderProgram(factory, "caxton_rendertype_text_outline_raster", CaxtonVertexFormats.POSITION_COLOR_COLOR_TEXTURE_LIGHT), shader -> {
-            CaxtonShaders.caxtonTextOutlineShaderR = shader;
-        }));
         return shaders;
     }
 }

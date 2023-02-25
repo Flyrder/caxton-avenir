@@ -9,6 +9,4 @@ import org.jetbrains.annotations.Nullable;
 public class CaxtonShaders {
     @Nullable
     public static ShaderProgram caxtonTextShader, caxtonTextSeeThroughShader, caxtonTextOutlineShader;
-    @Nullable
-    public static ShaderProgram caxtonTextShaderR, caxtonTextSeeThroughShaderR, caxtonTextOutlineShaderR;
 }

@@ -4,10 +4,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gl.GlUniform;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderPhase;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.render.*;
 import xyz.flirora.caxton.font.FontTech;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -85,7 +82,7 @@ public class CaxtonTextRenderLayers {
                     RenderLayer.MultiPhaseParameters.builder()
                             .program(new Shayder(
                                     () -> shader,
-                                    handleTextShader(page)))
+                                    handleTextShader(page, !rasterized)))
                             .texture(new RenderPhase.Texture(page.getId(), !rasterized, page.getNumMipmapLevels() > 1))
                             .transparency(TRANSLUCENT_TRANSPARENCY)
                             .lightmap(ENABLE_LIGHTMAP)
@@ -105,18 +102,20 @@ public class CaxtonTextRenderLayers {
         }
 
         private static RenderLayer ofTextR(CaxtonAtlas.Page page) {
-            return make("caxton_text_raster", CaxtonShaders.caxtonTextShaderR, page, false, true);
+            return make("caxton_text_raster", GameRenderer.getRenderTypeTextIntensityProgram(), page, false, true);
         }
 
         private static RenderLayer ofTextSeeThroughR(CaxtonAtlas.Page page) {
-            return make("caxton_text_see_through_raster", CaxtonShaders.caxtonTextSeeThroughShaderR, page, false, true);
+            return make("caxton_text_see_through_raster", GameRenderer.getRenderTypeTextIntensitySeeThroughProgram(), page, false, true);
         }
 
         private static RenderLayer ofTextOutlineR(CaxtonAtlas.Page page) {
-            return make("caxton_text_outline_raster", CaxtonShaders.caxtonTextOutlineShaderR, page, true, true);
+            return make("caxton_text_outline_raster", GameRenderer.getRenderTypeTextIntensityProgram(), page, true, true);
         }
 
-        private static Consumer<net.minecraft.client.gl.ShaderProgram> handleTextShader(CaxtonAtlas.Page texId) {
+        private static Consumer<net.minecraft.client.gl.ShaderProgram> handleTextShader(CaxtonAtlas.Page texId, boolean setUniforms) {
+            if (!setUniforms) return shader -> {
+            };
             return shader -> {
                 if (shader == null) return;
                 GlUniform unitRange = ((ShaderExt) shader).getUnitRange();
