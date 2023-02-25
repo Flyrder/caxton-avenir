@@ -36,6 +36,9 @@ public record ConfiguredCaxtonFont(CaxtonFont font, long ptr, float shadowOffset
         if (settings == null) return null;
         String config = settings.settings == null ? null : settings.settings.toString();
         CaxtonFont font = CaxtonFontLoader.loadFontByIdentifier(manager, settings.id);
+        if (font == null) {
+            throw new RuntimeException("font " + settings.id + " does not exist");
+        }
         long ptr = CaxtonInternal.configureFont(font.getFontPtr(), config);
         float shadowOffset = settings.settings == null ? 1.0f :
                 JsonHelper.getFloat(settings.settings, "shadow_offset", 1.0f);
