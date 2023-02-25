@@ -306,21 +306,12 @@ fn create_mtsdf(
     let width = adjust_dims(width, mipmap);
     let height = adjust_dims(height, mipmap);
 
-    let scale = (-(mipmap as f64)).exp2() / options.shrinkage;
-
     let mut shape = face
         .as_ref()
         .glyph_shape(glyph_id)
         .ok_or_else(|| anyhow!("could not load glyph #{}", glyph_id.0))?;
     shape.edge_coloring_simple(3.0, 69);
-    let framing: Framing<f64> = Framing::new(
-        options.range as f64 * options.shrinkage,
-        Vector2 { x: scale, y: scale },
-        Vector2 {
-            x: options.margin() as f64 * options.shrinkage - bounding_box.x_min as f64,
-            y: options.margin() as f64 * options.shrinkage - bounding_box.y_min as f64,
-        },
-    );
+    let framing: Framing<f64> = framing(options, &bounding_box, mipmap);
 
     let mut mtsdf: Bitmap<msdfgen::Rgba<f32>> = Bitmap::new(width, height);
     shape.generate_mtsdf(&mut mtsdf, &framing, &msdf_config);
@@ -367,6 +358,18 @@ fn create_bitmap(
         slice[index] = (alpha * 255.0) as u8;
     });
     Ok(())
+}
+
+fn framing(options: &FontOptions, bounding_box: &Rect, mipmap: u32) -> Framing<f64> {
+    let scale = (-(mipmap as f64)).exp2() / options.shrinkage;
+    Framing::new(
+        options.range as f64 * options.shrinkage,
+        Vector2 { x: scale, y: scale },
+        Vector2 {
+            x: options.margin() as f64 * options.shrinkage - bounding_box.x_min as f64,
+            y: options.margin() as f64 * options.shrinkage - bounding_box.y_min as f64,
+        },
+    )
 }
 
 fn adjust_dims(n: u32, p: u32) -> u32 {
