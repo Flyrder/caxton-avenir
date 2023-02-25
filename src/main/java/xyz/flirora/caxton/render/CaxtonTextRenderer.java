@@ -319,7 +319,7 @@ public class CaxtonTextRenderer {
                 gx += bbXMin;
                 offsetY += bbYMin;
 
-                RenderLayer renderLayer = renderLayers.text(atlasPage, layerType, options.fontTech());
+                RenderLayer renderLayer = renderLayers.text(atlasPage, layerType, options.fontTech(), configuredFont.blur());
                 VertexConsumer vertexConsumer = vertexConsumers.getBuffer(renderLayer);
 
                 // Draw the quad

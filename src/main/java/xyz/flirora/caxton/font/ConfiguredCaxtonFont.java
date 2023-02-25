@@ -23,7 +23,7 @@ import xyz.flirora.caxton.layout.ShapingResult;
  */
 @Environment(EnvType.CLIENT)
 public record ConfiguredCaxtonFont(CaxtonFont font, long ptr, float shadowOffset,
-                                   float computedScaleFactor) implements AutoCloseable {
+                                   float computedScaleFactor, boolean blur) implements AutoCloseable {
     /**
      * Loads a {@link ConfiguredCaxtonFont} from its settings.
      *
@@ -44,7 +44,8 @@ public record ConfiguredCaxtonFont(CaxtonFont font, long ptr, float shadowOffset
                 JsonHelper.getFloat(settings.settings, "shadow_offset", 1.0f);
         double scaleFactor = settings.settings == null ? 1.0f : JsonHelper.getDouble(settings.settings, "scale_factor", 1.0f);
         float computedScaleFactor = (float) (7.0 * scaleFactor / font.getMetrics(CaxtonFont.Metrics.ASCENDER));
-        return new ConfiguredCaxtonFont(font, ptr, shadowOffset, computedScaleFactor);
+        boolean blur = settings.settings == null ? false : JsonHelper.getBoolean(settings.settings, "blur", false);
+        return new ConfiguredCaxtonFont(font, ptr, shadowOffset, computedScaleFactor, blur);
     }
 
     /**

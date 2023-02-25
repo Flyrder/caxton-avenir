@@ -93,6 +93,10 @@ key `file` specifies the path:
   // A list of OpenType feature tags. See below for the syntax:
   // https://docs.rs/rustybuzz/0.6.0/rustybuzz/struct.Feature.html#method.from_str
   "features": [],
+  // Only has an effect on raster tech. Interpolation is always enabled for
+  // MSDF fonts.
+  // If true, texels in the glyph bitmap will be interpolated.
+  "blur": false
 }
 ```
 
@@ -139,9 +143,6 @@ rasterizing the font:
   // Neither method is currently compatible with Iris Shaders, but support for
   // "raster" when a shader is present is planned.
   "tech": "msdf",
-  // Whether to interpolate texels in the bitmap (NOT YET IMPLEMENTED).
-  // Only has an effect on raster tech.
-  "blur": false,
   // The maximum mipmap level (0 – 4).
   // This is pointless to set if you’re using the MSDF rendering tech.
   // However, it can be useful for non-pixel fonts when you’re using the raster
