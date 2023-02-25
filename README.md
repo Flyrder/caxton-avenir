@@ -140,8 +140,8 @@ rasterizing the font:
   // to use glyph bitmaps ("raster").
   // "msdf" is recommended for most fonts, but "raster" is more suitable for
   // pixel fonts.
-  // Neither method is currently compatible with Iris Shaders, but support for
-  // "raster" when a shader is present is planned.
+  // In addition, only "raster" is fully compatible with Iris Shaders – text in
+  // MSDF fonts will not show up inside the world if a shader is loaded.
   "tech": "msdf",
   // The maximum mipmap level (0 – 4).
   // This is pointless to set if you’re using the MSDF rendering tech.
