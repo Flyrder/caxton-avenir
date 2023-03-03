@@ -17,6 +17,7 @@ use serde::{de, Deserialize};
 use sha2::{Digest, Sha256};
 use ttf_parser::{GlyphId, OutlineBuilder, Rect, Variation};
 
+use crate::extrude::Kernel;
 use crate::tlist::{TList, TListPendingEntry};
 
 const SALT: [u8; 4] = [0xE6, 0x26, 0x69, 0x11];
@@ -337,6 +338,8 @@ fn create_bitmap(
     mipmap: u32,
     pe: &mut TListPendingEntry,
 ) -> anyhow::Result<()> {
+    let kernel = Kernel::with_radius(options.range as f64 * (-(mipmap as f64)).exp2());
+
     let Some(bounding_box) = bounding_box else { return Ok(()); };
     let (width, height) = dimensions_in_image(&Some(bounding_box), options);
     let width = adjust_dims(width, mipmap);

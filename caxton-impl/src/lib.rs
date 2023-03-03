@@ -1,4 +1,5 @@
 pub mod cfont;
+pub mod extrude;
 pub mod font;
 pub mod jni;
 pub mod shape;

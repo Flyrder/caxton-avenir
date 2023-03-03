@@ -28,3 +28,6 @@ ab_glyph_rasterizer = "0.1.8"
 
 [lib]
 crate_type = ["cdylib"]
+
+[profile.release]
+panic = 'abort'
