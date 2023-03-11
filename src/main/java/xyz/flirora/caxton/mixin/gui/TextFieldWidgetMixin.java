@@ -1,5 +1,6 @@
 package xyz.flirora.caxton.mixin.gui;
 
+import com.llamalad7.mixinextras.injector.ModifyReceiver;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.TextRenderer;
@@ -93,6 +94,9 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     @Shadow
     public abstract void setCursor(int cursor);
 
+    @Shadow
+    public abstract void setSelectionStart(int cursor);
+
     @Override
     public void updateCaxtonText(boolean changed) {
         // Protect against mods that do things such as *gasp* registering
@@ -132,21 +136,31 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     // call `setSelectionEnd` before `onChanged`.
     @Inject(at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;text:Ljava/lang/String;", opcode = Opcodes.PUTFIELD, shift = At.Shift.AFTER), method = "setText")
     private void updateCaxtonTextOnSetText(String text, CallbackInfo ci) {
+        this.selectionStart = text.length();
+        this.selectionEnd = selectionStart;
         updateCaxtonText(true);
     }
 
-    @Inject(at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;text:Ljava/lang/String;", opcode = Opcodes.PUTFIELD, shift = At.Shift.AFTER), method = "write")
-    private void updateCaxtonTextOnWrite(String text, CallbackInfo ci) {
+    @ModifyReceiver(method = "write", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;setSelectionStart(I)V"))
+    private TextFieldWidget updateCaxtonTextOnWrite(TextFieldWidget me, int newSelectionStart) {
+        this.setSelectionStart(newSelectionStart);
+        this.selectionEnd = selectionStart;
         updateCaxtonText(true);
+        return me;
     }
 
-    @Inject(at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;text:Ljava/lang/String;", opcode = Opcodes.PUTFIELD, shift = At.Shift.AFTER), method = "eraseCharacters")
-    private void updateCaxtonTextOnEraseCharacters(int maxLength, CallbackInfo ci) {
+    @ModifyReceiver(method = "eraseCharacters", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;setCursor(I)V"))
+    private TextFieldWidget updateCaxtonTextOnEraseCharacters(TextFieldWidget me, int cursor) {
+        this.setSelectionStart(cursor);
+        this.selectionEnd = selectionStart;
         updateCaxtonText(true);
+        return me;
     }
 
     @Inject(at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;text:Ljava/lang/String;", opcode = Opcodes.PUTFIELD, shift = At.Shift.AFTER), method = "setMaxLength")
     private void updateCaxtonTextOnSetMaxLength(int maxLength, CallbackInfo ci) {
+        this.selectionStart = Math.min(selectionStart, text.length());
+        this.selectionEnd = Math.min(selectionEnd, text.length());
         updateCaxtonText(true);
     }
 
