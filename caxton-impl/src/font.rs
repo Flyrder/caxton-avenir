@@ -253,30 +253,52 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Vec<TList>
         .map(|mipmap| {
             let mut tlist = TList::new();
 
-            let pending_entries = tlist.adds(
-                options.tech.bytes_per_pixel(),
-                glyph_indices_and_bboxes.iter().map(|(_, bbox)| {
-                    let (width, height) = dimensions_in_image(bbox, options);
-                    (adjust_dims(width, mipmap), adjust_dims(height, mipmap))
-                }),
-            )?;
+            let sizes = glyph_indices_and_bboxes.iter().map(|(_, bbox)| {
+                let (width, height) = dimensions_in_image(bbox, options);
+                (adjust_dims(width, mipmap), adjust_dims(height, mipmap))
+            });
 
-            glyph_indices_and_bboxes
-                .par_iter()
-                .copied()
-                .zip_eq(pending_entries.into_par_iter())
-                .try_for_each(|((glyph_idx, bbox), mut pe)| -> anyhow::Result<()> {
-                    let glyph_id = GlyphId(glyph_idx);
-                    match options.tech {
-                        FontTech::Msdf => {
+            match options.tech {
+                FontTech::Msdf => {
+                    let pending_entries = tlist.adds(4, sizes)?;
+
+                    glyph_indices_and_bboxes
+                        .par_iter()
+                        .copied()
+                        .zip_eq(pending_entries.into_par_iter())
+                        .try_for_each(|((glyph_idx, bbox), mut pe)| -> anyhow::Result<()> {
+                            let glyph_id = GlyphId(glyph_idx);
                             create_mtsdf(face, glyph_id, bbox, options, mipmap, &mut pe)?;
-                        }
-                        FontTech::Raster => {
-                            create_bitmap(face, glyph_id, bbox, options, mipmap, &mut pe)?;
-                        }
-                    }
-                    anyhow::Result::Ok(())
-                })?;
+                            anyhow::Result::Ok(())
+                        })?;
+                }
+                FontTech::Raster => {
+                    let kernel =
+                        Kernel::with_radius(options.range as f64 * (-(mipmap as f64)).exp2());
+                    let pending_entries = tlist.adds_pairs(1, sizes)?;
+
+                    glyph_indices_and_bboxes
+                        .par_iter()
+                        .copied()
+                        .zip_eq(pending_entries.into_par_iter())
+                        .try_for_each(
+                            |((glyph_idx, bbox), (mut pe, mut pe_outline))| -> anyhow::Result<()> {
+                                let glyph_id = GlyphId(glyph_idx);
+                                create_bitmap(
+                                    face,
+                                    glyph_id,
+                                    bbox,
+                                    options,
+                                    mipmap,
+                                    &mut pe,
+                                    &mut pe_outline,
+                                    &kernel,
+                                )?;
+                                anyhow::Result::Ok(())
+                            },
+                        )?;
+                }
+            }
 
             Ok(tlist)
         })
@@ -357,9 +379,9 @@ fn create_bitmap(
     options: &FontOptions,
     mipmap: u32,
     pe: &mut TListPendingEntry,
+    pe_outline: &mut TListPendingEntry,
+    kernel: &Kernel,
 ) -> anyhow::Result<()> {
-    let kernel = Kernel::with_radius(options.range as f64 * (-(mipmap as f64)).exp2());
-
     let Some(bounding_box) = bounding_box else { return Ok(()); };
     let (width, height) = dimensions_in_image(&Some(bounding_box), options);
     let width = adjust_dims(width, mipmap);
@@ -380,6 +402,14 @@ fn create_bitmap(
         let index = (x as usize) + ((height - 1 - y) as usize) * (width as usize);
         slice[index] = (alpha * 255.0) as u8;
     });
+
+    kernel.convolve(
+        slice,
+        pe_outline.as_slice_mut(),
+        width as usize,
+        height as usize,
+    );
+
     Ok(())
 }
 

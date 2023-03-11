@@ -1,4 +1,3 @@
-use std::borrow::BorrowMut;
 use std::collections::btree_map::Entry;
 use std::collections::BTreeMap;
 
@@ -35,8 +34,8 @@ impl Kernel {
     }
 
     pub fn convolve(&self, src: &[u8], dest: &mut [u8], width: usize, height: usize) {
-        assert_eq!(src.len(), width * height);
-        assert_eq!(dest.len(), width * height);
+        assert!(src.len() >= width * height);
+        assert!(dest.len() >= width * height);
         if width == 0 || height == 0 {
             return;
         }

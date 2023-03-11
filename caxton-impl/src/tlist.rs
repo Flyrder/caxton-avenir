@@ -97,6 +97,27 @@ impl TList {
         Ok(result)
     }
 
+    pub fn adds_pairs(
+        &mut self,
+        bit_depth: usize,
+        sizes: impl Iterator<Item = (u32, u32)> + Clone,
+    ) -> anyhow::Result<Vec<(TListPendingEntry<'_>, TListPendingEntry<'_>)>> {
+        let mut entries = self.adds(bit_depth, sizes.clone().chain(sizes))?;
+        let midpoint = entries.len() / 2;
+        // [1, 2, 3, 4, 5, 6] → [(1, 4), (2, 5), (3, 6)]
+        unsafe {
+            entries.set_len(0);
+            Ok((0..midpoint)
+                .map(|i| {
+                    (
+                        entries.as_ptr().add(i).read(),
+                        entries.as_ptr().add(midpoint + i).read(),
+                    )
+                })
+                .collect())
+        }
+    }
+
     pub fn locations(&self) -> &[TLocation] {
         &self.locations
     }
