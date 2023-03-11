@@ -11,7 +11,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.TextureManager;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.system.MemoryUtil;
@@ -303,17 +302,6 @@ public class CaxtonFont implements AutoCloseable {
 
     public int getTlistSize() {
         return tlistEntryCount;
-    }
-
-    /**
-     * Registers all atlas textures associated with this font.
-     *
-     * @param textureManager the {@link TextureManager} to which the textures should be registered
-     */
-    @Deprecated(forRemoval = true)
-    public void registerTextures(TextureManager textureManager) {
-        if (registered) return;
-        registered = true;
     }
 
     private String getCacheDir() {

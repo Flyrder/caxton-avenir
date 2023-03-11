@@ -6,7 +6,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.Font;
 import net.minecraft.client.font.Glyph;
-import net.minecraft.client.texture.TextureManager;
 import net.minecraft.text.Style;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,15 +109,5 @@ public class CaxtonTypeface implements Font {
      */
     public Stream<ConfiguredCaxtonFont> fonts() {
         return Stream.of(regular, bold, italic, boldItalic).filter(Objects::nonNull);
-    }
-
-    /**
-     * Registers all fonts used by this typeface.
-     *
-     * @param textureManager the {@link TextureManager} to register the font textures under
-     */
-    @Deprecated(forRemoval = true)
-    public void registerFonts(TextureManager textureManager) {
-        this.fonts().forEach(f -> f.font().registerTextures(textureManager));
     }
 }
