@@ -173,6 +173,7 @@ impl<'a> Font<'a> {
                     x_max: 0,
                     y_max: 0,
                 });
+                let rect = adjust_bbox(rect, &options);
                 (rect.x_min as u16 as u64)
                     | (rect.y_min as u16 as u64) << 16
                     | (rect.x_max as u16 as u64) << 32
@@ -309,10 +310,18 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Vec<TList>
 /// 2^n pixels, where n is the maximum mipmap level.
 fn adjust_bbox(mut bounding_box: Rect, options: &FontOptions) -> Rect {
     let max_shrink_factor = options.shrinkage * (options.max_mipmap as f64).exp2();
-    let x_max_in_max_mipmap_atlas_pixels = (bounding_box.x_max as f64) / max_shrink_factor;
-    let whole_atlas_pixels_above_baseline = x_max_in_max_mipmap_atlas_pixels.ceil();
+
+    // Fun fact: I accidentally put x_max instead of y_max here at first
+    let y_max_in_max_mipmap_atlas_pixels = (bounding_box.y_max as f64) / max_shrink_factor;
+    let whole_atlas_pixels_above_baseline = y_max_in_max_mipmap_atlas_pixels.ceil();
     let font_units_above_baseline = whole_atlas_pixels_above_baseline * max_shrink_factor;
-    bounding_box.x_max = font_units_above_baseline.clamp(i16::MIN as f64, i16::MAX as f64) as i16;
+    bounding_box.y_max = font_units_above_baseline.clamp(i16::MIN as f64, i16::MAX as f64) as i16;
+
+    let y_min_in_max_mipmap_atlas_pixels = (bounding_box.y_min as f64) / max_shrink_factor;
+    let whole_atlas_pixels_below_baseline = y_min_in_max_mipmap_atlas_pixels.floor();
+    let font_units_below_baseline = whole_atlas_pixels_below_baseline * max_shrink_factor;
+    bounding_box.y_min = font_units_below_baseline.clamp(i16::MIN as f64, i16::MAX as f64) as i16;
+
     bounding_box
 }
 
