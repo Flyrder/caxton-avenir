@@ -36,8 +36,6 @@ public class Voepfxo {
 
         BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
         RenderSystem.enableBlend();
-        RenderSystem.disableTexture();
-        RenderSystem.defaultBlendFunc();
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
         bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
         bufferBuilder.vertex(matrix, x1, y2, 0.0f).color(r, g, b, a).next();
@@ -45,7 +43,6 @@ public class Voepfxo {
         bufferBuilder.vertex(matrix, x2, y1, 0.0f).color(r, g, b, a).next();
         bufferBuilder.vertex(matrix, x1, y1, 0.0f).color(r, g, b, a).next();
         BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
-        RenderSystem.enableTexture();
         RenderSystem.disableBlend();
     }
 
@@ -59,7 +56,6 @@ public class Voepfxo {
         BufferBuilder bufferBuilder = tessellator.getBuffer();
         RenderSystem.setShader(GameRenderer::getPositionProgram);
         RenderSystem.setShaderColor(0.0f, 0.0f, 1.0f, 1.0f);
-        RenderSystem.disableTexture();
         RenderSystem.enableColorLogicOp();
         RenderSystem.logicOp(GlStateManager.LogicOp.OR_REVERSE);
         bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
@@ -70,7 +66,6 @@ public class Voepfxo {
         tessellator.draw();
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         RenderSystem.disableColorLogicOp();
-        RenderSystem.enableTexture();
     }
 
     public static int sus(int codePoint) {

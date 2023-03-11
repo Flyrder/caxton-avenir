@@ -90,16 +90,14 @@ public class CaxtonTextRenderer {
         return this.fontStorageAccessor.apply(id);
     }
 
-    public float drawLayer(String text, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider, boolean seeThrough, int backgroundColor, int light, int leftmostCodePoint, float maxWidth) {
-        TextRenderer.TextLayerType layerType = seeThrough ? TextRenderer.TextLayerType.SEE_THROUGH : TextRenderer.TextLayerType.NORMAL;
+    public float drawLayer(String text, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider, TextRenderer.TextLayerType layerType, int backgroundColor, int light, int leftmostCodePoint, float maxWidth) {
         CaxtonText runGroups = CaxtonText.fromFormatted(text, fontStorageAccessor, Style.EMPTY, false, this.rtl, handler.getCache());
         float newX = drawRunGroups(x, y, color, shadow, matrix, vertexConsumerProvider, layerType, backgroundColor, light, runGroups, leftmostCodePoint, maxWidth, getMinThickness(matrix));
         if (!shadow) this.rtl = false;
         return newX;
     }
 
-    public float drawLayer(OrderedText text, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider, boolean seeThrough, int backgroundColor, int light, int leftmostCodePoint, float maxWidth) {
-        TextRenderer.TextLayerType layerType = seeThrough ? TextRenderer.TextLayerType.SEE_THROUGH : TextRenderer.TextLayerType.NORMAL;
+    public float drawLayer(OrderedText text, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider, TextRenderer.TextLayerType layerType, int backgroundColor, int light, int leftmostCodePoint, float maxWidth) {
         CaxtonText runGroups = CaxtonText.from(text, fontStorageAccessor, false, this.rtl, handler.getCache());
         return drawRunGroups(x, y, color, shadow, matrix, vertexConsumerProvider, layerType, backgroundColor, light, runGroups, leftmostCodePoint, maxWidth, getMinThickness(matrix));
     }

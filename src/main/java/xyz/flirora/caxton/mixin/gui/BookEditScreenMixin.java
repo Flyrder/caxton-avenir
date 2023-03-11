@@ -9,9 +9,7 @@ import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.BookEditScreen;
-import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.SelectionManager;
 import net.minecraft.client.util.math.MatrixStack;
@@ -198,10 +196,11 @@ public abstract class BookEditScreenMixin extends Screen {
         return new Rect2i(x1, lineY + 32, x2 - x1, this.textRenderer.fontHeight);
     }
 
-    @Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/BufferBuilder;vertex(DDD)Lnet/minecraft/client/render/VertexConsumer;"), method = "drawSelection")
-    private VertexConsumer onVertex(BufferBuilder bb, double x, double y, double z) {
-        double scx = x / XSCALE + (width - 192) / 2.0 + 36;
-        return bb.vertex(scx, y, z);
+    @Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ingame/BookEditScreen;fill(Lnet/minecraft/client/util/math/MatrixStack;IIIII)V"), method = "drawSelection")
+    private void onVertex(MatrixStack matrices, int x1, int y1, int x2, int y2, int color) {
+        float scx1 = x1 / XSCALE + (width - 192) / 2.0f + 36;
+        float scx2 = x2 / XSCALE + (width - 192) / 2.0f + 36;
+        Voepfxo.fill(matrices, scx1, y1, scx2, y2, color);
     }
 
     @ModifyExpressionValue(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ingame/BookEditScreen;getPageContent()Lnet/minecraft/client/gui/screen/ingame/BookEditScreen$PageContent;"), method = "render")

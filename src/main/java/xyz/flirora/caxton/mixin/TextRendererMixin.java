@@ -46,14 +46,14 @@ public class TextRendererMixin implements HasCaxtonTextRenderer {
         cir.setReturnValue(text);
     }
 
-    @Inject(at = @At("HEAD"), method = "drawLayer(Ljava/lang/String;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;ZII)F", cancellable = true)
-    private void onDrawLayerString(String text, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider, boolean seeThrough, int backgroundColor, int light, CallbackInfoReturnable<Float> cir) {
-        cir.setReturnValue(caxtonRenderer.drawLayer(text, x, y, color, shadow, matrix, vertexConsumerProvider, seeThrough, backgroundColor, light, -1, Float.POSITIVE_INFINITY));
+    @Inject(at = @At("HEAD"), method = "drawLayer(Ljava/lang/String;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/client/font/TextRenderer$TextLayerType;II)F", cancellable = true)
+    private void onDrawLayerString(String text, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider, TextRenderer.TextLayerType layerType, int backgroundColor, int light, CallbackInfoReturnable<Float> cir) {
+        cir.setReturnValue(caxtonRenderer.drawLayer(text, x, y, color, shadow, matrix, vertexConsumerProvider, layerType, backgroundColor, light, -1, Float.POSITIVE_INFINITY));
     }
 
-    @Inject(at = @At("HEAD"), method = "drawLayer(Lnet/minecraft/text/OrderedText;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;ZII)F", cancellable = true)
-    private void onDrawLayerOrderedText(OrderedText text, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider, boolean seeThrough, int backgroundColor, int light, CallbackInfoReturnable<Float> cir) {
-        cir.setReturnValue(caxtonRenderer.drawLayer(text, x, y, color, shadow, matrix, vertexConsumerProvider, seeThrough, backgroundColor, light, -1, Float.POSITIVE_INFINITY));
+    @Inject(at = @At("HEAD"), method = "drawLayer(Lnet/minecraft/text/OrderedText;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/client/font/TextRenderer$TextLayerType;II)F", cancellable = true)
+    private void onDrawLayerOrderedText(OrderedText text, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider, TextRenderer.TextLayerType layerType, int backgroundColor, int light, CallbackInfoReturnable<Float> cir) {
+        cir.setReturnValue(caxtonRenderer.drawLayer(text, x, y, color, shadow, matrix, vertexConsumerProvider, layerType, backgroundColor, light, -1, Float.POSITIVE_INFINITY));
     }
 
     @Inject(at = @At("HEAD"), method = "drawWithOutline", cancellable = true)
