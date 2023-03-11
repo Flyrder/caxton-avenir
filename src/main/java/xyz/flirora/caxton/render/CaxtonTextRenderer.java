@@ -148,9 +148,11 @@ public class CaxtonTextRenderer {
             } else {
                 ShapingResult[] shapingResults = runGroup.getShapingResults();
 
+                // FIXME (hard): underlines and strikethroughs don’t render
+                //  properly with this strategy
                 for (int i = 0; i < shapingResults.length; i++) {
                     ShapingResult shapingResult = shapingResults[i];
-                    x = drawShapedRun(shapingResult, runGroup, i, x, y, effectiveColor, effectiveOutlineColor, false, matrix, vertexConsumers, TextRenderer.TextLayerType.POLYGON_OFFSET, light, outlineDrawer, NO_THRESHOLD, Float.POSITIVE_INFINITY, minThickness);
+                    x = drawShapedRun(shapingResult, runGroup, i, x, y, effectiveColor, effectiveOutlineColor, false, matrix, vertexConsumers, TextRenderer.TextLayerType.POLYGON_OFFSET, light, outlineDrawer, NO_THRESHOLD, Float.POSITIVE_INFINITY, minThickness, 0);
                 }
             }
         }
@@ -202,7 +204,7 @@ public class CaxtonTextRenderer {
 
                 for (int index = 0; index < shapingResults.length; ++index) {
                     ShapingResult shapingResult = shapingResults[index];
-                    x = drawShapedRun(shapingResult, runGroup, index, x, y, color, 0, shadow, matrix, vertexConsumerProvider, layerType, light, drawer, threshold, maxX, minThickness);
+                    x = drawShapedRun(shapingResult, runGroup, index, x, y, color, 0, shadow, matrix, vertexConsumerProvider, layerType, light, drawer, threshold, maxX, minThickness, 0);
                 }
             }
         }
@@ -220,13 +222,16 @@ public class CaxtonTextRenderer {
             Matrix4f matrix, VertexConsumerProvider vertexConsumers,
             TextRenderer.TextLayerType layerType, int light,
             TextRenderer.Drawer drawer,
-            Threshold threshold, float maxX, float minThickness) {
+            Threshold threshold, float maxX, float minThickness,
+            int glyphOffset) {
         if (x >= maxX) return x;
 
         ConfiguredCaxtonFont configuredFont = runGroup.getFont();
         CaxtonFont font = configuredFont.font();
         CaxtonFontOptions options = font.getOptions();
         CaxtonGlyphCache.Font cacheForFont = cache.forFont(font);
+
+        assert glyphOffset + font.getGlyphCount() <= font.getTlistSize();
 
         double shrink = options.shrinkage();
         int margin = options.margin();
@@ -247,6 +252,7 @@ public class CaxtonTextRenderer {
         float ys = baselineY - strikeoutPosition * scale;
         float dyu = underlineThickness * scale;
         float dys = strikeoutThickness * scale;
+        float ou = 0.5f * dyu, os = 0.5f * dys;
 
         // I don’t want to have to deal with computing this for every underlined character
         if (dyu < minThickness) dyu = minThickness;
@@ -263,10 +269,12 @@ public class CaxtonTextRenderer {
         float baseRed = ((color >> 16) & 0xFF) / 255.0f * brightnessMultiplier;
         float alpha = ((color >> 24) & 0xFF) / 255.0f;
 
-        float ulBlue = (outlineColor & 0xFF) / 255.0f * brightnessMultiplier;
-        float ulGreen = ((outlineColor >> 8) & 0xFF) / 255.0f * brightnessMultiplier;
-        float ulRed = ((outlineColor >> 16) & 0xFF) / 255.0f * brightnessMultiplier;
-        float ulAlpha = ((outlineColor >> 24) & 0xFF) / 255.0f;
+        // Will the render layers accept two colors per vertex instead of one?
+        boolean twoColored = layerType == TextRenderer.TextLayerType.POLYGON_OFFSET;
+        float olBlue = (outlineColor & 0xFF) / 255.0f * brightnessMultiplier;
+        float olGreen = ((outlineColor >> 8) & 0xFF) / 255.0f * brightnessMultiplier;
+        float olRed = ((outlineColor >> 16) & 0xFF) / 255.0f * brightnessMultiplier;
+        float olAlpha = ((outlineColor >> 24) & 0xFF) / 255.0f;
 
         int numGlyphs = shapedRun.numGlyphs();
         int cumulAdvanceX = 0;
@@ -301,7 +309,7 @@ public class CaxtonTextRenderer {
             int gx = cumulAdvanceX + offsetX;
 
             {
-                long atlasLoc = cacheForFont.getOrCreateAtlasLocation(glyphId);
+                long atlasLoc = cacheForFont.getOrCreateAtlasLocation(glyphOffset + glyphId);
                 int atlasX = CaxtonAtlas.getX(atlasLoc);
                 int atlasY = CaxtonAtlas.getY(atlasLoc);
                 int atlasWidth = CaxtonAtlas.getW(atlasLoc);
@@ -344,29 +352,29 @@ public class CaxtonTextRenderer {
 
                 vertexConsumer.vertex(matrix, x0, y0, 0.0f)
                         .color(red, green, blue, alpha);
-                if (layerType == TextRenderer.TextLayerType.POLYGON_OFFSET)
-                    vertexConsumer.color(ulRed, ulGreen, ulBlue, ulAlpha);
+                if (twoColored)
+                    vertexConsumer.color(olRed, olGreen, olBlue, olAlpha);
                 vertexConsumer.texture(u0, v0)
                         .light(light)
                         .next();
                 vertexConsumer.vertex(matrix, x0, y1, 0.0f)
                         .color(red, green, blue, alpha);
-                if (layerType == TextRenderer.TextLayerType.POLYGON_OFFSET)
-                    vertexConsumer.color(ulRed, ulGreen, ulBlue, ulAlpha);
+                if (twoColored)
+                    vertexConsumer.color(olRed, olGreen, olBlue, olAlpha);
                 vertexConsumer.texture(u0, v1)
                         .light(light)
                         .next();
                 vertexConsumer.vertex(matrix, x1, y1, 0.0f)
                         .color(red, green, blue, alpha);
-                if (layerType == TextRenderer.TextLayerType.POLYGON_OFFSET)
-                    vertexConsumer.color(ulRed, ulGreen, ulBlue, ulAlpha);
+                if (twoColored)
+                    vertexConsumer.color(olRed, olGreen, olBlue, olAlpha);
                 vertexConsumer.texture(u1, v1)
                         .light(light)
                         .next();
                 vertexConsumer.vertex(matrix, x1, y0, 0.0f)
                         .color(red, green, blue, alpha);
-                if (layerType == TextRenderer.TextLayerType.POLYGON_OFFSET)
-                    vertexConsumer.color(ulRed, ulGreen, ulBlue, ulAlpha);
+                if (twoColored)
+                    vertexConsumer.color(olRed, olGreen, olBlue, olAlpha);
                 vertexConsumer.texture(u1, v0)
                         .light(light)
                         .next();
@@ -375,9 +383,15 @@ public class CaxtonTextRenderer {
             float x0a = x + cumulAdvanceX * scale;
             float x1a = x + (cumulAdvanceX + advanceX) * scale;
             if (style.isUnderlined()) {
+                if (twoColored) {
+                    ((TextRendererDrawerAccessor) drawer).callAddRectangle(new GlyphRenderer.Rectangle(x0a - ou, y0u + ou, x1a + ou, y1u - ou, 0.005f, olRed, olGreen, olBlue, olAlpha));
+                }
                 ((TextRendererDrawerAccessor) drawer).callAddRectangle(new GlyphRenderer.Rectangle(x0a, y0u, x1a, y1u, 0.01f, red, green, blue, alpha));
             }
             if (style.isStrikethrough()) {
+                if (twoColored) {
+                    ((TextRendererDrawerAccessor) drawer).callAddRectangle(new GlyphRenderer.Rectangle(x0a - os, y0s + os, x1a + os, y1s - os, 0.005f, olRed, olGreen, olBlue, olAlpha));
+                }
                 ((TextRendererDrawerAccessor) drawer).callAddRectangle(new GlyphRenderer.Rectangle(x0a, y0s, x1a, y1s, 0.01f, red, green, blue, alpha));
             }
 

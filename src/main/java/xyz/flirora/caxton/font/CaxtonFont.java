@@ -301,6 +301,10 @@ public class CaxtonFont implements AutoCloseable {
         return glyphCount;
     }
 
+    public int getTlistSize() {
+        return tlistEntryCount;
+    }
+
     /**
      * Registers all atlas textures associated with this font.
      *
