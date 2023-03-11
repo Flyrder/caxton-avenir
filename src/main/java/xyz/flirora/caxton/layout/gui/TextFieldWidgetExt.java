@@ -1,5 +1,5 @@
 package xyz.flirora.caxton.layout.gui;
 
 public interface TextFieldWidgetExt {
-    void updateCaxtonText();
+    void updateCaxtonText(boolean changed);
 }

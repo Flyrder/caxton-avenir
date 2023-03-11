@@ -21,6 +21,6 @@ public class ChatInputSuggestorMixin {
 
     @Inject(at = @At("RETURN"), method = "refresh")
     private void afterRefresh(CallbackInfo ci) {
-        ((TextFieldWidgetExt) textField).updateCaxtonText();
+        ((TextFieldWidgetExt) textField).updateCaxtonText(false);
     }
 }

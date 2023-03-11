@@ -34,6 +34,7 @@ import xyz.flirora.caxton.render.HasCaxtonTextRenderer;
 import xyz.flirora.caxton.render.Voepfxo;
 
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 @Environment(EnvType.CLIENT)
 @Mixin(TextFieldWidget.class)
@@ -74,6 +75,10 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     private @Nullable String suggestion;
     @Shadow
     private @Nullable Text placeholder;
+    @Shadow
+    private @Nullable Consumer<String> changedListener;
+    @Unique
+    private boolean updatingCaxtonText = false;
 
     public TextFieldWidgetMixin(int x, int y, int width, int height, Text message) {
         super(x, y, width, height, message);
@@ -88,42 +93,66 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     @Shadow
     public abstract void setCursor(int cursor);
 
-    public void updateCaxtonText() {
-        boolean hideSuggestion = selectionStart < text.length() || text.length() >= getMaxLength();
-        OrderedText text = renderTextProvider.apply(this.text, 0);
-        if (!hideSuggestion && suggestion != null) {
-            text = OrderedText.concat(text, OrderedText.styledForwardsVisitedString(suggestion, SUGGESTION));
+    @Override
+    public void updateCaxtonText(boolean changed) {
+        // Protect against mods that do things such as *gasp* registering
+        // changed listeners that set suggestion text.
+        if (updatingCaxtonText) return;
+        updatingCaxtonText = true;
+
+        if (changed && this.changedListener != null) {
+            this.changedListener.accept(text);
         }
 
-        this.caxtonText = CaxtonText.from(text, ((TextRendererAccessor) textRenderer).getFontStorageAccessor(), true, false, ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer().getHandler().getCache());
+        try {
+            boolean hideSuggestion = selectionStart < text.length() || text.length() >= getMaxLength();
+            // We need to check for empty text – some mods (such as EMI)
+            // assume that their render text providers will never be called
+            // for an empty text box
+            OrderedText text = this.text.isEmpty() ?
+                    OrderedText.EMPTY :
+                    renderTextProvider.apply(this.text, 0);
+            if (!hideSuggestion && suggestion != null) {
+                text = OrderedText.concat(text, OrderedText.styledForwardsVisitedString(suggestion, SUGGESTION));
+            }
+
+            this.caxtonText = CaxtonText.from(text, ((TextRendererAccessor) textRenderer).getFontStorageAccessor(), true, false, ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer().getHandler().getCache());
 //        System.err.println("caxtonText = " + this.caxtonText);
+        } finally {
+            updatingCaxtonText = false;
+        }
+    }
+
+    @Inject(at = @At("HEAD"), method = "onChanged", cancellable = true)
+    private void stubOnChanged(String newText, CallbackInfo ci) {
+        ci.cancel();
     }
 
     // We can’t inject on `onChanged`, as some methods that update `text`
     // call `setSelectionEnd` before `onChanged`.
     @Inject(at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;text:Ljava/lang/String;", opcode = Opcodes.PUTFIELD, shift = At.Shift.AFTER), method = "setText")
     private void updateCaxtonTextOnSetText(String text, CallbackInfo ci) {
-        updateCaxtonText();
+        updateCaxtonText(true);
     }
 
     @Inject(at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;text:Ljava/lang/String;", opcode = Opcodes.PUTFIELD, shift = At.Shift.AFTER), method = "write")
     private void updateCaxtonTextOnWrite(String text, CallbackInfo ci) {
-        updateCaxtonText();
+        updateCaxtonText(true);
     }
 
     @Inject(at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;text:Ljava/lang/String;", opcode = Opcodes.PUTFIELD, shift = At.Shift.AFTER), method = "eraseCharacters")
     private void updateCaxtonTextOnEraseCharacters(int maxLength, CallbackInfo ci) {
-        updateCaxtonText();
+        updateCaxtonText(true);
     }
 
     @Inject(at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;text:Ljava/lang/String;", opcode = Opcodes.PUTFIELD, shift = At.Shift.AFTER), method = "setMaxLength")
     private void updateCaxtonTextOnSetMaxLength(int maxLength, CallbackInfo ci) {
-        updateCaxtonText();
+        updateCaxtonText(true);
     }
 
     @Inject(at = @At("TAIL"), method = "setSuggestion")
     private void updateCaxtonTextOnSuggestionSet(String text, CallbackInfo ci) {
-        updateCaxtonText();
+        updateCaxtonText(false);
     }
 
     @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;getInnerWidth()I"), method = "renderButton", cancellable = true)
@@ -195,7 +224,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;getInnerWidth()I"), method = "mouseClicked", cancellable = true)
     private void onMouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
         if (caxtonText == null) {
-            updateCaxtonText();
+            updateCaxtonText(false);
         }
 
         CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
