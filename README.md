@@ -116,7 +116,8 @@ rasterizing the font:
   "path": "<path of font file>",
   // All of these options are optional and will default to the provided values.
   // The number of font units corresponding to each pixel in the texture atlas.
-  // This can be set to a high value because the atlas is an MTSDF.
+  // This can be set to a high value if using the "msdf" font rendering tech.
+  // If you’re using "raster", then you should set this to a lower value.
   "shrinkage": 32.0,
   // The number of pixels to leave around the glyph bounding box on each side.
   // This should be larger than `range` and will default to `range` if left blank.
