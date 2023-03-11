@@ -137,7 +137,8 @@ pub struct Font<'a> {
     pub face: Face<'a>,
     pub tlist: Vec<TList>,
     pub bboxes: Vec<u64>,
-    pub num_atlas_locations: usize,
+    pub num_glyphs: usize,
+    pub num_tlist_locations: usize,
     pub bytes_per_pixel: usize,
 }
 
@@ -221,11 +222,15 @@ impl<'a> Font<'a> {
             Ok(tlist)
         })()?;
 
+        // Hope and pray that all the tlists have the same number of locations
+        let num_tlist_locations = tlist[0].locations().len();
+
         Ok(Font {
             face,
-            tlist: tlist,
+            tlist,
             bboxes,
-            num_atlas_locations: num_glyphs as usize,
+            num_glyphs: num_glyphs as usize,
+            num_tlist_locations,
             bytes_per_pixel: options.tech.bytes_per_pixel(),
         })
     }

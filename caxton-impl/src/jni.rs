@@ -200,7 +200,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontMip
     (*(addr as usize as *const Font)).num_mipmap_layers() as i32
 }
 
-/// JNI wrapper for the number of atlas locations.
+/// JNI wrapper for the number of glyphs.
 ///
 /// # Safety
 ///
@@ -217,7 +217,27 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
         eprintln!("warn: was passed an address of 0; returning");
         return 0;
     }
-    (*(addr as usize as *const Font)).num_atlas_locations as i32
+    (*(addr as usize as *const Font)).num_glyphs as i32
+}
+
+/// JNI wrapper for the number of texture list locations.
+///
+/// # Safety
+///
+/// `addr` must have previously been returned by [`Java_xyz_flirora_caxton_dll_CaxtonInternal_createFont`]
+/// and must not have been previously passed into [`Java_xyz_flirora_caxton_dll_CaxtonInternal_destroyFont`].
+// public static native int fontAtlasPhysicalSize(long addr);
+#[no_mangle]
+pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtlasPhysicalSize(
+    _env: JNIEnv,
+    _class: JClass,
+    addr: jlong,
+) -> jint {
+    if addr == 0 {
+        eprintln!("warn: was passed an address of 0; returning");
+        return 0;
+    }
+    (*(addr as usize as *const Font)).num_tlist_locations as i32
 }
 
 /// JNI wrapper for accessing atlas locations.

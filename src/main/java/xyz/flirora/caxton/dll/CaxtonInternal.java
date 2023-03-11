@@ -21,6 +21,8 @@ public class CaxtonInternal {
 
     public static native int fontAtlasSize(long addr);
 
+    public static native int fontAtlasPhysicalSize(long addr);
+
     public static native long fontAtlasLocations(long addr, int mipmap);
 
     public static native long fontBboxes(long addr);

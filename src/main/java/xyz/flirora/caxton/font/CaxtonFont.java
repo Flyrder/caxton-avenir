@@ -40,6 +40,7 @@ public class CaxtonFont implements AutoCloseable {
     private final Identifier id;
     private final short[] metrics;
     private final int glyphCount;
+    private final int tlistEntryCount;
     private final long[] tlistLocations;
     private final long bboxes;
     private final CaxtonFontOptions options;
@@ -77,6 +78,7 @@ public class CaxtonFont implements AutoCloseable {
                     options.toString());
             metrics = CaxtonInternal.fontMetrics(fontPtr);
             glyphCount = CaxtonInternal.fontAtlasSize(fontPtr);
+            tlistEntryCount = CaxtonInternal.fontAtlasPhysicalSize(fontPtr);
             bboxes = CaxtonInternal.fontBboxes(fontPtr);
 
             int mipmapLayers = CaxtonInternal.fontMipmapLayers(fontPtr);
@@ -229,8 +231,8 @@ public class CaxtonFont implements AutoCloseable {
      * @return a packed atlas location value
      */
     public long getTlistLocation(int glyphId, int mipmap) {
-        if (glyphId < 0 || glyphId >= glyphCount) {
-            throw new IndexOutOfBoundsException("i must be in [0, " + glyphCount + ") (got " + glyphId + ")");
+        if (glyphId < 0 || glyphId >= tlistEntryCount) {
+            throw new IndexOutOfBoundsException("i must be in [0, " + tlistEntryCount + ") (got " + glyphId + ")");
         }
         return MemoryUtil.memGetLong(tlistLocations[mipmap] + 8 * Integer.toUnsignedLong(glyphId));
     }
@@ -286,6 +288,17 @@ public class CaxtonFont implements AutoCloseable {
 
     public @Nullable String getGlyphName(int id) {
         return CaxtonInternal.fontGlyphName(this.fontPtr, id);
+    }
+
+    /**
+     * Returns the number of logical glyphs in this font.
+     * <p>
+     * Note that this is not necessarily equal to the number of texture list locations. For instance, a font might store a texture for each glyph twice: once for the glyph itself and another for its outline. (For instance, the bitmap font implementation stores glyphs this way rather than assigning separate channels for interiors and outlines in order to be compatible with the built-in core shaders.)
+     *
+     * @return the number of logical glyphs in this font
+     */
+    public int getGlyphCount() {
+        return glyphCount;
     }
 
     /**
