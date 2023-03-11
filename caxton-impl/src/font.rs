@@ -155,7 +155,7 @@ impl<'a> Font<'a> {
         let sha = options.calculate_sha(contents);
 
         let mut this_cache = cache_dir.to_path_buf();
-        this_cache.push(URL_SAFE.encode(sha) + ".zst");
+        this_cache.push(URL_SAFE.encode(sha) + ".zz");
 
         let mut face =
             Face::from_slice(contents, options.face_index).context("failed to parse font")?;
