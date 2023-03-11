@@ -236,8 +236,12 @@ impl<'a> Font<'a> {
 }
 
 fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Vec<TList>> {
-    let glyph_indices = (0..face.number_of_glyphs())
-        .map(|glyph_idx| (glyph_idx, face.glyph_bounding_box(GlyphId(glyph_idx))))
+    let glyph_indices_and_bboxes = (0..face.number_of_glyphs())
+        .map(|glyph_idx| {
+            let bbox = face.glyph_bounding_box(GlyphId(glyph_idx));
+            let bbox = bbox.map(|bbox| adjust_bbox(bbox, &options));
+            (glyph_idx, bbox)
+        })
         .collect::<Vec<_>>();
 
     (0..=options.max_mipmap)
@@ -246,13 +250,13 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Vec<TList>
 
             let pending_entries = tlist.adds(
                 options.tech.bytes_per_pixel(),
-                glyph_indices.iter().map(|(_, bbox)| {
+                glyph_indices_and_bboxes.iter().map(|(_, bbox)| {
                     let (width, height) = dimensions_in_image(bbox, options);
                     (adjust_dims(width, mipmap), adjust_dims(height, mipmap))
                 }),
             )?;
 
-            glyph_indices
+            glyph_indices_and_bboxes
                 .par_iter()
                 .copied()
                 .zip_eq(pending_entries.into_par_iter())
@@ -272,6 +276,17 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Vec<TList>
             Ok(tlist)
         })
         .collect()
+}
+
+/// Adjust the bounds of the bounding box so that the baseline is aligned to
+/// 2^n pixels, where n is the maximum mipmap level.
+fn adjust_bbox(mut bounding_box: Rect, options: &FontOptions) -> Rect {
+    let max_shrink_factor = options.shrinkage * (options.max_mipmap as f64).exp2();
+    let x_max_in_max_mipmap_atlas_pixels = (bounding_box.x_max as f64) / max_shrink_factor;
+    let whole_atlas_pixels_above_baseline = x_max_in_max_mipmap_atlas_pixels.ceil();
+    let font_units_above_baseline = whole_atlas_pixels_above_baseline * max_shrink_factor;
+    bounding_box.x_max = font_units_above_baseline.clamp(i16::MIN as f64, i16::MAX as f64) as i16;
+    bounding_box
 }
 
 fn dimensions_in_image(bounding_box: &Option<Rect>, options: &FontOptions) -> (u32, u32) {

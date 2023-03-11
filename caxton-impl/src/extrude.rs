@@ -2,6 +2,9 @@ use std::borrow::BorrowMut;
 use std::collections::btree_map::Entry;
 use std::collections::BTreeMap;
 
+// Stupid CS101-level code to generate thicker versions of glyphs for
+// drawing outlined text (such as on glow ink signs)
+
 #[derive(Debug, Clone)]
 pub struct Kernel(pub Box<[u32]>);
 
