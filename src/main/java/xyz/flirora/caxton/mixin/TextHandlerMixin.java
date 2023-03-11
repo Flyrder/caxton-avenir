@@ -35,6 +35,13 @@ public class TextHandlerMixin implements TextHandlerExt {
         this.caxtonTextHandler = handler;
     }
 
+    @Inject(at = @At("TAIL"), method = "<init>")
+    private void onInit(TextHandler.WidthRetriever widthRetriever, CallbackInfo ci) {
+        this.setCaxtonTextHandler(new CaxtonTextHandler(
+                CaxtonTextHandler.EMPTY_FONT_STORAGE_ACCESSOR,
+                (TextHandler) (Object) this));
+    }
+
     @Inject(at = @At("HEAD"), method = "getWidth(Ljava/lang/String;)F", cancellable = true)
     private void onGetWidth(String text, CallbackInfoReturnable<Float> cir) {
         cir.setReturnValue(caxtonTextHandler.getWidth(text));

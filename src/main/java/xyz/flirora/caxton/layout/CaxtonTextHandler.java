@@ -4,6 +4,7 @@ import com.ibm.icu.lang.UCharacter;
 import com.ibm.icu.text.Bidi;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.font.FontManager;
 import net.minecraft.client.font.FontStorage;
 import net.minecraft.client.font.TextHandler;
 import net.minecraft.text.OrderedText;
@@ -25,6 +26,8 @@ import java.util.function.Function;
 
 @Environment(EnvType.CLIENT)
 public class CaxtonTextHandler {
+    private static final FontStorage EMPTY_FONT_STORAGE = new FontStorage(null, FontManager.MISSING_STORAGE_ID);
+    public static final Function<Identifier, FontStorage> EMPTY_FONT_STORAGE_ACCESSOR = fontId -> EMPTY_FONT_STORAGE;
     private final LayoutCache cache = LayoutCache.getInstance();
     private final Function<Identifier, FontStorage> fontStorageAccessor;
     private final TextHandler vanillaHandler;
