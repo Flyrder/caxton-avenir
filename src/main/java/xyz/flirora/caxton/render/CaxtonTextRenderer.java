@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import xyz.flirora.caxton.font.CaxtonFont;
 import xyz.flirora.caxton.font.CaxtonFontOptions;
 import xyz.flirora.caxton.font.ConfiguredCaxtonFont;
-import xyz.flirora.caxton.font.FontTech;
 import xyz.flirora.caxton.layout.*;
 import xyz.flirora.caxton.mixin.TextRendererDrawerAccessor;
 
@@ -153,14 +152,11 @@ public class CaxtonTextRenderer {
                 //  properly with this strategy
                 for (int i = 0; i < shapingResults.length; i++) {
                     ShapingResult shapingResult = shapingResults[i];
-                    switch (font.font().getOptions().fontTech()) {
-                        case MSDF -> {
-                            x = drawShapedRun(shapingResult, runGroup, i, x, y, effectiveColor, effectiveOutlineColor, false, matrix, vertexConsumers, TextRenderer.TextLayerType.POLYGON_OFFSET, light, outlineDrawer, NO_THRESHOLD, Float.POSITIVE_INFINITY, minThickness, 0);
-                        }
-                        case RASTER -> {
-                            drawShapedRun(shapingResult, runGroup, i, x, y, effectiveOutlineColor, 0, false, matrix, vertexConsumers, TextRenderer.TextLayerType.NORMAL, light, outlineDrawer, NO_THRESHOLD, Float.POSITIVE_INFINITY, minThickness, font.font().getGlyphCount());
-                            x = drawShapedRun(shapingResult, runGroup, i, x, y, effectiveColor, 0, false, matrix, vertexConsumers, TextRenderer.TextLayerType.POLYGON_OFFSET, light, outlineDrawer, NO_THRESHOLD, Float.POSITIVE_INFINITY, minThickness, 0);
-                        }
+                    if (font.font().getOptions().fontTech().hasTwoPhasedOutlineTextRendering()) {
+                        drawShapedRun(shapingResult, runGroup, i, x, y, effectiveOutlineColor, 0, false, matrix, vertexConsumers, TextRenderer.TextLayerType.NORMAL, light, outlineDrawer, NO_THRESHOLD, Float.POSITIVE_INFINITY, minThickness, font.font().getGlyphCount());
+                        x = drawShapedRun(shapingResult, runGroup, i, x, y, effectiveColor, 0, false, matrix, vertexConsumers, TextRenderer.TextLayerType.POLYGON_OFFSET, light, outlineDrawer, NO_THRESHOLD, Float.POSITIVE_INFINITY, minThickness, 0);
+                    } else {
+                        x = drawShapedRun(shapingResult, runGroup, i, x, y, effectiveColor, effectiveOutlineColor, false, matrix, vertexConsumers, TextRenderer.TextLayerType.POLYGON_OFFSET, light, outlineDrawer, NO_THRESHOLD, Float.POSITIVE_INFINITY, minThickness, 0);
                     }
                 }
             }
@@ -279,7 +275,7 @@ public class CaxtonTextRenderer {
         float alpha = ((color >> 24) & 0xFF) / 255.0f;
 
         // Will the render layers accept two colors per vertex instead of one?
-        boolean twoColored = layerType == TextRenderer.TextLayerType.POLYGON_OFFSET && options.fontTech() == FontTech.MSDF;
+        boolean twoColored = layerType == TextRenderer.TextLayerType.POLYGON_OFFSET && !options.fontTech().hasTwoPhasedOutlineTextRendering();
         float olBlue = (outlineColor & 0xFF) / 255.0f * brightnessMultiplier;
         float olGreen = ((outlineColor >> 8) & 0xFF) / 255.0f * brightnessMultiplier;
         float olRed = ((outlineColor >> 16) & 0xFF) / 255.0f * brightnessMultiplier;
