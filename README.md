@@ -29,6 +29,10 @@ Available on [Modrinth](https://modrinth.com/mod/caxton)!
 
 Caxton has been confirmed to work with [Sodium] and [ImmediatelyFast].
 
+Caxton is not fully compatible with [Iris Shaders]. Text outside the world (e.g. in GUIs or HUDs) is rendered normally,
+but the default MSDF-based font rendering technology uses [custom core shaders, which Iris does not support].
+As a result, text rendered in world using such fonts will not render at all when a shader is active.
+
 If [Exordium]’s sign buffering feature is enabled, then [text on signs will look pixelated]. If this happens, then
 disable sign buffering for Exordium.
 
@@ -44,6 +48,10 @@ methods.
 [Sodium]: https://modrinth.com/mod/sodium
 
 [ImmediatelyFast]: https://modrinth.com/mod/immediatelyfast
+
+[Iris Shaders]: https://github.com/IrisShaders/Iris
+
+[custom core shaders, which Iris does not support]: https://github.com/IrisShaders/Iris/blob/1.18.2/docs/development/compatibility/core-shaders.md
 
 [Exordium]: https://modrinth.com/mod/exordium
 
@@ -87,6 +95,7 @@ key `file` specifies the path:
   // The factor by which to scale the font from the default size.
   // If this is 1.0, then the font is scaled so that the ascent is scaled to 7
   // pixels of the default bitmap font.
+  // Added in Caxton 0.3.0.
   "scale_factor": 1.0,
   // The shadow offset, as a multiple of the memefont pixel size.
   "shadow_offset": 1.0,
@@ -96,6 +105,7 @@ key `file` specifies the path:
   // Only has an effect on raster tech. Interpolation is always enabled for
   // MSDF fonts.
   // If true, texels in the glyph bitmap will be interpolated.
+  // Added in Caxton 0.4.0.
   "blur": false
 }
 ```
@@ -136,18 +146,21 @@ rasterizing the font:
   "variations": [],
   // The index of the font face to use in a font collection.
   // Leave this as 0 if you’re not sure.
+  // Added in Caxton 0.3.0.
   "face_index": 0,
   // Specifies whether to use the MSDF-based rendering method ("msdf") or
-  // to use glyph bitmaps ("raster").
+  // to use glyph bitmaps ("raster" – EXPERIMENTAL).
   // "msdf" is recommended for most fonts, but "raster" is more suitable for
   // pixel fonts.
   // In addition, only "raster" is fully compatible with Iris Shaders – text in
   // MSDF fonts will not show up inside the world if a shader is loaded.
+  // Added in Caxton 0.4.0.
   "tech": "msdf",
   // The maximum mipmap level (0 – 4).
   // This is pointless to set if you’re using the MSDF rendering tech.
   // However, it can be useful for non-pixel fonts when you’re using the raster
   // rendering tech.
+  // Added in Caxton 0.4.0.
   "max_mipmap": 0
 }
 ```
@@ -160,6 +173,7 @@ The following options are available in `config/caxton.json`:
 {
   // One of the Rust platform names (https://doc.rust-lang.org/nightly/rustc/platform-support.html) corresponding to your platform.
   // If this is null, then Caxton will determine the correct value for your platform, so it is recommended to change this only when necessary.
+  // Added in Caxton 0.2.1.
   "rustTarget": null,
   // Use a different method of drawing the level text on the experience bar:
   // For Caxton fonts, this draws the text with an outline shader, instead of
@@ -167,13 +181,16 @@ The following options are available in `config/caxton.json`:
   // in the fill color. This acts as a workaround for a misrendering issue when
   // ImmediatelyFast is present (https://gitlab.com/Kyarei/caxton/-/issues/31).
   // Non-Caxton fonts are not affected.
+  // Added in Caxton 0.4.0.
   "tweakExpText": true,
   // Some text handling methods are inherently broken and unsupported by Caxton. Caxton will log a warning whenever these methods are called. If this option is set to true, then Caxton will throw an exception instead.
   // This option is primarily useful for debugging. If in doubt, set this to false.
+  // Added in Caxton 0.2.1.
   "fatalOnBrokenMethodCall": false,
   // Track information about when a Caxton font object has a reference added or
   // removed for debugging purposes.
   // If in doubt, set this to false.
+  // Added in Caxton 0.3.0.
   "debugRefcountChanges": false
 }
 ```
