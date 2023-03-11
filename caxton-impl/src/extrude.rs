@@ -86,11 +86,11 @@ impl Kernel {
             // about the 45° diagonals)
             for (dx, h) in self.0.iter().copied().enumerate() {
                 if dx < width {
-                    if (y + 1 + h as usize) < height {
-                        histogram.increment(src[width - 1 - dx + (y + 1 + h as usize) * width]);
+                    if (y + h as usize) < height {
+                        histogram.increment(src[width - 1 - dx + (y + h as usize) * width]);
                     }
-                    if y >= h as usize {
-                        histogram.decrement(src[width - 1 - dx + (y - h as usize) * width]);
+                    if y - 1 >= h as usize {
+                        histogram.decrement(src[width - 1 - dx + (y - 1 - h as usize) * width]);
                     }
                 }
             }
@@ -126,11 +126,11 @@ impl Kernel {
             // about the 45° diagonals)
             for (dx, h) in self.0.iter().copied().enumerate() {
                 if dx < width {
-                    if (y + 1 + h as usize) < height {
-                        histogram.increment(src[dx + (y + 1 + h as usize) * width]);
+                    if (y + h as usize) < height {
+                        histogram.increment(src[dx + (y + h as usize) * width]);
                     }
-                    if y >= h as usize {
-                        histogram.decrement(src[dx + (y - h as usize) * width]);
+                    if y - 1 >= h as usize {
+                        histogram.decrement(src[dx + (y - 1 - h as usize) * width]);
                     }
                 }
             }

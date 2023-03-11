@@ -1,3 +1,5 @@
+#![cfg_attr(test, feature(slice_flatten))]
+
 pub mod cfont;
 pub mod extrude;
 pub mod font;
@@ -5,17 +7,52 @@ pub mod jni;
 pub mod shape;
 pub mod tlist;
 
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
-
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::extrude::Kernel;
 
     #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+    fn test_kernel_construction() {
+        let kernel = Kernel::with_radius(0.5);
+        assert_eq!(&*kernel.0, &[1, 0]);
+        let kernel = Kernel::with_radius(1.0);
+        assert_eq!(&*kernel.0, &[1, 1]);
+        let kernel = Kernel::with_radius(1.5);
+        assert_eq!(&*kernel.0, &[2, 1, 0]);
+        let kernel = Kernel::with_radius(2.0);
+        assert_eq!(&*kernel.0, &[2, 2, 1]);
+    }
+
+    #[test]
+    fn test_kernel_construction_doesnt_panic() {
+        for i in 0..100 {
+            let r = (i as f64) / 10.0;
+            eprintln!("Trying to construct kernel for r = {r}");
+            let kernel = Kernel::with_radius(r);
+            eprintln!("Kernel: {kernel:?}");
+        }
+    }
+
+    #[test]
+    fn test_convolve() {
+        let kernel = Kernel::with_radius(1.0);
+        let orig = [
+            [1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 5, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 9],
+        ];
+        let expected = [
+            [1, 1, 0, 0, 0],
+            [1, 5, 5, 5, 0],
+            [0, 5, 5, 5, 0],
+            [0, 5, 5, 9, 9],
+            [0, 0, 0, 9, 9],
+        ];
+        let orig = orig.flatten();
+        let mut actual = vec![0; orig.len()];
+        kernel.convolve(orig, &mut actual, 5, 5);
+        assert_eq!(expected.flatten(), actual)
     }
 }
