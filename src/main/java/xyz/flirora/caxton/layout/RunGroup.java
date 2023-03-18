@@ -9,9 +9,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.text.CharacterVisitor;
 import net.minecraft.text.Style;
 import org.jetbrains.annotations.Nullable;
-import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.font.ConfiguredCaxtonFont;
-import xyz.flirora.caxton.render.Voepfxo;
 
 import java.util.Arrays;
 import java.util.List;
@@ -177,11 +175,11 @@ public class RunGroup {
     }
 
     public boolean acceptRender(CharacterVisitor visitor) {
-        return accept(CaxtonModClient.APRIL_FOOLS ? (index, style, codePoint) -> visitor.accept(index, style, Voepfxo.sus(codePoint)) : visitor);
+        return accept(visitor);
     }
 
     public boolean acceptRender(DirectionalCharacterVisitor visitor) {
-        return accept(CaxtonModClient.APRIL_FOOLS ? (index, style, codePoint, rtl) -> visitor.accept(index, style, Voepfxo.sus(codePoint), rtl) : visitor);
+        return accept(visitor);
     }
 
     /**
@@ -327,7 +325,6 @@ public class RunGroup {
      * @return an array of {@link ShapingResult}s for each bidi run
      */
     private ShapingResult[] shape(LayoutCache cache) {
-        var joined = CaxtonModClient.APRIL_FOOLS ? Voepfxo.shingetsuGaShirokuMarukuKagayaiteIruYoruNi(this.joinedStr).toCharArray() : this.joined;
         ConfiguredCaxtonFont font = this.getFont();
 
         if (font == null) {

@@ -12,6 +12,8 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import xyz.flirora.caxton.CaxtonModClient;
+import xyz.flirora.caxton.render.Voepfxo;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -40,9 +42,16 @@ public abstract class SplashTextResourceSupplierMixin extends SinglePreparationR
     private void onGet(CallbackInfoReturnable<String> cir) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
-        if (calendar.get(Calendar.MONTH) + 1 == 2 && calendar.get(Calendar.DATE) == 4) {
+        if (calendar.get(Calendar.MONTH) == Calendar.FEBRUARY && calendar.get(Calendar.DATE) == 4) {
             String text = TEXTS[RANDOM.nextInt(TEXTS.length)];
             cir.setReturnValue(text);
+        }
+    }
+
+    @Inject(method = "get", at = @At("RETURN"), cancellable = true)
+    private void tweakOnAprilFools(CallbackInfoReturnable<String> cir) {
+        if (CaxtonModClient.APRIL_FOOLS) {
+            cir.setReturnValue(Voepfxo.shingetsuGaShirokuMarukuKagayaiteIruYoruNi(cir.getReturnValue()));
         }
     }
 }

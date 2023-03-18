@@ -22,6 +22,7 @@
     "TextRendererAccessor",
     "TextRendererDrawerAccessor",
     "TextRendererMixin",
+    "TitleScreenMixin",
     "TranslationStorageMixin",
     "WorldRendererMixin",
     "dll.MinecraftClientMixin",

@@ -185,9 +185,9 @@ The following options are available in `config/caxton.json`:
   // For Caxton fonts, this draws the text with an outline shader, instead of
   // drawing four offset copies in the outline color followed by the main text
   // in the fill color.
-  // This option primarily serves to make the text look better. It used to act
-  // as a workaround for a misrendering issue with ImmediatelyFast but poses
-  // issues on newer versions of that mod.
+  // This option primarily serves to make the experience level text look better
+  // in outline fonts. It used to act as a workaround for a misrendering issue
+  // with ImmediatelyFast but poses issues on newer versions of that mod.
   // See:
   // * https://gitlab.com/Kyarei/caxton/-/issues/31
   // * https://github.com/RaphiMC/ImmediatelyFast/issues/49
