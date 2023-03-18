@@ -27,7 +27,8 @@ Available on [Modrinth](https://modrinth.com/mod/caxton)!
 
 #### Mod compatibility
 
-Caxton has been confirmed to work with [Sodium] and [ImmediatelyFast].
+Caxton has been confirmed to work with [Sodium] and [ImmediatelyFast], but the latter currently requires
+the `tweakExpText` option to be disabled.
 
 Caxton is not fully compatible with [Iris Shaders]. Text outside the world (e.g. in GUIs or HUDs) is rendered normally,
 but the default MSDF-based font rendering technology uses [custom core shaders, which Iris does not support].
