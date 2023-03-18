@@ -1,5 +1,6 @@
 package xyz.flirora.caxton.layout;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.ibm.icu.lang.UCharacter;
 import com.ibm.icu.text.ArabicShaping;
 import it.unimi.dsi.fastutil.ints.IntArrayList;

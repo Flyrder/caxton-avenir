@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
