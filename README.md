@@ -33,6 +33,9 @@ Caxton is not fully compatible with [Iris Shaders]. Text outside the world (e.g.
 but the default MSDF-based font rendering technology uses [custom core shaders, which Iris does not support].
 As a result, text rendered in world using such fonts will not render at all when a shader is active.
 
+Caxton is not compatible with [Emojiful], which replaces Minecraft’s default text renderer with its own implementation
+and does not delegate to the original text renderer’s methods.
+
 If [Exordium]’s sign buffering feature is enabled, then [text on signs will look pixelated]. If this happens, then
 disable sign buffering for Exordium.
 
@@ -60,6 +63,8 @@ methods.
 [IBE Editor]: https://modrinth.com/mod/ibe-editor
 
 [Roughly Enough Items]: https://modrinth.com/mod/roughly-enough-items
+
+[Emojiful]: https://github.com/InnovativeOnlineIndustries/Emojiful
 
 ## OS support
 
