@@ -5,6 +5,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gl.GlUniform;
 import net.minecraft.client.render.*;
+import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.font.FontTech;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -82,7 +83,7 @@ public class CaxtonTextRenderLayers {
                     VertexFormat.DrawMode.QUADS,
                     256,
                     false,
-                    true,
+                    CaxtonModClient.CONFIG.sortTextRenderLayers,
                     RenderLayer.MultiPhaseParameters.builder()
                             .program(new Shayder(
                                     shader,

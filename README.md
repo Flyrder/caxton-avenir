@@ -183,11 +183,27 @@ The following options are available in `config/caxton.json`:
   // Use a different method of drawing the level text on the experience bar:
   // For Caxton fonts, this draws the text with an outline shader, instead of
   // drawing four offset copies in the outline color followed by the main text
-  // in the fill color. This acts as a workaround for a misrendering issue when
-  // ImmediatelyFast is present (https://gitlab.com/Kyarei/caxton/-/issues/31).
+  // in the fill color.
+  // This option primarily serves to make the text look better. It used to act
+  // as a workaround for a misrendering issue with ImmediatelyFast but poses
+  // issues on newer versions of that mod.
+  // See:
+  // * https://gitlab.com/Kyarei/caxton/-/issues/31
+  // * https://github.com/RaphiMC/ImmediatelyFast/issues/49
   // Non-Caxton fonts are not affected.
   // Added in Caxton 0.4.0.
   "tweakExpText": true,
+  // Sort primitives on Caxton’s text render layers from back to front.
+  // Disabling this setting may theoretically result in misrendering of text;
+  // however, ImmediatelyFast expects this setting to be disabled, and
+  // the developer of ImmediatelyFast has not received any reports of rendering
+  // issues when this functionality is disabled.
+  // If you experience rendering issues where some text seems to be drawn in
+  // the wrong z-order, then try enabling this option (and disabling HUD batching
+  // in ImmediatelyFast).
+  // See: https://github.com/RaphiMC/ImmediatelyFast/issues/49
+  // Added in Caxton 0.4.0.
+  "sortTextRenderLayers": false,
   // Some text handling methods are inherently broken and unsupported by Caxton. Caxton will log a warning whenever these methods are called. If this option is set to true, then Caxton will throw an exception instead.
   // This option is primarily useful for debugging. If in doubt, set this to false.
   // Added in Caxton 0.2.1.

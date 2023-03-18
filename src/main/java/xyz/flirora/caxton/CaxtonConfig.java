@@ -21,15 +21,16 @@ public class CaxtonConfig {
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeNulls().setLenient().create();
     public @Nullable String rustTarget = null;
     public boolean tweakExpText = true;
+    public boolean sortTextRenderLayers = false;
     public boolean fatalOnBrokenMethodCall = false;
     public boolean debugRefcountChanges = false;
 
     public static CaxtonConfig readFromFile() {
+        CaxtonConfig config;
         try (FileReader fh = new FileReader(CONFIG_PATH, StandardCharsets.UTF_8)) {
             try {
-                CaxtonConfig config = GSON.fromJson(fh, CaxtonConfig.class);
+                config = GSON.fromJson(fh, CaxtonConfig.class);
                 // Perform validation (none currently)
-                return config;
             } catch (JsonIOException | JsonSyntaxException e) {
                 CaxtonModClient.LOGGER.error("Invalid config: ", e);
                 CaxtonModClient.LOGGER.error("Falling back to default config");
@@ -38,15 +39,16 @@ public class CaxtonConfig {
         } catch (IOException e) {
             if (!Files.exists(Path.of(CONFIG_PATH))) {
                 // Create new config
-                CaxtonConfig config = new CaxtonConfig();
-                try (FileWriter fh = new FileWriter(CONFIG_PATH, StandardCharsets.UTF_8)) {
-                    GSON.toJson(config, fh);
-                    return config;
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
+                config = new CaxtonConfig();
+            } else {
+                throw new RuntimeException(e);
             }
-            throw new RuntimeException(e);
+        }
+        try (FileWriter fh = new FileWriter(CONFIG_PATH, StandardCharsets.UTF_8)) {
+            GSON.toJson(config, fh);
+            return config;
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
     }
 }
