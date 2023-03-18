@@ -20,6 +20,7 @@ Map.Entry<String, TaskProvider<Task>> registerCrossBuildTask(String taskName, St
         configuration.outputs = [(targetName): dllName]
         configuration.profile = 'release'
         configure(configuration)
+        dependsOn(getTasksByName("build", false))
     }
     def copyTask = tasks.register(taskName, Copy) {
         dependsOn cargoTask
