@@ -63,7 +63,7 @@ methods.
 
 [IBE Editor]: https://modrinth.com/mod/ibe-editor
 
-[Roughly Enough Items]: https://modrinth.com/mod/roughly-enough-items
+[Roughly Enough Items]: https://modrinth.com/mod/rei
 
 [Emojiful]: https://github.com/InnovativeOnlineIndustries/Emojiful
 
