@@ -50,7 +50,7 @@ public abstract class SplashTextResourceSupplierMixin extends SinglePreparationR
 
     @Inject(method = "get", at = @At("RETURN"), cancellable = true)
     private void tweakOnAprilFools(CallbackInfoReturnable<String> cir) {
-        if (CaxtonModClient.APRIL_FOOLS) {
+        if (CaxtonModClient.APRIL_FOOLS && cir.getReturnValue() != null) {
             cir.setReturnValue(Voepfxo.shingetsuGaShirokuMarukuKagayaiteIruYoruNi(cir.getReturnValue()));
         }
     }
