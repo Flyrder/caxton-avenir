@@ -176,6 +176,14 @@ public class RunGroup {
         return accept(DirectionalCharacterVisitor.fromCharacterVisitor(visitor));
     }
 
+    public boolean acceptRender(CharacterVisitor visitor) {
+        return accept(CaxtonModClient.APRIL_FOOLS ? (index, style, codePoint) -> visitor.accept(index, style, Voepfxo.sus(codePoint)) : visitor);
+    }
+
+    public boolean acceptRender(DirectionalCharacterVisitor visitor) {
+        return accept(CaxtonModClient.APRIL_FOOLS ? (index, style, codePoint, rtl) -> visitor.accept(index, style, Voepfxo.sus(codePoint), rtl) : visitor);
+    }
+
     /**
      * Gets the {@link ConfiguredCaxtonFont} that was used for this run group.
      *

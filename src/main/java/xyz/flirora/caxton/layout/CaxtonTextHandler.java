@@ -72,7 +72,7 @@ public class CaxtonTextHandler {
         float total = 0;
         if (runGroup.getFont() == null) {
             MutableFloat cumulWidth = new MutableFloat();
-            runGroup.accept((index, style, codePoint) -> {
+            runGroup.acceptRender((index, style, codePoint) -> {
                 cumulWidth.add(getWidth(codePoint, style));
                 return true;
             });
@@ -116,7 +116,7 @@ public class CaxtonTextHandler {
             if (runGroup.getFont() == null) {
                 MutableFloat cumulWidth = new MutableFloat(x);
                 MutableInt theIndex = new MutableInt();
-                boolean completed = runGroup.accept((index, style, codePoint) -> {
+                boolean completed = runGroup.acceptRender((index, style, codePoint) -> {
                     int index2 = index + runGroup.getCharOffset();
                     if (threshold.updateLegacy(index2)) {
                         return true;
@@ -189,7 +189,7 @@ public class CaxtonTextHandler {
             }
             if (runGroup.getFont() == null) {
                 MutableFloat cumulWidth = new MutableFloat(x);
-                boolean completed = runGroup.accept((index, style, codePoint) -> {
+                boolean completed = runGroup.acceptRender((index, style, codePoint) -> {
                     int index2 = index + runGroup.getCharOffset();
                     if (threshold.updateLegacy(index2)) {
                         return true;
@@ -252,7 +252,7 @@ public class CaxtonTextHandler {
             ConfiguredCaxtonFont font = runGroup.getFont();
             if (font == null) {
                 MutableFloat mutableFloat = new MutableFloat(offset);
-                boolean completed = runGroup.accept((index, style, codePoint, rtl) -> {
+                boolean completed = runGroup.acceptRender((index, style, codePoint, rtl) -> {
                     if (index + runGroup.getCharOffset() == textIndex) {
                         if (direction.treatAsRtl(rtl))
                             mutableFloat.add(getWidth(codePoint, style));
@@ -303,7 +303,7 @@ public class CaxtonTextHandler {
         for (RunGroup runGroup : text.runGroups()) {
             ConfiguredCaxtonFont font = runGroup.getFont();
             if (font == null) {
-                runGroup.accept((index, style, codePoint, rtl) -> {
+                runGroup.acceptRender((index, style, codePoint, rtl) -> {
                     int index2 = index + runGroup.getCharOffset();
                     highlighter.accept(index2, index2 + 1, rtl, getWidth(codePoint, style));
                     return true;

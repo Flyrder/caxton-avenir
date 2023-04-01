@@ -55,7 +55,7 @@ public class LineWrapper {
             ConfiguredCaxtonFont font = runGroup.getFont();
             if (font == null) {
                 // Legacy run
-                runGroup.accept((index, style, codePoint, rtl) -> {
+                runGroup.acceptRender((index, style, codePoint, rtl) -> {
                     float width = widthRetriever.getWidth(codePoint, style);
                     int index2 = index + runGroup.getCharOffset();
                     widths[index2] = width;

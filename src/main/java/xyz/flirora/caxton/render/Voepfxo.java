@@ -48,17 +48,21 @@ public class Voepfxo {
         RenderSystem.disableBlend();
     }
 
+    public static int sus(int codePoint) {
+        if (codePoint >= 'a' && codePoint <= 'z') {
+            return TABLE[codePoint - 'a'];
+        } else if (codePoint >= 'A' && codePoint <= 'Z') {
+            return TABLE[codePoint - 'A'] + ('A' - 'a');
+        } else {
+            return codePoint;
+        }
+    }
+
     public static String shingetsuGaShirokuMarukuKagayaiteIruYoruNi(String input) {
         StringBuilder buf = new StringBuilder();
         for (int i = 0; i < input.length(); ++i) {
             char c = input.charAt(i);
-            if (c >= 'a' && c <= 'z') {
-                buf.append(TABLE[c - 'a']);
-            } else if (c >= 'A' && c <= 'Z') {
-                buf.append((char) (TABLE[c - 'A'] + ('A' - 'a')));
-            } else {
-                buf.append(c);
-            }
+            buf.append((char) sus(c));
         }
         return buf.toString();
     }

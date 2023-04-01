@@ -101,7 +101,7 @@ public class CaxtonTextRenderer {
                         if (dx == 0 && dy == 0) continue;
                         xBox.setValue(x);
                         int dxf = dx, dyf = dy;
-                        runGroup.accept((index, style, codePoint) -> {
+                        runGroup.acceptRender((index, style, codePoint) -> {
                             int index2 = runGroup.getCharOffset() + index;
 
                             FontStorage fontStorage = this.getFontStorage(style.getFont());
@@ -116,7 +116,7 @@ public class CaxtonTextRenderer {
                     }
                 }
                 ((TextRendererDrawerAccessor) centralDrawer).setX(x);
-                runGroup.accept((index, style, codePoint) -> {
+                runGroup.acceptRender((index, style, codePoint) -> {
                     int index2 = runGroup.getCharOffset() + index;
                     return centralDrawer.accept(index2, style, codePoint);
                 });
@@ -162,7 +162,7 @@ public class CaxtonTextRenderer {
             if (x >= maxX) break;
             if (runGroup.getFont() == null) {
                 ((TextRendererDrawerAccessor) drawer).setX(x);
-                runGroup.accept((index, style, codePoint) -> {
+                runGroup.acceptRender((index, style, codePoint) -> {
                     int index2 = runGroup.getCharOffset() + index;
                     if (threshold.updateLegacy(index2)) {
                         return true;
