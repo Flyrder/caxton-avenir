@@ -2,12 +2,16 @@ package xyz.flirora.caxton.render;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.text.Text;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 
 /**
- * Replacements for {@link net.minecraft.client.gui.DrawableHelper} methods that use floating-point coordinates.
+ * Replacements for {@link net.minecraft.client.gui.DrawContext} methods that use floating-point coordinates.
  */
 public class Voepfxo {
     private static final char[] TABLE = {'u', 'v', 'm', 'c', 'y', 'g', 'w', 'l', 'e', 'x', 'j', 'd', 'p', 'r', 'a', 'f', 'k', 'h', 'n', 's', 'i', 'q', 'b', 'z', 'o', 't'};
@@ -66,6 +70,27 @@ public class Voepfxo {
         tessellator.draw();
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         RenderSystem.disableColorLogicOp();
+    }
+
+    public static int drawTextWithShadow(DrawContext context, TextRenderer textRenderer, Text text, float x, float y, int color) {
+        return textRenderer.draw(text, x, y, color, true, context.getMatrices().peek().getPositionMatrix(), context.getVertexConsumers(), TextRenderer.TextLayerType.NORMAL, 0, 0xF000F0);
+    }
+
+    public static int drawTextWithShadow(DrawContext context, TextRenderer textRenderer, String text, float x, float y, int color) {
+        return drawText(context, textRenderer, text, x, y, color, true);
+    }
+
+    public static int drawText(DrawContext context, TextRenderer textRenderer, String text, float x, float y, int color) {
+        return drawText(context, textRenderer, text, x, y, color, false);
+    }
+
+    public static int drawText(DrawContext context, TextRenderer textRenderer, @Nullable String text, float x, float y, int color, boolean shadow) {
+        if (text == null) {
+            return 0;
+        }
+        int i = textRenderer.draw(text, x, y, color, shadow, context.getMatrices().peek().getPositionMatrix(), context.getVertexConsumers(), TextRenderer.TextLayerType.NORMAL, 0, 0xF000F0, textRenderer.isRightToLeft());
+        context.draw();
+        return i;
     }
 
     public static int sus(int codePoint) {

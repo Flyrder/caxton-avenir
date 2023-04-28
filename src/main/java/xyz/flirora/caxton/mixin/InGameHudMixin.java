@@ -4,7 +4,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -21,7 +21,7 @@ import xyz.flirora.caxton.render.HasCaxtonTextRenderer;
 
 @Environment(EnvType.CLIENT)
 @Mixin(InGameHud.class)
-public abstract class InGameHudMixin extends DrawableHelper {
+public abstract class InGameHudMixin {
     @Shadow
     @Final
     private MinecraftClient client;
@@ -36,13 +36,13 @@ public abstract class InGameHudMixin extends DrawableHelper {
     public abstract TextRenderer getTextRenderer();
 
     @Inject(method = "renderExperienceBar", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/font/TextRenderer;getWidth(Ljava/lang/String;)I"), cancellable = true)
-    private void onRenderExpText(MatrixStack matrices, int _x, CallbackInfo ci) {
+    private void onRenderExpText(DrawContext context, int _x, CallbackInfo ci) {
         if (!CaxtonModClient.CONFIG.tweakExpText) return;
         String levelStr = "" + this.client.player.experienceLevel;
         float x = (this.scaledWidth - this.getTextRenderer().getTextHandler().getWidth(levelStr)) / 2.0f;
         float y = this.scaledHeight - 31 - 4;
         VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
-        ((HasCaxtonTextRenderer) this.getTextRenderer()).getCaxtonTextRenderer().drawWithOutline(Text.literal(levelStr).asOrderedText(), x, y, 0x80ff20, 0, matrices.peek().getPositionMatrix(), immediate, 0xF000F0, false);
+        ((HasCaxtonTextRenderer) this.getTextRenderer()).getCaxtonTextRenderer().drawWithOutline(Text.literal(levelStr).asOrderedText(), x, y, 0x80ff20, 0, context.getMatrices().peek().getPositionMatrix(), immediate, 0xF000F0, false);
         immediate.draw();
         this.client.getProfiler().pop();
         ci.cancel();

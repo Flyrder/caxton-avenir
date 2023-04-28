@@ -4,20 +4,18 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.AbstractSignEditScreen;
-import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.SelectionManager;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
-import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import xyz.flirora.caxton.layout.CaxtonText;
 import xyz.flirora.caxton.layout.CaxtonTextHandler;
@@ -32,16 +30,14 @@ public abstract class AbstractSignEditScreenMixin
         extends Screen {
     @Shadow
     @Final
-    protected SignBlockEntity blockEntity;
+    private SignBlockEntity blockEntity;
     @Shadow
     @Final
-    protected String[] text;
+    private String[] messages;
     @Shadow
     private SelectionManager selectionManager;
     @Shadow
     private int currentRow;
-    @Shadow
-    private int ticksSinceOpened;
     @Unique
     private CaxtonText rowText;
     @Unique
@@ -52,28 +48,32 @@ public abstract class AbstractSignEditScreenMixin
     }
 
     // Use the more precise CaxtonTextHandler.getWidth instead of TextHandler.getWidth
-    @ModifyArg(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/font/TextRenderer;draw(Ljava/lang/String;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/client/font/TextRenderer$TextLayerType;IIZ)I", ordinal = 0), index = 1)
-    private float modifyXForDrawingRow(String currentLine, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumers, TextRenderer.TextLayerType layerType, int backgroundColor, int light, boolean rightToLeft) {
+    @Redirect(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawText(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;IIIZ)I", ordinal = 0))
+    private int drawRowTextProxy(DrawContext instance, TextRenderer textRenderer, String currentLine, int x, int y, int color, boolean shadow) {
         CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
         CaxtonTextHandler cth = ctr.getHandler();
         this.rowText = CaxtonText.fromFormatted(currentLine, ctr.getFontStorageAccessor(), Style.EMPTY, false, this.textRenderer.isRightToLeft(), cth.getCache());
-        return -cth.getWidth(rowText) / 2.0f;
+        // The use of `==` is intentional; this check will pass if we are
+        // indeed on the current row.
+        if (currentLine == this.messages[this.currentRow]) this.currentRowText = rowText;
+        int x2 = (int) ctr.draw(this.rowText, -cth.getWidth(rowText) / 2.0f, y, color, false, instance.getMatrices().peek().getPositionMatrix(), instance.getVertexConsumers(), false, 0, 0xF000F0, 0, Float.POSITIVE_INFINITY);
+        instance.draw();
+        return x2;
     }
 
     // Use the more precise CaxtonTextHandler.getWidth instead of TextHandler.getWidth
-    @ModifyArg(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/font/TextRenderer;draw(Ljava/lang/String;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/client/font/TextRenderer$TextLayerType;IIZ)I", ordinal = 1), index = 1)
-    private float modifyXForDrawingEndCursor(float x) {
+    @Redirect(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawText(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;IIIZ)I", ordinal = 1))
+    private int drawEndCursorProxy(DrawContext instance, TextRenderer textRenderer, String text, int x, int y, int color, boolean shadow) {
         CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
         CaxtonTextHandler cth = ctr.getHandler();
-        this.currentRowText = rowText;
-        return cth.getWidth(rowText) / 2.0f;
+        return Voepfxo.drawText(instance, textRenderer, "_", cth.getWidth(rowText) / 2.0f, y, color);
     }
 
-    @Redirect(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ingame/AbstractSignEditScreen;fill(Lnet/minecraft/client/util/math/MatrixStack;IIIII)V", ordinal = 0))
-    private void drawVerticalCursor(MatrixStack matrixStack, int x1, int y1, int x2, int y2, int color) {
+    @Redirect(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;fill(IIIII)V", ordinal = 0))
+    private void drawVerticalCursor(DrawContext instance, int x1, int y1, int x2, int y2, int color) {
         CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
         CaxtonTextHandler cth = ctr.getHandler();
-        String currentLine = this.text[this.currentRow];
+        String currentLine = this.messages[this.currentRow];
         int selectionStart = this.selectionManager.getSelectionStart();
         int yAdj = 4 * this.blockEntity.getTextLineHeight() / 2;
         int lineY = currentRow * this.blockEntity.getTextLineHeight() - yAdj;
@@ -82,14 +82,14 @@ public abstract class AbstractSignEditScreenMixin
         float cursorOffset = cth.getOffsetAtIndex(currentRowText, Math.min(selectionStart, currentLine.length()), DirectionSetting.AUTO);
         float cursorX = cursorOffset - x;
         Voepfxo.fill(
-                matrixStack,
+                instance.getMatrices(),
                 cursorX, lineY - 1,
                 cursorX + 1, lineY + this.blockEntity.getTextLineHeight(),
                 0xFF000000 | color);
     }
 
-    @Redirect(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ingame/AbstractSignEditScreen;fill(Lnet/minecraft/client/util/math/MatrixStack;IIIII)V", ordinal = 1))
-    private void drawHighlights(MatrixStack matrices, int x1, int y1, int x2, int y2, int color) {
+    @Redirect(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;fill(IIIII)V", ordinal = 1))
+    private void drawHighlights(DrawContext instance, int x1, int y1, int x2, int y2, int color) {
         CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
         CaxtonTextHandler cth = ctr.getHandler();
 
@@ -100,7 +100,7 @@ public abstract class AbstractSignEditScreenMixin
         int lineY = currentRow * this.blockEntity.getTextLineHeight() - yAdj;
 
         cth.getHighlightRanges(currentRowText, Math.min(selectionStart, selectionEnd), Math.max(selectionStart, selectionEnd), (start, end) -> {
-            Voepfxo.fill(matrices, start - x, lineY, end - x, lineY + this.blockEntity.getTextLineHeight(), color);
+            Voepfxo.fill(instance.getMatrices(), start - x, lineY, end - x, lineY + this.blockEntity.getTextLineHeight(), color);
         });
     }
 }

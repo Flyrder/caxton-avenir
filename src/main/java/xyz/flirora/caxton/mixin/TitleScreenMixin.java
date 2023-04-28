@@ -3,9 +3,8 @@ package xyz.flirora.caxton.mixin;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.TitleScreen;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Style;
 import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,13 +18,12 @@ public class TitleScreenMixin {
     private static final Identifier SGA_FONT_ID = new Identifier("minecraft", "alt");
     private static final Style STYLE = Style.EMPTY.withFont(SGA_FONT_ID);
 
-    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/TitleScreen;drawTextWithShadow(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;III)V"))
-    private void voepfxo(MatrixStack matrixStack, TextRenderer textRenderer, String s, int x, int y, int color) {
+    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawTextWithShadow(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;III)I"))
+    private int voepfxo(DrawContext instance, TextRenderer textRenderer, String s, int x, int y, int color) {
         if (!CaxtonModClient.APRIL_FOOLS) {
-            DrawableHelper.drawTextWithShadow(matrixStack, textRenderer, s, x, y, color);
-            return;
+            return instance.drawTextWithShadow(textRenderer, s, x, y, color);
         }
-        DrawableHelper.drawTextWithShadow(matrixStack, textRenderer, visitor -> {
+        return instance.drawTextWithShadow(textRenderer, visitor -> {
             int len = s.length();
             int i = 0;
             while (i < len) {

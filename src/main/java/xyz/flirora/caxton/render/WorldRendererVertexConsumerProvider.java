@@ -1,6 +1,7 @@
 package xyz.flirora.caxton.render;
 
 import com.google.common.collect.ImmutableSet;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.BufferBuilder;
@@ -91,7 +92,7 @@ public class WorldRendererVertexConsumerProvider extends VertexConsumerProvider.
         if (!this.activeConsumers.remove(bufferBuilder)) {
             return;
         }
-        layer.draw(bufferBuilder, 0, 0, 0);
+        layer.draw(bufferBuilder, RenderSystem.getVertexSorting());
         if (layerIsCurrent) {
             this.currentLayer = Optional.empty();
         }

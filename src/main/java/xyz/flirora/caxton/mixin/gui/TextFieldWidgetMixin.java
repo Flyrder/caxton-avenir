@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.ModifyReceiver;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Drawable;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.widget.ClickableWidget;
@@ -170,7 +171,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     }
 
     @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;getInnerWidth()I"), method = "renderButton", cancellable = true)
-    private void onRenderButton(MatrixStack matrices, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+    private void onRenderButton(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
 
         int color = editable ? editableColor : uneditableColor;
@@ -186,7 +187,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
                     caxtonText,
                     x, y,
                     color, true,
-                    matrices.peek().getPositionMatrix(), immediate,
+                    context.getMatrices().peek().getPositionMatrix(), immediate,
                     false, 0, 0xF000F0,
                     firstCharacterIndex, getInnerWidth());
             firstCharLocation = ctr.getHandler().getOffsetAtIndex(caxtonText, firstCharacterIndex, DirectionSetting.FORCE_LTR);
@@ -209,14 +210,14 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
         }
 
         if (this.placeholder != null && text.isEmpty() && !this.isFocused()) {
-            textRenderer.drawWithShadow(matrices, this.placeholder, cursorX, y, color);
+            Voepfxo.drawTextWithShadow(context, this.textRenderer, this.placeholder, cursorX, y, color);
         }
 
         if (showCursor) {
             if (cursorIsVertical) {
-                Voepfxo.fill(matrices, cursorX, y - 1, cursorX + 1, y + 1 + this.textRenderer.fontHeight, 0xFFD0D0D0);
+                Voepfxo.fill(context.getMatrices(), cursorX, y - 1, cursorX + 1, y + 1 + this.textRenderer.fontHeight, 0xFFD0D0D0);
             } else {
-                textRenderer.drawWithShadow(matrices, HORIZONTAL_CURSOR, cursorX, y, color);
+                Voepfxo.drawTextWithShadow(context, this.textRenderer, HORIZONTAL_CURSOR, cursorX, y, color);
             }
         }
 
@@ -235,8 +236,8 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
         ci.cancel();
     }
 
-    @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;getInnerWidth()I"), method = "mouseClicked", cancellable = true)
-    private void onMouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;getInnerWidth()I"), method = "onClick", cancellable = true)
+    private void onMouseClicked(double mouseX, double mouseY, CallbackInfo ci) {
         if (caxtonText == null) {
             updateCaxtonText(false);
         }
@@ -251,7 +252,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
         int index = ctr.getHandler().getCharIndexAtX(caxtonText, xOffset, firstCharacterIndex);
 
         this.setCursor(index);
-        cir.setReturnValue(true);
+        ci.cancel();
     }
 
     @Inject(at = @At("HEAD"), method = "setSelectionEnd", cancellable = true)

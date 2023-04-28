@@ -32,7 +32,7 @@ public class BookEditScreenPageContentMixin implements BookEditScreenPageContent
     private int[] lineStarts;
     @Shadow
     @Final
-    private BookEditScreen.Line[] lines;
+    BookEditScreen.Line[] lines;
     @Shadow
     @Final
     private String pageContent;

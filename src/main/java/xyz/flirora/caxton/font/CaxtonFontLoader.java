@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
+import com.mojang.datafixers.util.Either;
 import com.mojang.logging.LogUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -141,7 +142,6 @@ public class CaxtonFontLoader implements FontLoader {
      * @return a {@link CaxtonTypeface} described by this object
      */
     @Nullable
-    @Override
     public Font load(ResourceManager manager) {
         try {
             ConfiguredCaxtonFont regular = ConfiguredCaxtonFont.load(manager, this.regular);
@@ -153,5 +153,10 @@ public class CaxtonFontLoader implements FontLoader {
             LOGGER.error("Couldn't load truetype font", exception);
         }
         return null;
+    }
+
+    @Override
+    public Either<Loadable, Reference> build() {
+        return Either.left(this::load);
     }
 }

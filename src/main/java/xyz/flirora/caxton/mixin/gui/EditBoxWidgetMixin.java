@@ -1,6 +1,7 @@
 package xyz.flirora.caxton.mixin.gui;
 
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.EditBox;
 import net.minecraft.client.gui.widget.EditBoxWidget;
 import net.minecraft.client.gui.widget.ScrollableWidget;
@@ -42,7 +43,7 @@ public abstract class EditBoxWidgetMixin extends ScrollableWidget {
     }
 
     @Inject(method = "renderContents", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/EditBox;getCursor()I"), cancellable = true)
-    private void onRenderContents(MatrixStack matrices, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+    private void onRenderContents(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) this.textRenderer).getCaxtonTextRenderer();
         CaxtonTextHandler cth = ctr.getHandler();
         String text = this.editBox.getText();
@@ -59,17 +60,19 @@ public abstract class EditBoxWidgetMixin extends ScrollableWidget {
             if (lineVisible) {
                 if (drawCursor && cursorVertical && cursorPos >= line.beginIndex() && cursorPos <= line.endIndex()) {
                     // Draw vertical cursor for this line
-                    x = this.textRenderer.drawWithShadow(
-                            matrices,
+                    x = Voepfxo.drawTextWithShadow(
+                            context,
+                            this.textRenderer,
                             lineStr,
                             (float) (this.getX() + this.getPadding()),
                             (float) y,
                             0xffe0e0e0) - 1;
                     float cursorX = this.getX() + this.getPadding() + cth.getOffsetAtIndex(CaxtonText.fromForwards(lineStr, ctr.getFontStorageAccessor(), Style.EMPTY, false, false, cth.getCache()), cursorPos - line.beginIndex(), DirectionSetting.AUTO);
-                    Voepfxo.fill(matrices, cursorX, y - 1, cursorX + 1, y + 1 + this.textRenderer.fontHeight, 0xffd0d0d0);
+                    Voepfxo.fill(context.getMatrices(), cursorX, y - 1, cursorX + 1, y + 1 + this.textRenderer.fontHeight, 0xffd0d0d0);
                 } else {
-                    x = this.textRenderer.drawWithShadow(
-                            matrices,
+                    x = Voepfxo.drawTextWithShadow(
+                            context,
+                            this.textRenderer,
                             lineStr,
                             (float) (this.getX() + this.getPadding()),
                             (float) y,
@@ -80,7 +83,7 @@ public abstract class EditBoxWidgetMixin extends ScrollableWidget {
             y += this.textRenderer.fontHeight;
         }
         if (drawCursor && !cursorVertical && this.isVisible(endY, endY + this.textRenderer.fontHeight)) {
-            this.textRenderer.drawWithShadow(matrices, UNDERSCORE, (float) x, (float) endY, 0xffd0d0d0);
+            Voepfxo.drawTextWithShadow(context, this.textRenderer, UNDERSCORE, (float) x, (float) endY, 0xffd0d0d0);
         }
 
         if (this.editBox.hasSelection()) {
@@ -109,7 +112,7 @@ public abstract class EditBoxWidgetMixin extends ScrollableWidget {
                             Math.max(0, selection.beginIndex() - line.beginIndex()),
                             Math.min(selection.endIndex(), line.endIndex()) - line.beginIndex(),
                             (left, right) -> {
-                                Voepfxo.drawSelection(matrices, selX + left, selY, selX + right, selY + this.textRenderer.fontHeight);
+                                Voepfxo.drawSelection(context.getMatrices(), selX + left, selY, selX + right, selY + this.textRenderer.fontHeight);
                             });
                 }
                 y += this.textRenderer.fontHeight;

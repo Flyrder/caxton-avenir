@@ -7,6 +7,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.BookEditScreen;
 import net.minecraft.client.render.Tessellator;
@@ -196,15 +197,15 @@ public abstract class BookEditScreenMixin extends Screen {
         return new Rect2i(x1, lineY + 32, x2 - x1, this.textRenderer.fontHeight);
     }
 
-    @Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ingame/BookEditScreen;fill(Lnet/minecraft/client/util/math/MatrixStack;IIIII)V"), method = "drawSelection")
-    private void onVertex(MatrixStack matrices, int x1, int y1, int x2, int y2, int color) {
+    @Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;fill(IIIII)V"), method = "drawSelection")
+    private void onVertex(DrawContext context, int x1, int y1, int x2, int y2, int color) {
         float scx1 = x1 / XSCALE + (width - 192) / 2.0f + 36;
         float scx2 = x2 / XSCALE + (width - 192) / 2.0f + 36;
-        Voepfxo.fill(matrices, scx1, y1, scx2, y2, color);
+        Voepfxo.fill(context.getMatrices(), scx1, y1, scx2, y2, color);
     }
 
     @ModifyExpressionValue(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ingame/BookEditScreen;getPageContent()Lnet/minecraft/client/gui/screen/ingame/BookEditScreen$PageContent;"), method = "render")
-    private BookEditScreen.PageContent drawPageContent(BookEditScreen.PageContent content, MatrixStack matrices, int mouseX, int mouseY, float delta) {
+    private BookEditScreen.PageContent drawPageContent(BookEditScreen.PageContent content, DrawContext context, int mouseX, int mouseY, float delta) {
         VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
         CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
         List<CaxtonText> cts = ((BookEditScreenPageContentExt) content).getCaxtonText();
@@ -216,7 +217,7 @@ public abstract class BookEditScreenMixin extends Screen {
                     ((BookEditScreenLineAccessor) line).getX(),
                     ((BookEditScreenLineAccessor) line).getY(),
                     0xff000000, false,
-                    matrices.peek().getPositionMatrix(), immediate,
+                    context.getMatrices().peek().getPositionMatrix(), immediate,
                     false, 0, 0xF000F0,
                     -1, Float.POSITIVE_INFINITY);
         }
@@ -225,26 +226,26 @@ public abstract class BookEditScreenMixin extends Screen {
     }
 
     @Redirect(
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/font/TextRenderer;draw(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/text/Text;FFI)I"),
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawText(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Text;IIIZ)I"),
             slice = @Slice(
                     from = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ingame/BookEditScreen;getPageContent()Lnet/minecraft/client/gui/screen/ingame/BookEditScreen$PageContent;")),
             method = "render")
-    private int onDrawText(TextRenderer instance, MatrixStack matrices, Text text, float x, float y, int color) {
+    private int onDrawText(DrawContext instance, TextRenderer textRenderer, Text text, int x, int y, int color, boolean shadow) {
         return 0;
     }
 
-    @Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawableHelper;fill(Lnet/minecraft/client/util/math/MatrixStack;IIIII)V"), method = "drawCursor")
-    private void fillProxyForCursor(MatrixStack matrices, int x1, int y1, int x2, int y2, int color) {
+    @Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;fill(IIIII)V"), method = "drawCursor")
+    private void fillProxyForCursor(DrawContext context, int x1, int y1, int x2, int y2, int color) {
         x1 = x1 - (width - 192) / 2 - 36;
         float scx1 = x1 / XSCALE + (width - 192) / 2.0f + 36;
         float scx2 = scx1 + 1;
-        Voepfxo.fill(matrices, scx1, y1, scx2, y2, color);
+        Voepfxo.fill(context.getMatrices(), scx1, y1, scx2, y2, color);
     }
 
-    @Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/font/TextRenderer;draw(Lnet/minecraft/client/util/math/MatrixStack;Ljava/lang/String;FFI)I"), method = "drawCursor")
-    private int drawTextProxyForCursor(TextRenderer instance, MatrixStack matrices, String text, float x, float y, int color) {
-        x = x - (width - 192) / 2.0f - 36;
-        float scx = x / XSCALE + (width - 192) / 2.0f + 36;
-        return instance.draw(matrices, "_", scx, y, color);
+    @Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawText(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;IIIZ)I"), method = "drawCursor")
+    private int drawTextProxyForCursor(DrawContext context, TextRenderer textRenderer, String text, int x, int y, int color, boolean shadow) {
+        float x2 = x - (width - 192) / 2.0f - 36;
+        float scx = x2 / XSCALE + (width - 192) / 2.0f + 36;
+        return Voepfxo.drawText(context, textRenderer, "_", scx, y, color);
     }
 }
