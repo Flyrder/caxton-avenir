@@ -17,7 +17,9 @@ import java.nio.file.Path;
 
 @Environment(EnvType.CLIENT)
 public class CaxtonConfig {
-    public static final String CONFIG_PATH = "config/caxton.json";
+    public static final String CONFIG_PATH_STR = "config/caxton.json";
+    public static final Path CONFIG_PATH = Path.of(CONFIG_PATH_STR);
+    public static final Path CONFIG_DIR = CONFIG_PATH.getParent();
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeNulls().setLenient().create();
     public @Nullable String rustTarget = null;
     public boolean tweakExpText = true;
@@ -27,7 +29,7 @@ public class CaxtonConfig {
 
     public static CaxtonConfig readFromFile() {
         CaxtonConfig config;
-        try (FileReader fh = new FileReader(CONFIG_PATH, StandardCharsets.UTF_8)) {
+        try (FileReader fh = new FileReader(CONFIG_PATH_STR, StandardCharsets.UTF_8)) {
             try {
                 config = GSON.fromJson(fh, CaxtonConfig.class);
                 // Perform validation (none currently)
@@ -37,18 +39,23 @@ public class CaxtonConfig {
                 return new CaxtonConfig();
             }
         } catch (IOException e) {
-            if (!Files.exists(Path.of(CONFIG_PATH))) {
-                // Create new config
-                config = new CaxtonConfig();
+            // Create new config
+            config = new CaxtonConfig();
+            if (!Files.exists(CONFIG_PATH)) {
+                try {
+                    Files.createDirectories(CONFIG_DIR);
+                } catch (IOException e2) {
+                    CaxtonModClient.LOGGER.error("Could not create config directory: ", e);
+                }
             } else {
-                throw new RuntimeException(e);
+                CaxtonModClient.LOGGER.error("Could not read from config file:  ", e);
             }
         }
-        try (FileWriter fh = new FileWriter(CONFIG_PATH, StandardCharsets.UTF_8)) {
+        try (FileWriter fh = new FileWriter(CONFIG_PATH_STR, StandardCharsets.UTF_8)) {
             GSON.toJson(config, fh);
-            return config;
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            CaxtonModClient.LOGGER.error("Could not write to config file: ", ex);
         }
+        return config;
     }
 }
