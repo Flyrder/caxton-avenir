@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.render.HasCaxtonTextRenderer;
+import xyz.flirora.caxton.render.Voepfxo;
 
 @Environment(EnvType.CLIENT)
 @Mixin(InGameHud.class)
@@ -41,9 +42,7 @@ public abstract class InGameHudMixin {
         String levelStr = "" + this.client.player.experienceLevel;
         float x = (this.scaledWidth - this.getTextRenderer().getTextHandler().getWidth(levelStr)) / 2.0f;
         float y = this.scaledHeight - 31 - 4;
-        VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
-        ((HasCaxtonTextRenderer) this.getTextRenderer()).getCaxtonTextRenderer().drawWithOutline(Text.literal(levelStr).asOrderedText(), x, y, 0x80ff20, 0, context.getMatrices().peek().getPositionMatrix(), immediate, 0xF000F0, false);
-        immediate.draw();
+        Voepfxo.drawText4Way(context, this.getTextRenderer(), Text.literal(levelStr).asOrderedText(), x, y, 0x80ff20, 0);
         this.client.getProfiler().pop();
         ci.cancel();
     }

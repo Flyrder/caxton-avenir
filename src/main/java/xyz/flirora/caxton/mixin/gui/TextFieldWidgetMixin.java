@@ -179,19 +179,9 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
         float firstCharLocation = 0, selectionStartLocation = 0;
 
         if (caxtonText != null) {
-            VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
-
-            ctr.draw(
-                    caxtonText,
-                    x, y,
-                    color, true,
-                    context.getMatrices().peek().getPositionMatrix(), immediate,
-                    false, 0, 0xF000F0,
-                    firstCharacterIndex, getInnerWidth());
+            Voepfxo.drawText(context, textRenderer, caxtonText, x, y, color, true, firstCharacterIndex, getInnerWidth());
             firstCharLocation = ctr.getHandler().getOffsetAtIndex(caxtonText, firstCharacterIndex, DirectionSetting.FORCE_LTR);
             selectionStartLocation = ctr.getHandler().getOffsetAtIndex(caxtonText, selectionStart, DirectionSetting.AUTO);
-
-            immediate.draw();
         }
 
         boolean cursorIsVertical = selectionStart < text.length() || text.length() >= getMaxLength();

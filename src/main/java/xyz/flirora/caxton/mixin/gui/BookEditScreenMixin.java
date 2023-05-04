@@ -207,22 +207,18 @@ public abstract class BookEditScreenMixin extends Screen {
 
     @ModifyExpressionValue(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ingame/BookEditScreen;getPageContent()Lnet/minecraft/client/gui/screen/ingame/BookEditScreen$PageContent;"), method = "render")
     private BookEditScreen.PageContent drawPageContent(BookEditScreen.PageContent content, DrawContext context, int mouseX, int mouseY, float delta) {
-        VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
-        CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
         List<CaxtonText> cts = ((BookEditScreenPageContentExt) content).getCaxtonText();
         BookEditScreen.Line[] lines = ((BookEditScreenPageContentAccessor) content).getLines();
         for (int i = 0; i < lines.length; ++i) {
             BookEditScreen.Line line = lines[i];
-            ctr.draw(
+            Voepfxo.drawText(
+                    context,
+                    textRenderer,
                     cts.get(i),
                     ((BookEditScreenLineAccessor) line).getX(),
-                    ((BookEditScreenLineAccessor) line).getY(),
-                    0xff000000, false,
-                    context.getMatrices().peek().getPositionMatrix(), immediate,
-                    false, 0, 0xF000F0,
-                    -1, Float.POSITIVE_INFINITY);
+                    ((BookEditScreenLineAccessor) line).getY(), 0xff000000,
+                    false);
         }
-        immediate.draw();
         return content;
     }
 
