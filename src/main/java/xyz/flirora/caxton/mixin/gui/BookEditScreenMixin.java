@@ -10,6 +10,7 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.BookEditScreen;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.SelectionManager;
@@ -197,11 +198,11 @@ public abstract class BookEditScreenMixin extends Screen {
         return new Rect2i(x1, lineY + 32, x2 - x1, this.textRenderer.fontHeight);
     }
 
-    @Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;fill(IIIII)V"), method = "drawSelection")
-    private void onVertex(DrawContext context, int x1, int y1, int x2, int y2, int color) {
+    @Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;method_51739(Lnet/minecraft/client/render/RenderLayer;IIIII)V"), method = "drawSelection")
+    private void onVertex(DrawContext context, RenderLayer renderLayer, int x1, int y1, int x2, int y2, int color) {
         float scx1 = x1 / XSCALE + (width - 192) / 2.0f + 36;
         float scx2 = x2 / XSCALE + (width - 192) / 2.0f + 36;
-        Voepfxo.fill(context.getMatrices(), scx1, y1, scx2, y2, color);
+        Voepfxo.fill(context, renderLayer, scx1, y1, scx2, y2, color);
     }
 
     @ModifyExpressionValue(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ingame/BookEditScreen;getPageContent()Lnet/minecraft/client/gui/screen/ingame/BookEditScreen$PageContent;"), method = "render")
@@ -239,7 +240,7 @@ public abstract class BookEditScreenMixin extends Screen {
         x1 = x1 - (width - 192) / 2 - 36;
         float scx1 = x1 / XSCALE + (width - 192) / 2.0f + 36;
         float scx2 = scx1 + 1;
-        Voepfxo.fill(context.getMatrices(), scx1, y1, scx2, y2, color);
+        Voepfxo.fill(context, scx1, y1, scx2, y2, color);
     }
 
     @Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawText(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;IIIZ)I"), method = "drawCursor")

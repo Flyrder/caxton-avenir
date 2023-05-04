@@ -7,6 +7,7 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.AbstractSignEditScreen;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.util.SelectionManager;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Style;
@@ -20,6 +21,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import xyz.flirora.caxton.layout.CaxtonText;
 import xyz.flirora.caxton.layout.CaxtonTextHandler;
 import xyz.flirora.caxton.layout.DirectionSetting;
+import xyz.flirora.caxton.mixin.DrawContextAccessor;
 import xyz.flirora.caxton.render.CaxtonTextRenderer;
 import xyz.flirora.caxton.render.HasCaxtonTextRenderer;
 import xyz.flirora.caxton.render.Voepfxo;
@@ -57,7 +59,7 @@ public abstract class AbstractSignEditScreenMixin
         // indeed on the current row.
         if (currentLine == this.messages[this.currentRow]) this.currentRowText = rowText;
         int x2 = (int) ctr.draw(this.rowText, -cth.getWidth(rowText) / 2.0f, y, color, false, instance.getMatrices().peek().getPositionMatrix(), instance.getVertexConsumers(), false, 0, 0xF000F0, 0, Float.POSITIVE_INFINITY);
-        instance.draw();
+        ((DrawContextAccessor)instance).callDraw();
         return x2;
     }
 
@@ -82,14 +84,14 @@ public abstract class AbstractSignEditScreenMixin
         float cursorOffset = cth.getOffsetAtIndex(currentRowText, Math.min(selectionStart, currentLine.length()), DirectionSetting.AUTO);
         float cursorX = cursorOffset - x;
         Voepfxo.fill(
-                instance.getMatrices(),
+                instance,
                 cursorX, lineY - 1,
                 cursorX + 1, lineY + this.blockEntity.getTextLineHeight(),
                 0xFF000000 | color);
     }
 
-    @Redirect(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;fill(IIIII)V", ordinal = 1))
-    private void drawHighlights(DrawContext instance, int x1, int y1, int x2, int y2, int color) {
+    @Redirect(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;method_51739(Lnet/minecraft/client/render/RenderLayer;IIIII)V"))
+    private void drawHighlights(DrawContext context, RenderLayer renderLayer, int x1, int y1, int x2, int y2, int color) {
         CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
         CaxtonTextHandler cth = ctr.getHandler();
 
@@ -100,7 +102,7 @@ public abstract class AbstractSignEditScreenMixin
         int lineY = currentRow * this.blockEntity.getTextLineHeight() - yAdj;
 
         cth.getHighlightRanges(currentRowText, Math.min(selectionStart, selectionEnd), Math.max(selectionStart, selectionEnd), (start, end) -> {
-            Voepfxo.fill(instance.getMatrices(), start - x, lineY, end - x, lineY + this.blockEntity.getTextLineHeight(), color);
+            Voepfxo.fill(context, renderLayer, start - x, lineY, end - x, lineY + this.blockEntity.getTextLineHeight(), color);
         });
     }
 }

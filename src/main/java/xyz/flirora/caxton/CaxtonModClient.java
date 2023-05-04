@@ -1,5 +1,6 @@
 package xyz.flirora.caxton;
 
+import com.chocohead.mm.api.ClassTinkerers;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.logging.LogUtils;
 import net.fabricmc.api.ClientModInitializer;
@@ -10,6 +11,7 @@ import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
+import net.minecraft.client.font.FontType;
 import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.text.Text;
@@ -31,6 +33,8 @@ public class CaxtonModClient implements ClientModInitializer {
     public static final boolean APRIL_FOOLS = isAprilFools();
     private static final Set<String> CALLSITE_BLACKLIST = ImmutableSet.of(TextHandler.class.getName(), TextRenderer.class.getName());
     private static final ConcurrentMap<StackTraceElement, StackTraceElement> PREVIOUS_BROKEN_METHOD_CALLERS = new ConcurrentHashMap<>();
+
+    public static final FontType CAXTON_FONT_TYPE = ClassTinkerers.getEnum(FontType.class, "CAXTON");
 
     public static CaxtonConfig CONFIG = null;
 

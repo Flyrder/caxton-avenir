@@ -6,16 +6,22 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.mojang.datafixers.util.Either;
 import com.mojang.logging.LogUtils;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.Font;
 import net.minecraft.client.font.FontLoader;
+import net.minecraft.client.font.FontType;
 import net.minecraft.resource.Resource;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.JsonHelper;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
+import xyz.flirora.caxton.CaxtonEarlyRiser;
+import xyz.flirora.caxton.CaxtonModClient;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -36,6 +42,19 @@ public class CaxtonFontLoader implements FontLoader {
     private final ConfiguredCaxtonFont.Loader regular;
     @Nullable
     private final ConfiguredCaxtonFont.Loader bold, italic, boldItalic;
+
+    public static final MapCodec<CaxtonFontLoader> CODEC = RecordCodecBuilder.mapCodec(
+            instance -> instance.group(
+                            ConfiguredCaxtonFont.Loader.CODEC.fieldOf("regular")
+                                    .forGetter(x -> x.regular),
+                            ConfiguredCaxtonFont.Loader.CODEC.optionalFieldOf("bold")
+                                    .forGetter(x -> Optional.ofNullable(x.bold)),
+                            ConfiguredCaxtonFont.Loader.CODEC.optionalFieldOf("italic")
+                                    .forGetter(x -> Optional.ofNullable(x.italic)),
+                            ConfiguredCaxtonFont.Loader.CODEC.optionalFieldOf("bold_italic")
+                                    .forGetter(x -> Optional.ofNullable(x.boldItalic)))
+                    .apply(instance, (regular, bold, italic, boldItalic) -> new CaxtonFontLoader(regular, bold.orElse(null), italic.orElse(null), boldItalic.orElse(null))
+                    ));
 
     /**
      * Constructs a new {@link CaxtonFontLoader}.
@@ -158,5 +177,10 @@ public class CaxtonFontLoader implements FontLoader {
     @Override
     public Either<Loadable, Reference> build() {
         return Either.left(this::load);
+    }
+
+    @Override
+    public FontType method_51731() {
+        return CaxtonModClient.CAXTON_FONT_TYPE;
     }
 }

@@ -1,6 +1,12 @@
 package xyz.flirora.caxton.font;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.*;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.resource.ResourceManager;
@@ -9,6 +15,8 @@ import net.minecraft.util.JsonHelper;
 import org.jetbrains.annotations.Nullable;
 import xyz.flirora.caxton.dll.CaxtonInternal;
 import xyz.flirora.caxton.layout.ShapingResult;
+
+import java.util.function.Function;
 
 /**
  * A font with additional settings.
@@ -86,5 +94,21 @@ public record ConfiguredCaxtonFont(CaxtonFont font, long ptr, float shadowOffset
      * @param settings the original JSON object specifying the {@link ConfiguredCaxtonFont}, or {@code null} if it was passed as an identifier alone
      */
     public record Loader(Identifier id, @Nullable JsonObject settings) {
+        private static final Codec<Identifier> FILE_FIELD_CODEC = Identifier.CODEC.fieldOf("file").codec();
+        public static final Codec<Loader> CODEC = Codec.either(
+                        Identifier.CODEC.xmap(id -> new Loader(id, null), Loader::id),
+                        Codec.PASSTHROUGH.comapFlatMap(
+                                obj -> {
+                                    var elem = obj.cast(JsonOps.INSTANCE);
+                                    if (!(elem instanceof JsonObject settings)) {
+                                        return DataResult.error(() -> "Not a JSON object: " + elem);
+                                    }
+                                    return FILE_FIELD_CODEC.parse(obj).map(id -> new Loader(id, settings));
+                                },
+                                loader -> new Dynamic<>(JsonOps.INSTANCE, loader.settings)))
+                .xmap(either -> either.left().orElse(either.right().get()), x -> x.settings == null ? Either.left(x) : Either.right(x));
+        // If you’ve made it this far, why not take a break with a nice
+        // f i c t i o n a l  l a n g u a g e  song?
+        // https://www.youtube.com/watch?v=jaJQM4BqlAY
     }
 }

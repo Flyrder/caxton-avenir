@@ -3,9 +3,12 @@ package xyz.flirora.caxton;
 import com.chocohead.mm.api.ClassTinkerers;
 import com.google.gson.JsonObject;
 import com.llamalad7.mixinextras.MixinExtrasBootstrap;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.MappingResolver;
 import net.minecraft.client.font.FontLoader;
+import net.minecraft.client.font.FontType;
 import xyz.flirora.caxton.font.CaxtonFontLoader;
 
 import java.util.function.Function;
@@ -21,8 +24,8 @@ public class CaxtonEarlyRiser implements Runnable {
         MappingResolver remapper = FabricLoader.getInstance().getMappingResolver();
 
         String fontType = remapper.mapClassName("intermediary", "net.minecraft.class_394");
-        ClassTinkerers.enumBuilder(fontType, String.class, Function.class)
-                .addEnum("CAXTON", "caxton", (Function<JsonObject, FontLoader>) CaxtonFontLoader::fromJson).build();
+        ClassTinkerers.enumBuilder(fontType, String.class, MapCodec.class)
+                .addEnum("CAXTON", "caxton", CaxtonFontLoader.CODEC).build();
 
         MixinExtrasBootstrap.init();
     }

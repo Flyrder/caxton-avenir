@@ -11,7 +11,6 @@ import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -26,7 +25,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import xyz.flirora.caxton.layout.CaxtonText;
 import xyz.flirora.caxton.layout.DirectionSetting;
 import xyz.flirora.caxton.layout.gui.TextFieldWidgetExt;
@@ -215,7 +213,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
 
         if (showCursor) {
             if (cursorIsVertical) {
-                Voepfxo.fill(context.getMatrices(), cursorX, y - 1, cursorX + 1, y + 1 + this.textRenderer.fontHeight, 0xFFD0D0D0);
+                Voepfxo.fill(context, cursorX, y - 1, cursorX + 1, y + 1 + this.textRenderer.fontHeight, 0xFFD0D0D0);
             } else {
                 Voepfxo.drawTextWithShadow(context, this.textRenderer, HORIZONTAL_CURSOR, cursorX, y, color);
             }
@@ -228,6 +226,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
                     Math.min(selectionStart, selectionEnd),
                     Math.max(selectionStart, selectionEnd),
                     (x0, x1) -> myDrawSelectionHighlight(
+                            context,
                             x + x0 - finalFirstCharLocation, y - 1,
                             x + x1 - finalFirstCharLocation, y + 1 + textRenderer.fontHeight));
         }
@@ -289,7 +288,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     }
 
     // Copy of drawSelectionHighlight with float arguments
-    private void myDrawSelectionHighlight(float x1, float y1, float x2, float y2) {
+    private void myDrawSelectionHighlight(DrawContext context, float x1, float y1, float x2, float y2) {
         float i;
         if (x1 < x2) {
             i = x1;
@@ -313,6 +312,6 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
         if (x1 < this.getX()) {
             x1 = this.getX();
         }
-        Voepfxo.drawSelection(IDENTITY, x1, y1, x2, y2);
+        Voepfxo.drawSelection(context, x1, y1, x2, y2);
     }
 }

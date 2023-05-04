@@ -68,7 +68,7 @@ public abstract class EditBoxWidgetMixin extends ScrollableWidget {
                             (float) y,
                             0xffe0e0e0) - 1;
                     float cursorX = this.getX() + this.getPadding() + cth.getOffsetAtIndex(CaxtonText.fromForwards(lineStr, ctr.getFontStorageAccessor(), Style.EMPTY, false, false, cth.getCache()), cursorPos - line.beginIndex(), DirectionSetting.AUTO);
-                    Voepfxo.fill(context.getMatrices(), cursorX, y - 1, cursorX + 1, y + 1 + this.textRenderer.fontHeight, 0xffd0d0d0);
+                    Voepfxo.fill(context, cursorX, y - 1, cursorX + 1, y + 1 + this.textRenderer.fontHeight, 0xffd0d0d0);
                 } else {
                     x = Voepfxo.drawTextWithShadow(
                             context,
@@ -112,7 +112,7 @@ public abstract class EditBoxWidgetMixin extends ScrollableWidget {
                             Math.max(0, selection.beginIndex() - line.beginIndex()),
                             Math.min(selection.endIndex(), line.endIndex()) - line.beginIndex(),
                             (left, right) -> {
-                                Voepfxo.drawSelection(context.getMatrices(), selX + left, selY, selX + right, selY + this.textRenderer.fontHeight);
+                                Voepfxo.drawSelection(context, selX + left, selY, selX + right, selY + this.textRenderer.fontHeight);
                             });
                 }
                 y += this.textRenderer.fontHeight;
