@@ -251,7 +251,8 @@ public class CaxtonTextRenderer {
         int strikeoutThickness = font.getMetrics(CaxtonFont.Metrics.STRIKEOUT_THICKNESS);
 
         float scale = configuredFont.getScale();
-        float baselineY = y + 7.0f;
+        float baselineY = y + 7.0f + configuredFont.shiftY();
+        x += configuredFont.shiftX();
 
         float yu = baselineY - underlinePosition * scale;
         float ys = baselineY - strikeoutPosition * scale;
@@ -402,7 +403,7 @@ public class CaxtonTextRenderer {
 
             cumulAdvanceX += advanceX;
         }
-        return x + cumulAdvanceX * scale;
+        return x + cumulAdvanceX * scale - configuredFont.shiftX();
     }
 
     public CaxtonGlyphCache getCache() {

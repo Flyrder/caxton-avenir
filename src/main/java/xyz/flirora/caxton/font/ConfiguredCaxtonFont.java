@@ -1,8 +1,6 @@
 package xyz.flirora.caxton.font;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.*;
@@ -31,7 +29,8 @@ import java.util.function.Function;
  */
 @Environment(EnvType.CLIENT)
 public record ConfiguredCaxtonFont(CaxtonFont font, long ptr, float shadowOffset,
-                                   float computedScaleFactor, boolean blur) implements AutoCloseable {
+                                   float computedScaleFactor, boolean blur, float shiftX,
+                                   float shiftY) implements AutoCloseable {
     /**
      * Loads a {@link ConfiguredCaxtonFont} from its settings.
      *
@@ -48,12 +47,27 @@ public record ConfiguredCaxtonFont(CaxtonFont font, long ptr, float shadowOffset
             throw new RuntimeException("font " + settings.id + " does not exist");
         }
         long ptr = CaxtonInternal.configureFont(font.getFontPtr(), config);
-        float shadowOffset = settings.settings == null ? 1.0f :
-                JsonHelper.getFloat(settings.settings, "shadow_offset", 1.0f);
-        double scaleFactor = settings.settings == null ? 1.0f : JsonHelper.getDouble(settings.settings, "scale_factor", 1.0f);
+        float shadowOffset = 1.0f;
+        double scaleFactor = 1.0f;
+        boolean blur = false;
+        float shiftX = 0.0f, shiftY = 0.0f;
+        if (settings.settings != null) {
+            shadowOffset = JsonHelper.getFloat(settings.settings, "shadow_offset", shadowOffset);
+            scaleFactor = JsonHelper.getDouble(settings.settings, "scale_factor", scaleFactor);
+            blur = JsonHelper.getBoolean(settings.settings, "blur", blur);
+            JsonElement shiftE = settings.settings.get("shift");
+            if (shiftE instanceof JsonArray shift) {
+                if (shift.size() != 2) {
+                    throw new JsonSyntaxException("shift must have 2 elements");
+                }
+                shiftX = shift.get(0).getAsFloat();
+                shiftY = shift.get(1).getAsFloat();
+            } else if (shiftE != null) {
+                throw new JsonSyntaxException("shift must be an array");
+            }
+        }
         float computedScaleFactor = (float) (7.0 * scaleFactor / font.getMetrics(CaxtonFont.Metrics.ASCENDER));
-        boolean blur = settings.settings == null ? false : JsonHelper.getBoolean(settings.settings, "blur", false);
-        return new ConfiguredCaxtonFont(font, ptr, shadowOffset, computedScaleFactor, blur);
+        return new ConfiguredCaxtonFont(font, ptr, shadowOffset, computedScaleFactor, blur, shiftX, shiftY);
     }
 
     /**

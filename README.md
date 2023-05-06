@@ -105,6 +105,9 @@ key `file` specifies the path:
   "scale_factor": 1.0,
   // The shadow offset, as a multiple of the memefont pixel size.
   "shadow_offset": 1.0,
+  // The amount to shift the rendered text by in the X and Y axes, in memefont pixels.
+  // Added in Caxton 0.4.4.
+  "shift": [0.0, 0.0],
   // A list of OpenType feature tags. See below for the syntax:
   // https://docs.rs/rustybuzz/0.6.0/rustybuzz/struct.Feature.html#method.from_str
   "features": [],
