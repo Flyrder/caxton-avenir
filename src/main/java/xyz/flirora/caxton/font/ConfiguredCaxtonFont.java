@@ -21,9 +21,13 @@ import java.util.function.Function;
  * <p>
  * Whether an option is held by {@link CaxtonFont} or by {@link ConfiguredCaxtonFont} is determined by whether it affects MSDF generation. Options that affect MSDF generation, such as shrinkage, and those that affect atlas building, such as atlas page size, belong in {@link CaxtonFont}. Other options, such as the shadow offset or the use of OpenType features, are passed to {@link ConfiguredCaxtonFont}. To put it another way, options that are set in {@code .ttf.json} or {@code .otf.json} files are the ones passed to {@link CaxtonFont}, while those set as part of a font provider itself are the domain of {@link ConfiguredCaxtonFont}.
  *
- * @param font         the underlying {@link CaxtonFont}
- * @param ptr          the address of the pointer to the configured font in native memory
- * @param shadowOffset the shadow offset of the font
+ * @param font                the underlying {@link CaxtonFont}
+ * @param ptr                 the address of the pointer to the configured font in native memory
+ * @param shadowOffset        the shadow offset of the font
+ * @param computedScaleFactor the scale factor from typographic units to scaled GUI units
+ * @param blur                true if the glyph textures should be antialiased
+ * @param shiftX              the horizontal shift to apply, in scaled GUI units
+ * @param shiftY              the vertical shift to apply, in scaled GUI units
  * @see CaxtonFont
  * @see ConfiguredCaxtonFont
  */

@@ -22,9 +22,9 @@ import java.util.stream.Stream;
  */
 @Environment(EnvType.CLIENT)
 public class CaxtonTypeface implements Font {
-    private final ConfiguredCaxtonFont regular;
+    private ConfiguredCaxtonFont regular;
     @Nullable
-    private final ConfiguredCaxtonFont bold, italic, boldItalic;
+    private ConfiguredCaxtonFont bold, italic, boldItalic;
 
     /**
      * Creates a new {@link CaxtonTypeface}.
@@ -46,10 +46,14 @@ public class CaxtonTypeface implements Font {
      */
     @Override
     public void close() {
-        regular.close();
+        if (regular != null) regular.close();
         if (bold != null) bold.close();
         if (italic != null) italic.close();
         if (boldItalic != null) boldItalic.close();
+        regular = null;
+        bold = null;
+        italic = null;
+        boldItalic = null;
         Font.super.close();
     }
 
