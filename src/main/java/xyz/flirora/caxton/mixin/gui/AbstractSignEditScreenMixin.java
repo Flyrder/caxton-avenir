@@ -59,7 +59,7 @@ public abstract class AbstractSignEditScreenMixin
         // indeed on the current row.
         if (currentLine == this.messages[this.currentRow]) this.currentRowText = rowText;
         int x2 = (int) ctr.draw(this.rowText, -cth.getWidth(rowText) / 2.0f, y, color, false, instance.getMatrices().peek().getPositionMatrix(), instance.getVertexConsumers(), false, 0, 0xF000F0, 0, Float.POSITIVE_INFINITY);
-        ((DrawContextAccessor)instance).callDraw();
+        ((DrawContextAccessor) instance).callDraw();
         return x2;
     }
 
@@ -90,7 +90,7 @@ public abstract class AbstractSignEditScreenMixin
                 0xFF000000 | color);
     }
 
-    @Redirect(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;method_51739(Lnet/minecraft/client/render/RenderLayer;IIIII)V"))
+    @Redirect(method = "renderSignText", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;fill(Lnet/minecraft/client/render/RenderLayer;IIIII)V"))
     private void drawHighlights(DrawContext context, RenderLayer renderLayer, int x1, int y1, int x2, int y2, int color) {
         CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
         CaxtonTextHandler cth = ctr.getHandler();

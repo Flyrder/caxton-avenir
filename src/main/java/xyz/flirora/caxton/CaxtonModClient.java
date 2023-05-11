@@ -16,6 +16,7 @@ import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
 import org.slf4j.Logger;
 import xyz.flirora.caxton.command.DumpAtlasCommand;
 import xyz.flirora.caxton.dll.LibraryLoading;

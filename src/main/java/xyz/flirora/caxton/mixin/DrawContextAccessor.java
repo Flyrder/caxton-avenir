@@ -9,6 +9,6 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Environment(EnvType.CLIENT)
 @Mixin(DrawContext.class)
 public interface DrawContextAccessor {
-    @Invoker("method_51744")
+    @Invoker("tryDraw")
     void callDraw();
 }

@@ -198,7 +198,7 @@ public abstract class BookEditScreenMixin extends Screen {
         return new Rect2i(x1, lineY + 32, x2 - x1, this.textRenderer.fontHeight);
     }
 
-    @Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;method_51739(Lnet/minecraft/client/render/RenderLayer;IIIII)V"), method = "drawSelection")
+    @Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;fill(Lnet/minecraft/client/render/RenderLayer;IIIII)V"), method = "drawSelection")
     private void onVertex(DrawContext context, RenderLayer renderLayer, int x1, int y1, int x2, int y2, int color) {
         float scx1 = x1 / XSCALE + (width - 192) / 2.0f + 36;
         float scx2 = x2 / XSCALE + (width - 192) / 2.0f + 36;

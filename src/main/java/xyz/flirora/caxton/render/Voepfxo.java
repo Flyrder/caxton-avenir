@@ -20,7 +20,7 @@ public class Voepfxo {
     private static final char[] TABLE = {'u', 'v', 'm', 'c', 'y', 'g', 'w', 'l', 'e', 'x', 'j', 'd', 'p', 'r', 'a', 'f', 'k', 'h', 'n', 's', 'i', 'q', 'b', 'z', 'o', 't'};
 
     public static void fill(DrawContext context, float x1, float y1, float x2, float y2, int color) {
-        Voepfxo.fill(context, RenderLayer.method_51784(), x1, y1, x2, y2, color);
+        Voepfxo.fill(context, RenderLayer.getGui(), x1, y1, x2, y2, color);
     }
 
     public static void fill(DrawContext context, RenderLayer renderLayer, float x1, float y1, float x2, float y2, int color) {
@@ -51,7 +51,7 @@ public class Voepfxo {
     }
 
     public static void drawSelection(DrawContext context, float left, float top, float right, float bottom) {
-        fill(context, RenderLayer.method_51786(), left, top, right, bottom, 0xff0000ff);
+        fill(context, RenderLayer.getGuiTextHighlight(), left, top, right, bottom, 0xff0000ff);
     }
 
     public static int drawTextWithShadow(DrawContext context, TextRenderer textRenderer, Text text, float x, float y, int color) {

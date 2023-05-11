@@ -180,7 +180,7 @@ public class CaxtonFontLoader implements FontLoader {
     }
 
     @Override
-    public FontType method_51731() {
+    public FontType getType() {
         return CaxtonModClient.CAXTON_FONT_TYPE;
     }
 }
