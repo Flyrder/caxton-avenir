@@ -347,3 +347,4 @@ Caxton would not have been possible without the following projects:
 The following people are also credited for translations:
 
 * IcedDog for the Chinese translation
+* JustFoxxo for the Polish translation
