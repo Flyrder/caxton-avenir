@@ -9,6 +9,7 @@ import net.minecraft.client.gui.Drawable;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.text.OrderedText;
@@ -203,7 +204,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
 
         if (showCursor) {
             if (cursorIsVertical) {
-                Voepfxo.fill(context, cursorX, y - 1, cursorX + 1, y + 1 + this.textRenderer.fontHeight, 0xFFD0D0D0);
+                Voepfxo.fill(context, RenderLayer.getGuiOverlay(), cursorX, y - 1, cursorX + 1, y + 1 + this.textRenderer.fontHeight, 0xFFD0D0D0);
             } else {
                 Voepfxo.drawTextWithShadow(context, this.textRenderer, HORIZONTAL_CURSOR, cursorX, y, color);
             }
