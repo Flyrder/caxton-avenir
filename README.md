@@ -147,7 +147,8 @@ rasterizing the font:
   // This also determines the width of the border drawn for glowing sign text.
   "range": 4,
   // Whether to invert the signed distance field (true or false).
-  // If this is null, then Caxton will try to determine this automatically, but you can override this in case it guesses incorrectly.
+  // If this is null, then Caxton will try to determine this automatically,
+  // but you can override this in case it guesses incorrectly.
   "invert": null,
   // This option is used to set variation axis coordinates in variable fonts.
   // Each element has the following format:
@@ -180,8 +181,10 @@ The following options are available in `config/caxton.json`:
 
 ```json5
 {
-  // One of the Rust platform names (https://doc.rust-lang.org/nightly/rustc/platform-support.html) corresponding to your platform.
-  // If this is null, then Caxton will determine the correct value for your platform, so it is recommended to change this only when necessary.
+  // One of the Rust platform names (https://doc.rust-lang.org/nightly/rustc/platform-support.html)
+  // corresponding to your platform.
+  // If this is null, then Caxton will determine the correct value for your
+  // platform, so it is recommended to change this only when necessary.
   // Added in Caxton 0.2.1.
   "rustTarget": null,
   // Use a different method of drawing the level text on the experience bar:
@@ -208,7 +211,9 @@ The following options are available in `config/caxton.json`:
   // See: https://github.com/RaphiMC/ImmediatelyFast/issues/49
   // Added in Caxton 0.4.0.
   "sortTextRenderLayers": false,
-  // Some text handling methods are inherently broken and unsupported by Caxton. Caxton will log a warning whenever these methods are called. If this option is set to true, then Caxton will throw an exception instead.
+  // Some text handling methods are inherently broken and unsupported by Caxton.
+  // Caxton will log a warning whenever these methods are called. If this option
+  // is set to true, then Caxton will throw an exception instead.
   // This option is primarily useful for debugging. If in doubt, set this to false.
   // Added in Caxton 0.2.1.
   "fatalOnBrokenMethodCall": false,
@@ -228,6 +233,21 @@ The following options are available in `config/caxton.json`:
 
 [Open Sans]: https://github.com/googlefonts/opensans
 
+## Building from source
+
+If you want to build Caxton from source, then you’ll need to install the [Rust toolchain] and [Clang] in addition to Gradle.
+
+By default, the native library will be built for the host platform only. To build it for additional platforms, use the
+`xyz.flirora.caxton.additionalTargets` property. For instance, if you want to build the library for x86_64 Windows, then
+you can invoke
+
+```sh
+gradle build -Dxyz.flirora.caxton.additionalTargets=x86_64-pc-windows-gnu
+```
+
+[Rust toolchain]: https://www.rust-lang.org/tools/install
+[Clang]: https://rust-lang.github.io/rust-bindgen/requirements.html
+
 ## Comparison with other mods
 
 ### BetterFonts / TrueType Font Replacement
@@ -236,8 +256,8 @@ Originally created by [thvortex] through 1.4.4, updated to 1.4.7 by bechill, the
 by [secretdataz] to 1.6.x and 1.7.x, then by [cubex2] from 1.8.9 to 1.12.2. Then updated to 1.13 again by secretdataz.
 
 This mod uses Java AWT’s text layout functionality for laying out text. For rendering the glyphs, it rasterizes them
-into bitmaps. The resolution is quite limited. Unlike the other mods listed below, however, it implements bold and
-italic styles, as well as complex scripts, properly.
+into bitmaps. The resolution is quite limited. Unlike many of the other mods listed below, however, it implements bold
+and italic styles, as well as complex scripts, properly.
 
 [thvortex]: https://github.com/thvortex/BetterFonts
 
@@ -348,3 +368,4 @@ The following people are also credited for translations:
 
 * IcedDog for the Chinese translation
 * JustFoxxo for the Polish translation
+
