@@ -76,12 +76,11 @@ public class CaxtonAtlas implements AutoCloseable {
     }
 
     public Page getAtlasPageTexture(int pageNum) {
-        if (pageNum >= this.pages.size()) {
-            System.err.println("pages = " + this.pages);
-            System.err.println("shelves = " + this.shelves);
-            System.err.println("unallocatedSpaces = " + this.unallocatedSpaces);
-        }
         return this.pages.get(pageNum);
+    }
+
+    public int getNumPages() {
+        return this.pages.size();
     }
 
     public List<Page> getAllPages() {

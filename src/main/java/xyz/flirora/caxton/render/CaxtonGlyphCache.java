@@ -2,10 +2,12 @@ package xyz.flirora.caxton.render;
 
 import com.mojang.blaze3d.platform.GlConst;
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.util.Identifier;
+import org.slf4j.Logger;
 import xyz.flirora.caxton.font.CaxtonFont;
 
 import java.util.HashMap;
@@ -14,6 +16,7 @@ import java.util.Map;
 public class CaxtonGlyphCache {
     private final CaxtonAtlas atlas;
     private final Map<CaxtonFont, Int2LongMap> cache = new HashMap<>();
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     public CaxtonGlyphCache(TextureManager textureManager) {
         this.atlas = new CaxtonAtlas(textureManager);
@@ -28,6 +31,13 @@ public class CaxtonGlyphCache {
     }
 
     public CaxtonAtlas.Page getAtlasPageTexture(int pageNum) {
+        int pageCount = this.atlas.getNumPages();
+        if (pageNum >= pageCount) {
+            LOGGER.error("*** ATLAS PAGE INDEX OUT OF BOUNDS: {} >= {} ***", pageNum, pageCount);
+            LOGGER.error("This probably indicates a race condition.");
+            LOGGER.error("See <https://gitlab.com/Kyarei/caxton/-/issues/44> for more details.");
+            throw new IndexOutOfBoundsException("Al quira Prenia Callta caprinini");
+        }
         return atlas.getAtlasPageTexture(pageNum);
     }
 
