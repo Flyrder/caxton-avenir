@@ -1,5 +1,6 @@
 package xyz.flirora.caxton.mixin;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.Font;
@@ -25,7 +26,9 @@ public class FontManagerResourceReloaderMixin {
     @Inject(at = @At("HEAD"), method = "reload(Lnet/minecraft/client/font/FontManager$ProviderIndex;Lnet/minecraft/util/profiler/Profiler;)V")
     private void onPrepare(FontManager.ProviderIndex index, Profiler profiler, CallbackInfo ci) {
         CaxtonFontLoader.clearFontCache();
-        CaxtonTextRenderer.getInstance().clearCaches();
-        CaxtonTextRenderer.getAdvanceValidatingInstance().clearCaches();
+        RenderSystem.recordRenderCall(() -> {
+            CaxtonTextRenderer.getInstance().clearCaches();
+            CaxtonTextRenderer.getAdvanceValidatingInstance().clearCaches();
+        });
     }
 }
