@@ -12,6 +12,7 @@ import xyz.flirora.caxton.font.CaxtonFont;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class CaxtonGlyphCache {
     private final CaxtonAtlas atlas;

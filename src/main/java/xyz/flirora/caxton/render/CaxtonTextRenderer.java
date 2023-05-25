@@ -32,6 +32,7 @@ import xyz.flirora.caxton.layout.*;
 import xyz.flirora.caxton.mixin.TextRendererDrawerAccessor;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 @Environment(EnvType.CLIENT)
 public class CaxtonTextRenderer {
@@ -42,15 +43,16 @@ public class CaxtonTextRenderer {
     private final CaxtonTextHandler handler;
     private final TextRenderer vanillaTextRenderer;
     private final Random RANDOM = Random.createLocal();
-    private final CaxtonGlyphCache cache;
+    private CaxtonGlyphCache cache;
+    private final Supplier<CaxtonGlyphCache> cacheSupplier;
     private final CaxtonTextRenderLayers renderLayers;
     public boolean rtl;
 
-    public CaxtonTextRenderer(Function<Identifier, FontStorage> fontStorageAccessor, TextRenderer vanillaTextRenderer, CaxtonGlyphCache cache) {
+    public CaxtonTextRenderer(Function<Identifier, FontStorage> fontStorageAccessor, TextRenderer vanillaTextRenderer, Supplier<CaxtonGlyphCache> cacheSupplier) {
         this.fontStorageAccessor = fontStorageAccessor;
         this.handler = new CaxtonTextHandler(fontStorageAccessor, vanillaTextRenderer.getTextHandler());
         this.vanillaTextRenderer = vanillaTextRenderer;
-        this.cache = cache;
+        this.cacheSupplier = cacheSupplier;
         this.renderLayers = new CaxtonTextRenderLayers();
     }
 
@@ -183,6 +185,7 @@ public class CaxtonTextRenderer {
             TextRenderer.TextLayerType layerType, int backgroundColor, int light,
             CaxtonText text, int leftmostCodePoint, float maxWidth, float minThickness) {
 //        System.err.println(text);
+        getCache();
         Threshold threshold = new Threshold(leftmostCodePoint);
         float origX = x;
         float maxX = x + maxWidth;
@@ -407,13 +410,14 @@ public class CaxtonTextRenderer {
     }
 
     public CaxtonGlyphCache getCache() {
+        if (cache == null) cache = cacheSupplier.get();
         return cache;
     }
 
     public void clearCaches() {
         this.handler.clearCaches();
         LOGGER.info("Cleared layout caches");
-        this.cache.clear();
+        if (this.cache != null) this.cache.clear();
         this.renderLayers.clear();
         LOGGER.info("Cleared rendering caches");
     }

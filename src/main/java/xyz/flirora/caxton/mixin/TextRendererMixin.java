@@ -1,5 +1,6 @@
 package xyz.flirora.caxton.mixin;
 
+import com.google.common.base.Suppliers;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -20,13 +21,14 @@ import xyz.flirora.caxton.render.CaxtonTextRenderer;
 import xyz.flirora.caxton.render.HasCaxtonTextRenderer;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 @Environment(EnvType.CLIENT)
 @Mixin(TextRenderer.class)
 public class TextRendererMixin implements HasCaxtonTextRenderer {
     // Would like to put this in a FontManager mixin, but it doesn’t pass itself to TextRenderer’s constructor.
     @Unique
-    private static final CaxtonGlyphCache CACHE = new CaxtonGlyphCache(MinecraftClient.getInstance().getTextureManager());
+    private static final Supplier<CaxtonGlyphCache> CACHE = Suppliers.memoize(() -> new CaxtonGlyphCache(MinecraftClient.getInstance().getTextureManager()));
     @Unique
     private CaxtonTextRenderer caxtonRenderer;
 
