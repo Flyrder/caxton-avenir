@@ -34,8 +34,8 @@ pub struct CxVariation(pub Variation);
 
 impl<'de> Deserialize<'de> for CxVariation {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
+        where
+            D: serde::Deserializer<'de>,
     {
         let format = CxVariationFormat::deserialize(deserializer)?;
         let axis = if format.axis.len() == 4 {
@@ -400,6 +400,7 @@ fn create_bitmap(
         glyph_id,
         &mut AbOutlineBuilder {
             rasterizer: &mut rasterizer,
+            open_point: None,
             last_point: None,
             bbox: &bounding_box,
             options: &options,
@@ -441,6 +442,7 @@ fn adjust_dims(n: u32, p: u32) -> u32 {
 #[derive(Debug)]
 struct AbOutlineBuilder<'a> {
     rasterizer: &'a mut Rasterizer,
+    open_point: Option<Point>,
     last_point: Option<Point>,
     bbox: &'a Rect,
     options: &'a FontOptions,
@@ -462,32 +464,41 @@ impl<'a> AbOutlineBuilder<'a> {
 impl<'a> OutlineBuilder for AbOutlineBuilder<'a> {
     fn move_to(&mut self, x: f32, y: f32) {
         self.last_point = Some(self.point(x, y));
+        self.open_point = self.last_point;
     }
 
     fn line_to(&mut self, x: f32, y: f32) {
+        let end_point = self.point(x, y);
         self.rasterizer
-            .draw_line(self.last_point.unwrap(), self.point(x, y));
-        self.last_point = Some(self.point(x, y));
+            .draw_line(self.last_point.unwrap(), end_point);
+        self.last_point = Some(end_point);
     }
 
     fn quad_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
+        let end_point = self.point(x, y);
         self.rasterizer.draw_quad(
             self.last_point.unwrap(),
             self.point(x1, y1),
-            self.point(x, y),
+            end_point,
         );
-        self.last_point = Some(self.point(x, y));
+        self.last_point = Some(end_point);
     }
 
     fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
+        let end_point = self.point(x, y);
         self.rasterizer.draw_cubic(
             self.last_point.unwrap(),
             self.point(x1, y1),
             self.point(x2, y2),
-            self.point(x, y),
+            end_point,
         );
-        self.last_point = Some(self.point(x, y));
+        self.last_point = Some(end_point);
     }
 
-    fn close(&mut self) {}
+    fn close(&mut self) {
+        // Fix for issue #46
+        if self.last_point != self.open_point {
+            self.rasterizer.draw_line(self.last_point.unwrap(), self.open_point.unwrap());
+        }
+    }
 }
