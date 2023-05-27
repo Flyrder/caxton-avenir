@@ -72,6 +72,7 @@ public class CaxtonGlyphCache {
                 int height = (int) ((tlLoc >> 16) & 0xFFFF);
                 int numMipmapLevels = font.getNumMipmapLevels();
                 long location = CaxtonGlyphCache.this.atlas.insert(width, height, 1, font.getOptions().range(), numMipmapLevels, font.getPixelFormat());
+                if (location == 0) return location;
 
                 atlas.getAtlasPageTexture(CaxtonAtlas.getPage(location)).bindTexture();
                 GlStateManager._pixelStore(GlConst.GL_UNPACK_ROW_LENGTH, 0);
