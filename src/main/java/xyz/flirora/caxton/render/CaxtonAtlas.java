@@ -201,11 +201,13 @@ public class CaxtonAtlas implements AutoCloseable {
     }
 
     public void clear() {
-        for (int i = 1; i < this.pages.size(); i++) {
-            Page page = this.pages.get(i);
-            page.close();
+        if (this.pages.size() > 0) {
+            for (int i = 1; i < this.pages.size(); i++) {
+                Page page = this.pages.get(i);
+                page.close();
+            }
+            this.pages.subList(1, this.pages.size()).clear();
         }
-        this.pages.subList(1, this.pages.size()).clear();
         shelves.clear();
         unallocatedSpaces.clear();
     }
