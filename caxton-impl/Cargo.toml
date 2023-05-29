@@ -16,7 +16,7 @@ io_ext = "0.2.0"
 jni = "0.20.0"
 # Stupid workaround until msdf-rs updates its ttf-parser dependency
 msdfgen = { git = "https://github.com/bluebear94/msdfgen-rs", branch = "cross-compile-workaround", features = ["ttf-parser", "bindgen"] }
-rustybuzz = { git = "https://github.com/bluebear94/rustybuzz" }
+rustybuzz = "0.7.0"
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.91"
 sha2 = "0.10.6"
