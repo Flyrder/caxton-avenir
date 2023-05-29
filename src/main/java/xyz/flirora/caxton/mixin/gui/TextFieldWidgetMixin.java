@@ -101,6 +101,8 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     public void updateCaxtonText(boolean changed) {
         // Protect against mods that do things such as *gasp* registering
         // changed listeners that set suggestion text.
+//        System.err.println("updateCaxtonText(changed = " + changed + ", updatingCaxtonText = " + updatingCaxtonText + ") with text " + this.text);
+//        System.err.println("firstCharacterIndex = " + firstCharacterIndex + ", selection = " + selectionStart + ".." + selectionEnd);
         if (updatingCaxtonText) return;
         updatingCaxtonText = true;
 
@@ -261,15 +263,21 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
 
             float firstCharLocation = ctr.getHandler().getOffsetAtIndex(caxtonText, firstCharacterIndex, DirectionSetting.FORCE_LTR);
             float selectionEndLocation = ctr.getHandler().getOffsetAtIndex(caxtonText, selectionEnd, DirectionSetting.AUTO);
-//            System.out.println("firstCharacterIndex = " + firstCharacterIndex + ", selectionEnd = " + selectionEnd);
-//            System.out.println("firstCharLocation = " + firstCharLocation + ", selectionEndLocation = " + selectionEndLocation);
+//            System.err.println("setSelectionEnd: text = " + this.text);
+//            System.err.println("firstCharacterIndex = " + firstCharacterIndex + ", selectionEnd = " + selectionEnd);
+//            System.err.println("firstCharLocation = " + firstCharLocation + ", selectionEndLocation = " + selectionEndLocation);
+//            System.err.println("width = " + width + " (raw: " + this.width + ")");
 
-            if (selectionEndLocation < firstCharLocation) {
+            if (this.selectionEnd == this.firstCharacterIndex) {
+                // Be compatible with mods that set the text of a text field before its width.
+                // See #47 and #48
+                this.firstCharacterIndex = ctr.getHandler().getCharIndexAtX(caxtonText, selectionEndLocation - width, -1);
+            } else if (selectionEndLocation < firstCharLocation) {
                 // Update firstCharacterIndex to point to a char farther to the left
-                this.firstCharacterIndex = ctr.getHandler().getCharIndexAtX(caxtonText, firstCharLocation - width, -1);
+                this.firstCharacterIndex = ctr.getHandler().getCharIndexAtX(caxtonText, Math.min(firstCharLocation - width, selectionEndLocation), -1);
             } else if (selectionEndLocation >= firstCharLocation + width) {
                 // Update firstCharacterIndex to point to a char farther to the right
-                this.firstCharacterIndex = ctr.getHandler().getCharIndexAfterX(caxtonText, selectionEndLocation - getInnerWidth(), -1);
+                this.firstCharacterIndex = ctr.getHandler().getCharIndexAfterX(caxtonText, selectionEndLocation - width, -1);
             }
 
             this.firstCharacterIndex = MathHelper.clamp(this.firstCharacterIndex, 0, length);
