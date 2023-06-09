@@ -1,0 +1,13 @@
+# cargo-vet audits file
+
+[[audits.io_ext]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+violation = "=0.2.0"
+notes = "Calls `assume_init` on an uninitialized `MaybeUninit`."
+
+[[audits.unicode-ident]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+delta = "1.0.8 -> 1.0.6"
+notes = "Only doc and lint changes."

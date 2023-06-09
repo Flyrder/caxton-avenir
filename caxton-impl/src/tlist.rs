@@ -1,11 +1,10 @@
 use std::io::{Read, Write};
-use std::{mem, slice};
+use std::{io, mem, slice};
 
 use anyhow::{bail, Context};
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
 use flate2::Compression;
-use io_ext::{ReadExt, WriteExt};
 use msdfgen::Bitmap;
 
 #[repr(C)]
@@ -58,7 +57,7 @@ impl TList {
     pub fn adds(
         &mut self,
         bit_depth: usize,
-        sizes: impl Iterator<Item = (u32, u32)>,
+        sizes: impl Iterator<Item=(u32, u32)>,
     ) -> anyhow::Result<Vec<TListPendingEntry<'_>>> {
         let first_index = self.pixels.len();
         let mut pending_index = first_index;
@@ -100,7 +99,7 @@ impl TList {
     pub fn adds_pairs(
         &mut self,
         bit_depth: usize,
-        sizes: impl Iterator<Item = (u32, u32)> + Clone,
+        sizes: impl Iterator<Item=(u32, u32)> + Clone,
     ) -> anyhow::Result<Vec<(TListPendingEntry<'_>, TListPendingEntry<'_>)>> {
         let mut entries = self.adds(bit_depth, sizes.clone().chain(sizes))?;
         let midpoint = entries.len() / 2;
@@ -127,8 +126,8 @@ impl TList {
     }
 
     fn save1(&self, fh: &mut impl Write) -> anyhow::Result<()> {
-        fh.write_u32_checked(self.locations.len().try_into()?)?;
-        fh.write_u32_checked((self.pixels.len() >> 2).try_into()?)?;
+        write_u32(fh, self.locations.len().try_into()?)?;
+        write_u32(fh, (self.pixels.len() >> 2).try_into()?)?;
         {
             let slice = self.locations.as_slice();
             let slice = unsafe {
@@ -146,8 +145,8 @@ impl TList {
 
     pub fn save(tlists: &[TList], fh: &mut impl Write) -> anyhow::Result<()> {
         let mut fh = ZlibEncoder::new(fh, Compression::default());
-        fh.write_u32_checked(VERSION)?;
-        fh.write_u8_checked(tlists.len().try_into()?)?;
+        write_u32(&mut fh, VERSION)?;
+        write_u8(&mut fh, tlists.len().try_into()?)?;
         for tlist in tlists {
             tlist.save1(&mut fh)?;
         }
@@ -156,8 +155,8 @@ impl TList {
     }
 
     fn load1(fh: &mut impl Read) -> anyhow::Result<Self> {
-        let num_locations = fh.read_u32_checked()?;
-        let num_pixels = fh.read_u32_checked()?;
+        let num_locations = read_u32(fh)?;
+        let num_pixels = read_u32(fh)?;
 
         let mut locations = vec![TLocation::default(); num_locations as usize];
         {
@@ -193,11 +192,11 @@ impl TList {
     pub fn load(fh: &mut impl Read, expected_len: usize) -> anyhow::Result<Vec<Self>> {
         let mut fh = ZlibDecoder::new(fh);
 
-        let version = fh.read_u32_checked()?;
+        let version = read_u32(&mut fh)?;
         if version != VERSION {
             bail!("version mismatch (expected version {VERSION}; found {version}");
         }
-        let len = fh.read_u8_checked()? as usize;
+        let len = read_u8(&mut fh)? as usize;
         if len != expected_len {
             bail!("expected {expected_len} elements; got {len} elements");
         }
@@ -232,4 +231,24 @@ impl<'a> TListPendingEntry<'a> {
     pub fn as_slice_mut(&mut self) -> &mut [u8] {
         self.pixels
     }
+}
+
+fn read_u8<R: Read>(r: &mut R) -> io::Result<u8> {
+    let mut x = [0; 1];
+    r.read_exact(&mut x)?;
+    Ok(u8::from_le_bytes(x))
+}
+
+fn read_u32<R: Read>(r: &mut R) -> io::Result<u32> {
+    let mut x = [0; 4];
+    r.read_exact(&mut x)?;
+    Ok(u32::from_le_bytes(x))
+}
+
+fn write_u8<W: Write>(w: &mut W, val: u8) -> io::Result<()> {
+    w.write_all(&val.to_le_bytes())
+}
+
+fn write_u32<W: Write>(w: &mut W, val: u32) -> io::Result<()> {
+    w.write_all(&val.to_le_bytes())
 }

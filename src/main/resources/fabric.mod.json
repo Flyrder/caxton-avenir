@@ -31,7 +31,7 @@
   "depends": {
     "fabricloader": ">=0.14.17",
     "fabric-api": "*",
-    "minecraft": "1.20-rc.1"
+    "minecraft": "1.20"
   },
   "conflicts": {
     "emojiful": "*",
