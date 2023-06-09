@@ -1,10 +1,102 @@
+
 # cargo-vet audits file
+
+[[audits.ab_glyph_rasterizer]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+version = "0.1.8"
+notes = """
+Uses unsafe to specialize the draw_line function for different CPU features, but
+this is done soundly.
+"""
+
+[[audits.block-buffer]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+delta = "0.10.3 -> 0.10.4"
+
+[[audits.cesu8]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+version = "1.1.0"
+
+[[audits.clang-sys]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+delta = "1.6.0 -> 1.6.1"
+
+[[audits.crossbeam-utils]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+delta = "0.8.14 -> 0.8.15"
+
+[[audits.generic-array]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+delta = "0.14.6 -> 0.14.7"
 
 [[audits.io_ext]]
 who = "+merlan #flirora <uruwi@protonmail.com>"
 criteria = "safe-to-deploy"
 violation = "=0.2.0"
 notes = "Calls `assume_init` on an uninitialized `MaybeUninit`."
+
+[[audits.itoa]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+version = "1.0.6"
+
+[[audits.once_cell]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+delta = "1.17.0 -> 1.17.1"
+
+[[audits.proc-macro2]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+delta = "1.0.59 -> 1.0.60"
+
+[[audits.same-file]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-run"
+version = "1.0.6"
+notes = """
+I can only verify the security of the `unix` implementation; I’m not familiar with
+Windows enough to say anything about the `win` implementation.
+"""
+
+[[audits.serde_json]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+delta = "1.0.95 -> 1.0.96"
+notes = "Only changes documentation and tests."
+
+[[audits.shlex]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+version = "1.1.0"
+notes = """
+Contains two uses of String::from_utf8_unchecked, but these are always called with
+valid UTF-8 data.
+"""
+
+[[audits.syn]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+delta = "1.0.107 -> 1.0.109"
+notes = "Only a small fix to whitespace handling following a newline in a string literal."
+
+[[audits.unicode-bidi-mirroring]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+version = "0.1.0"
+notes = "Does not use unsafe code."
+
+[[audits.unicode-ccc]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+version = "0.1.2"
+notes = "Does not use unsafe code."
 
 [[audits.unicode-ident]]
 who = "+merlan #flirora <uruwi@protonmail.com>"
