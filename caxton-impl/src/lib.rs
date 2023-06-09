@@ -1,5 +1,7 @@
 #![cfg_attr(test, feature(slice_flatten))]
 
+extern crate core;
+
 pub mod cfont;
 pub mod extrude;
 pub mod font;

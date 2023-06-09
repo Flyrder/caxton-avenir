@@ -4,9 +4,10 @@ use anyhow::Context;
 use jni::sys::jstring;
 use jni::{
     objects::{JByteBuffer, JClass, JObject, JString, JValue, ReleaseMode},
-    sys::{jcharArray, jint, jintArray, jlong, jobjectArray, jshortArray},
+    sys::{jchar, jint, jlong},
     JNIEnv,
 };
+use jni::objects::{JCharArray, JIntArray, JObjectArray, JShortArray};
 use rustybuzz::{Direction, UnicodeBuffer};
 use thiserror::Error;
 use ttf_parser::GlyphId;
@@ -58,7 +59,7 @@ macro_rules! throw_as_exn {
 // public static native long createFont(ByteBuffer fontData, String cachePath, String options);
 #[no_mangle]
 pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_createFont(
-    env: JNIEnv,
+    mut env: JNIEnv,
     _class: JClass,
     font_data: JByteBuffer,
     cache_path: JString,
@@ -66,13 +67,13 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_createF
 ) -> jlong {
     throw_as_exn! {
         env;
-        let cache_path: String = env.get_string(cache_path)?.into();
+        let cache_path: String = env.get_string(&cache_path)?.into();
         let font_data = slice::from_raw_parts(
-            env.get_direct_buffer_address(font_data)?,
-            env.get_direct_buffer_capacity(font_data)?,
+            env.get_direct_buffer_address(&font_data)?,
+            env.get_direct_buffer_capacity(&font_data)?,
         );
         let options: FontOptions = serde_json::from_str(
-            env.get_string(options)?
+            env.get_string(&options)?
                 .to_str()
                 .context("string decoding failed")?,
         )
@@ -142,16 +143,16 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontGly
 /// and must not have been previously passed into [`Java_xyz_flirora_caxton_dll_CaxtonInternal_destroyFont`].
 // public static native short[] fontMetrics(long addr);
 #[no_mangle]
-pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontMetrics(
-    env: JNIEnv,
-    _class: JClass,
+pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontMetrics<'local>(
+    mut env: JNIEnv<'local>,
+    _class: JClass<'local>,
     addr: jlong,
-) -> jshortArray {
+) -> JShortArray<'local> {
     throw_as_exn! {
-        env, ptr::null_mut();
+        env, JShortArray::from_raw(ptr::null_mut());
         if addr == 0 {
             eprintln!("warn: was passed an address of 0; returning");
-            return Ok(ptr::null_mut());
+            return Ok(JShortArray::from_raw(ptr::null_mut()));
         }
         let font = (*(addr as usize as *const Font)).face.as_ref();
         // TODO: compute these metrics using heuristics if they are not available
@@ -175,7 +176,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontMet
             strikeout_thickness,
         ];
         let output = env.new_short_array(metrics.len() as i32)?;
-        env.set_short_array_region(output, 0, &metrics)?;
+        env.set_short_array_region(&output, 0, &metrics)?;
         Ok(output)
     }
 }
@@ -292,7 +293,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontBbo
 // public static native int fontAtlasPage(long addr, int pageNum);
 #[no_mangle]
 pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtlasPage(
-    env: JNIEnv,
+    mut env: JNIEnv,
     _class: JClass,
     addr: jlong,
     mipmap: jint,
@@ -338,7 +339,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontByt
 // public static native String fontGlyphName(long addr, int glyphId);
 #[no_mangle]
 pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontGlyphName(
-    env: JNIEnv,
+    mut env: JNIEnv,
     _class: JClass,
     font_addr: jlong,
     glyph_id: jint,
@@ -368,7 +369,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontGly
 // public static native long configureFont(long fontAddr, String settings);
 #[no_mangle]
 pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_configureFont(
-    env: JNIEnv,
+    mut env: JNIEnv,
     _class: JClass,
     font_addr: jlong,
     settings: JString,
@@ -382,7 +383,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_configu
         let font = &*(font_addr as usize as *const Font);
         let settings: ConfiguredFontSettings = if !settings.is_null() {
             serde_json::from_str(
-                env.get_string(settings)?
+                env.get_string(&settings)?
                     .to_str()
                     .context("string decoding failed")?,
             )
@@ -425,28 +426,28 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_destroy
 /// `bidi_runs` must have a length divisible by 2.
 // public static native ShapingResult[] shape(long fontAddr, char[] s, int[] bidiRuns, boolean rtl);
 #[no_mangle]
-pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_shape(
-    env: JNIEnv,
-    _class: JClass,
+pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_shape<'local>(
+    mut env: JNIEnv<'local>,
+    _class: JClass<'local>,
     font_addr: jlong,
-    s: jcharArray,
-    bidi_runs: jintArray,
-) -> jobjectArray {
+    s: JCharArray<'local>,
+    bidi_runs: JIntArray<'local>,
+) -> JObjectArray<'local> {
     throw_as_exn! {
-        env, ptr::null_mut();
+        env, JObjectArray::from_raw(ptr::null_mut());
         let shaping_result_class = env.find_class("xyz/flirora/caxton/layout/ShapingResult")?;
         let shaping_result_ctor =
             env.get_method_id("xyz/flirora/caxton/layout/ShapingResult", "<init>", "([III)V")?;
 
-        let string = env.get_char_array_elements(s, ReleaseMode::NoCopyBack)?;
-        let bidi_runs = env.get_int_array_elements(bidi_runs, ReleaseMode::NoCopyBack)?;
-        let string = slice::from_raw_parts(string.as_ptr(), string.size()? as usize);
-        let bidi_runs = slice::from_raw_parts(bidi_runs.as_ptr(), bidi_runs.size()? as usize);
+        let string = env.get_array_elements::<jchar>(&s, ReleaseMode::NoCopyBack)?;
+        let bidi_runs = env.get_array_elements::<jint>(&bidi_runs, ReleaseMode::NoCopyBack)?;
+        let string = string.deref();
+        let bidi_runs = bidi_runs.deref();
         let font = &*(font_addr as usize as *const ConfiguredFont);
 
         let num_bidi_runs = bidi_runs.len() / 3;
         let output =
-            env.new_object_array(num_bidi_runs as i32, shaping_result_class, JObject::null())?;
+            env.new_object_array(num_bidi_runs as i32, &shaping_result_class, JObject::null())?;
 
         let mut buffer = UnicodeBuffer::new();
 
@@ -476,19 +477,19 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_shape(
             let sr = ShapingResult::from_glyph_buffer(&shaped);
 
             let data = env.new_int_array(6 * sr.data.len() as i32)?;
-            env.set_int_array_region(data, 0, sr.data_as_i32s())?;
+            env.set_int_array_region(&data, 0, sr.data_as_i32s())?;
 
             let object = env.new_object_unchecked(
-                shaping_result_class,
+                &shaping_result_class,
                 shaping_result_ctor,
                 &[
-                    JValue::Object(JObject::from_raw(data)),
-                    JValue::Int(sr.total_width),
-                    JValue::Int((end - start) as i32),
+                    JValue::Object(&data).as_jni(),
+                    JValue::Int(sr.total_width).as_jni(),
+                    JValue::Int((end - start) as i32).as_jni(),
                 ],
             )?;
 
-            env.set_object_array_element(output, i as i32, object)?;
+            env.set_object_array_element(&output, i as i32, object)?;
 
             buffer = shaped.clear();
         }
