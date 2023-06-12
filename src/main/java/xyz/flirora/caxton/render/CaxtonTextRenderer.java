@@ -108,6 +108,7 @@ public class CaxtonTextRenderer {
     }
 
     public void drawWithOutline(OrderedText text, float x, float y, int color, int outlineColor, Matrix4f matrix, VertexConsumerProvider vertexConsumers, int light, boolean addCorners) {
+        boolean reuseDrawer = CaxtonModClient.CONFIG.reuseTextRendererDrawer;
         Threshold NO_THRESHOLD = new Threshold(-1);
         float minThickness = getMinThickness(matrix);
 
@@ -117,10 +118,18 @@ public class CaxtonTextRenderer {
 
         TextRenderer.Drawer outlineDrawer = vanillaTextRenderer.new Drawer(vertexConsumers, 0.0f, 0.0f, effectiveOutlineColor, false, matrix, TextRenderer.TextLayerType.NORMAL, light);
         TextRenderer.Drawer centralDrawer = vanillaTextRenderer.new Drawer(vertexConsumers, x, y, effectiveColor, false, matrix, TextRenderer.TextLayerType.POLYGON_OFFSET, light);
+        boolean usedDrawer = false;
 
         for (RunGroup runGroup : runGroups.runGroups()) {
             ConfiguredCaxtonFont font = runGroup.getFont();
             if (font == null) {
+                if (!reuseDrawer) {
+                    if (usedDrawer) {
+                        outlineDrawer = vanillaTextRenderer.new Drawer(vertexConsumers, 0.0f, 0.0f, effectiveOutlineColor, false, matrix, TextRenderer.TextLayerType.NORMAL, light);
+                        centralDrawer = vanillaTextRenderer.new Drawer(vertexConsumers, x, y, effectiveColor, false, matrix, TextRenderer.TextLayerType.POLYGON_OFFSET, light);
+                    }
+                    usedDrawer = true;
+                }
                 MutableFloat xBox = new MutableFloat();
                 for (int dx = -1; dx <= 1; ++dx) {
                     for (int dy = -1; dy <= 1; ++dy) {
@@ -128,6 +137,7 @@ public class CaxtonTextRenderer {
                         if (!addCorners && dx != 0 && dy != 0) continue;
                         xBox.setValue(x);
                         int dxf = dx, dyf = dy;
+                        Drawer outlineDrawer2 = outlineDrawer;
                         runGroup.acceptRender((index, style, codePoint) -> {
                             int index2 = runGroup.getCharOffset() + index;
 
@@ -135,17 +145,18 @@ public class CaxtonTextRenderer {
                             Glyph glyph = fontStorage.getGlyph(codePoint, false);
                             float shadowOffset = glyph.getShadowOffset();
 
-                            ((TextRendererDrawerAccessor) outlineDrawer).setX(xBox.floatValue() + dxf * shadowOffset);
-                            ((TextRendererDrawerAccessor) outlineDrawer).setY(y + dyf * shadowOffset);
+                            ((TextRendererDrawerAccessor) outlineDrawer2).setX(xBox.floatValue() + dxf * shadowOffset);
+                            ((TextRendererDrawerAccessor) outlineDrawer2).setY(y + dyf * shadowOffset);
                             xBox.add(glyph.getAdvance(style.isBold()));
-                            return outlineDrawer.accept(index2, style, codePoint);
+                            return outlineDrawer2.accept(index2, style, codePoint);
                         });
                     }
                 }
                 ((TextRendererDrawerAccessor) centralDrawer).setX(x);
+                Drawer centralDrawer2 = centralDrawer;
                 runGroup.acceptRender((index, style, codePoint) -> {
                     int index2 = runGroup.getCharOffset() + index;
-                    return centralDrawer.accept(index2, style, codePoint);
+                    return centralDrawer2.accept(index2, style, codePoint);
                 });
                 x = ((TextRendererDrawerAccessor) centralDrawer).getX();
             } else {
@@ -206,14 +217,18 @@ public class CaxtonTextRenderer {
         // every legacy run group.
         // See <https://github.com/RaphiMC/ImmediatelyFast/blob/1.20/src/main/java/net/raphimc/immediatelyfast/injection/mixins/fast_text_lookup/MixinTextRenderer_Drawer.java>,
         //     <https://gitlab.com/Kyarei/caxton/-/issues/50>
-        TextRenderer.Drawer drawer = reuseDrawer ? vanillaTextRenderer.new Drawer(vertexConsumerProvider, x, y, color, shadow, matrix, layerType, light) : null;
+        TextRenderer.Drawer drawer = vanillaTextRenderer.new Drawer(vertexConsumerProvider, x, y, color, shadow, matrix, layerType, light);
+        boolean usedDrawer = false;
         for (RunGroup runGroup : text.runGroups()) {
             if (threshold.shouldSkip(runGroup)) {
                 continue;
             }
             if (x >= maxX) break;
-            if (!reuseDrawer)
-                drawer = vanillaTextRenderer.new Drawer(vertexConsumerProvider, x, y, color, shadow, matrix, layerType, light);
+            if (!reuseDrawer) {
+                if (usedDrawer)
+                    drawer = vanillaTextRenderer.new Drawer(vertexConsumerProvider, x, y, color, shadow, matrix, layerType, light);
+                usedDrawer = true;
+            }
             if (runGroup.getFont() == null) {
                 ((TextRendererDrawerAccessor) drawer).setX(x);
                 var drawer2 = drawer;
