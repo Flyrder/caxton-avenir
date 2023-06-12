@@ -137,7 +137,7 @@ public class CaxtonTextRenderer {
                         if (!addCorners && dx != 0 && dy != 0) continue;
                         xBox.setValue(x);
                         int dxf = dx, dyf = dy;
-                        Drawer outlineDrawer2 = outlineDrawer;
+                        TextRenderer.Drawer outlineDrawer2 = outlineDrawer;
                         runGroup.acceptRender((index, style, codePoint) -> {
                             int index2 = runGroup.getCharOffset() + index;
 
@@ -153,7 +153,7 @@ public class CaxtonTextRenderer {
                     }
                 }
                 ((TextRendererDrawerAccessor) centralDrawer).setX(x);
-                Drawer centralDrawer2 = centralDrawer;
+                TextRenderer.Drawer centralDrawer2 = centralDrawer;
                 runGroup.acceptRender((index, style, codePoint) -> {
                     int index2 = runGroup.getCharOffset() + index;
                     return centralDrawer2.accept(index2, style, codePoint);
