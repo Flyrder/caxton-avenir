@@ -6,6 +6,7 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.loader.api.FabricLoader;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.FileReader;
@@ -24,8 +25,18 @@ public class CaxtonConfig {
     public @Nullable String rustTarget = null;
     public boolean tweakExpText = true;
     public boolean sortTextRenderLayers = false;
+    public boolean reuseTextRendererDrawer = true;
     public boolean fatalOnBrokenMethodCall = false;
     public boolean debugRefcountChanges = false;
+
+    public CaxtonConfig() {
+        // Set options to bypass mod conflicts
+        boolean isImmediatelyFastLoaded = FabricLoader.getInstance().isModLoaded("immediatelyfast");
+        if (isImmediatelyFastLoaded) {
+            this.tweakExpText = false;
+            this.reuseTextRendererDrawer = false;
+        }
+    }
 
     public static CaxtonConfig readFromFile() {
         CaxtonConfig config;

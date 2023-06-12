@@ -25,6 +25,7 @@ import org.apache.commons.lang3.mutable.MutableFloat;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
+import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.font.CaxtonFont;
 import xyz.flirora.caxton.font.CaxtonFontOptions;
 import xyz.flirora.caxton.font.ConfiguredCaxtonFont;
@@ -184,27 +185,46 @@ public class CaxtonTextRenderer {
             Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider,
             TextRenderer.TextLayerType layerType, int backgroundColor, int light,
             CaxtonText text, int leftmostCodePoint, float maxWidth, float minThickness) {
+        boolean reuseDrawer = CaxtonModClient.CONFIG.reuseTextRendererDrawer;
 //        System.err.println(text);
         getCache();
         Threshold threshold = new Threshold(leftmostCodePoint);
         float origX = x;
         float maxX = x + maxWidth;
-        TextRenderer.Drawer drawer = vanillaTextRenderer.new Drawer(vertexConsumerProvider, x, y, color, shadow, matrix, layerType, light);
+        // We want to reuse the same TextRenderer.Drawer instance to improve
+        // performance; however, ImmediatelyFast adds some extra fields to
+        // the class in order to optimize text rendering. In particular, it saves
+        // the last render layer for which a vertex consumer was requested from
+        // the drawer’s vertex consumer provider and the corresponding vertex
+        // consumer, reducing the need to call VertexConsumerProvider#getBuffer.
+        // However, the return value of VertexConsumerProvider#getBuffer is only
+        // valid until the next call to that method. This means that if a Caxton text
+        // object has a Caxton run group between two legacy run groups, then the
+        // “last vertex consumer” field stored by IF can become invalidated. In
+        // practice, this conflict results in a crash.
+        // To avoid this, we add an option to create a fresh TextRenderer.Drawer for
+        // every legacy run group.
+        // See <https://github.com/RaphiMC/ImmediatelyFast/blob/1.20/src/main/java/net/raphimc/immediatelyfast/injection/mixins/fast_text_lookup/MixinTextRenderer_Drawer.java>,
+        //     <https://gitlab.com/Kyarei/caxton/-/issues/50>
+        TextRenderer.Drawer drawer = reuseDrawer ? vanillaTextRenderer.new Drawer(vertexConsumerProvider, x, y, color, shadow, matrix, layerType, light) : null;
         for (RunGroup runGroup : text.runGroups()) {
             if (threshold.shouldSkip(runGroup)) {
                 continue;
             }
             if (x >= maxX) break;
+            if (!reuseDrawer)
+                drawer = vanillaTextRenderer.new Drawer(vertexConsumerProvider, x, y, color, shadow, matrix, layerType, light);
             if (runGroup.getFont() == null) {
                 ((TextRendererDrawerAccessor) drawer).setX(x);
+                var drawer2 = drawer;
                 runGroup.acceptRender((index, style, codePoint) -> {
                     int index2 = runGroup.getCharOffset() + index;
                     if (threshold.updateLegacy(index2)) {
                         return true;
                     }
-                    if (((TextRendererDrawerAccessor) drawer).getX() >= maxX + handler.getWidth(codePoint, style))
+                    if (((TextRendererDrawerAccessor) drawer2).getX() >= maxX + handler.getWidth(codePoint, style))
                         return false;
-                    return drawer.accept(index2, style, codePoint);
+                    return drawer2.accept(index2, style, codePoint);
                 });
                 x = drawer.drawLayer(0, x);
             } else {

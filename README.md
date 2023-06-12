@@ -27,8 +27,13 @@ Available on [Modrinth](https://modrinth.com/mod/caxton)!
 
 #### Mod compatibility
 
-Caxton has been confirmed to work with [Sodium] and [ImmediatelyFast], but the latter currently requires
-the `tweakExpText` option to be disabled.
+Caxton has been confirmed to work with [Sodium].
+
+For [ImmediatelyFast], make sure that:
+
+* either Caxton’s `tweakExpText` option or IF’s `hud_batching` option is disabled, and
+* either Caxton’s `reuseTextRendererDrawer` option or IF’s `fast_text_lookup` option is disabled, and
+* Caxton’s `sortTextRenderLayers` option is disabled.
 
 Caxton is not fully compatible with [Iris Shaders]. Text outside the world (e.g. in GUIs or HUDs) is rendered normally,
 but the default MSDF-based font rendering technology uses [custom core shaders, which Iris does not support].
@@ -211,6 +216,12 @@ The following options are available in `config/caxton.json`:
   // See: https://github.com/RaphiMC/ImmediatelyFast/issues/49
   // Added in Caxton 0.4.0.
   "sortTextRenderLayers": false,
+  // When drawing text in non-Caxton fonts, reuse a single `TextRenderer.Drawer`
+  // instance. This avoids having to create a new object for each legacy run
+  // group but can result in a crash with ImmediatelyFast.
+  // See: https://gitlab.com/Kyarei/caxton/-/issues/50
+  // Added in Caxton 0.4.7.
+  "reuseTextRendererDrawer": true,
   // Some text handling methods are inherently broken and unsupported by Caxton.
   // Caxton will log a warning whenever these methods are called. If this option
   // is set to true, then Caxton will throw an exception instead.
