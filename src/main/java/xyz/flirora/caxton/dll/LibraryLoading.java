@@ -61,7 +61,9 @@ public class LibraryLoading {
                 libStream.transferTo(output);
             }
 
-            System.load(tmp.toString());
+            // Some launchers pass a relative path for Minecraft’s run directory;
+            // make sure to convert to an absolute path to satisfy System.load.
+            System.load(tmp.getAbsolutePath());
             loadingException = null;
         } catch (Exception e) {
             logger.error("Failed to load library", e);
