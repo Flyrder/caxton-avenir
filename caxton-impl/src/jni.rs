@@ -33,7 +33,7 @@ macro_rules! throw_as_exn {
         })() {
             Ok(value) => value,
             Err(CxtError::Mine(err)) => {
-                let _ = $env.throw_new("java/lang/RuntimeException", err.to_string());
+                let _ = $env.throw_new("java/lang/RuntimeException", format!("{err:?}"));
                 $default
             }
             Err(CxtError::Jni(err)) => {
