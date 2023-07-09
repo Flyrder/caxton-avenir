@@ -181,8 +181,6 @@ impl<'a> Font<'a> {
             })
             .collect();
 
-        // TODO: generate multiple mipmap layers when requested;
-        // implement conventional rasterization
         let tlist = (|| -> anyhow::Result<_> {
             let fh = OpenOptions::new().read(true).open(&this_cache);
             if let Ok(mut fh) = fh {
