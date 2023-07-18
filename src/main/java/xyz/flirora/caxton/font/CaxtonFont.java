@@ -146,7 +146,7 @@ public class CaxtonFont implements AutoCloseable {
             throw new IllegalStateException("font closed with a refcount of 0");
         }
         if (remainingRefs == 0) {
-            CaxtonInternal.destroyFont(fontPtr);
+            if (fontPtr != 0) CaxtonInternal.destroyFont(fontPtr);
             fontPtr = 0;
             MemoryUtil.memFree(fontData);
             fontData = null;

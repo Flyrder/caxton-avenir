@@ -24,6 +24,8 @@ pub enum CxtError {
     Mine(#[from] anyhow::Error),
     #[error("JNI error: {0:?}")]
     Jni(#[from] jni::errors::Error),
+    #[error("address was null")]
+    Null,
 }
 
 macro_rules! throw_as_exn {
@@ -33,11 +35,15 @@ macro_rules! throw_as_exn {
         })() {
             Ok(value) => value,
             Err(CxtError::Mine(err)) => {
-                let _ = $env.throw_new("java/lang/RuntimeException", format!("{err:?}"));
+                let _ = $env.throw_new("xyz/flirora/caxton/dll/CaxtonNativeException", format!("{err:?}"));
                 $default
             }
             Err(CxtError::Jni(err)) => {
                 let _ = $env.throw_new("java/lang/RuntimeException", err.to_string());
+                $default
+            }
+            Err(CxtError::Null) => {
+                let _ = throw_null_ptr_exn(&mut $env);
                 $default
             }
         }
@@ -48,6 +54,10 @@ macro_rules! throw_as_exn {
             $($tt)*
         }
     };
+}
+
+fn throw_null_ptr_exn(env: &mut JNIEnv) -> Result<(), jni::errors::Error> {
+    env.throw_new("java/lang/NullPointerException", "address was null")
 }
 
 /// JNI wrapper around [`Font::from_memory`].
@@ -95,12 +105,12 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_createF
 // public static native void destroyFont(long addr);
 #[no_mangle]
 pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_destroyFont(
-    _env: JNIEnv,
+    mut env: JNIEnv,
     _class: JClass,
     addr: jlong,
 ) {
     if addr == 0 {
-        eprintln!("warn: was passed an address of 0; returning");
+        let _ = throw_null_ptr_exn(&mut env);
         return;
     }
     mem::drop(Box::from_raw(addr as usize as *mut Font));
@@ -115,13 +125,13 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_destroy
 // public static native int fontGlyphIndex(long addr, int codePoint);
 #[no_mangle]
 pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontGlyphIndex(
-    _env: JNIEnv,
+    mut env: JNIEnv,
     _class: JClass,
     addr: jlong,
     codepoint: jint,
 ) -> jint {
     if addr == 0 {
-        eprintln!("warn: was passed an address of 0; returning");
+        let _ = throw_null_ptr_exn(&mut env);
         return -1;
     }
     let codepoint = match char::try_from(codepoint as u32) {
@@ -151,8 +161,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontMet
     throw_as_exn! {
         env, JShortArray::from_raw(ptr::null_mut());
         if addr == 0 {
-            eprintln!("warn: was passed an address of 0; returning");
-            return Ok(JShortArray::from_raw(ptr::null_mut()));
+            return Err(CxtError::Null);
         }
         let font = (*(addr as usize as *const Font)).face.as_ref();
         // TODO: compute these metrics using heuristics if they are not available
@@ -190,12 +199,12 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontMet
 // public static native int fontMipmapLayers(long addr)
 #[no_mangle]
 pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontMipmapLayers(
-    _env: JNIEnv,
+    mut env: JNIEnv,
     _class: JClass,
     addr: jlong,
 ) -> jint {
     if addr == 0 {
-        eprintln!("warn: was passed an address of 0; returning");
+        let _ = throw_null_ptr_exn(&mut env);
         return 0;
     }
     (*(addr as usize as *const Font)).num_mipmap_layers() as i32
@@ -210,12 +219,12 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontMip
 // public static native int fontAtlasSize(long addr);
 #[no_mangle]
 pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtlasSize(
-    _env: JNIEnv,
+    mut env: JNIEnv,
     _class: JClass,
     addr: jlong,
 ) -> jint {
     if addr == 0 {
-        eprintln!("warn: was passed an address of 0; returning");
+        let _ = throw_null_ptr_exn(&mut env);
         return 0;
     }
     (*(addr as usize as *const Font)).num_glyphs as i32
@@ -230,12 +239,12 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
 // public static native int fontAtlasPhysicalSize(long addr);
 #[no_mangle]
 pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtlasPhysicalSize(
-    _env: JNIEnv,
+    mut env: JNIEnv,
     _class: JClass,
     addr: jlong,
 ) -> jint {
     if addr == 0 {
-        eprintln!("warn: was passed an address of 0; returning");
+        let _ = throw_null_ptr_exn(&mut env);
         return 0;
     }
     (*(addr as usize as *const Font)).num_tlist_locations as i32
@@ -250,13 +259,13 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
 // public static native long fontAtlasLocations(long addr);
 #[no_mangle]
 pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtlasLocations(
-    _env: JNIEnv,
+    mut env: JNIEnv,
     _class: JClass,
     addr: jlong,
     mipmap: jint,
 ) -> jlong {
     if addr == 0 {
-        eprintln!("warn: was passed an address of 0; returning");
+        let _ = throw_null_ptr_exn(&mut env);
         return 0;
     }
     (*(addr as usize as *const Font)).tlist[mipmap as usize]
@@ -273,12 +282,12 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
 // public static native long fontBboxes(long addr);
 #[no_mangle]
 pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontBboxes(
-    _env: JNIEnv,
+    mut env: JNIEnv,
     _class: JClass,
     addr: jlong,
 ) -> jlong {
     if addr == 0 {
-        eprintln!("warn: was passed an address of 0; returning");
+        let _ = throw_null_ptr_exn(&mut env);
         return 0;
     }
     (*(addr as usize as *const Font)).bboxes.as_ptr() as usize as i64
@@ -299,7 +308,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
     mipmap: jint,
 ) -> jlong {
     if addr == 0 {
-        eprintln!("warn: was passed an address of 0; returning");
+        let _ = throw_null_ptr_exn(&mut env);
         return 0;
     }
     throw_as_exn! {
@@ -319,12 +328,12 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
 // public static native int fontBytesPerPixel(long addr);
 #[no_mangle]
 pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontBytesPerPixel(
-    _env: JNIEnv,
+    mut env: JNIEnv,
     _class: JClass,
     addr: jlong,
 ) -> jint {
     if addr == 0 {
-        eprintln!("warn: was passed an address of 0; returning");
+        let _ = throw_null_ptr_exn(&mut env);
         return 0;
     }
     unsafe { (*(addr as usize as *const Font)).bytes_per_pixel as i32 }
@@ -347,8 +356,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontGly
     let val = throw_as_exn! {
         env;
         if font_addr == 0 {
-            eprintln!("warn: was passed an address of 0; returning");
-            return Ok(JString::default());
+            return Err(CxtError::Null);
         }
         let font = &*(font_addr as usize as *const Font);
         let name = font.face.glyph_name(GlyphId(glyph_id as u16));
@@ -377,8 +385,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_configu
     throw_as_exn! {
         env;
         if font_addr == 0 {
-            eprintln!("warn: was passed an address of 0; returning");
-            return Ok(0);
+            return Err(CxtError::Null);
         }
         let font = &*(font_addr as usize as *const Font);
         let settings: ConfiguredFontSettings = if !settings.is_null() {
@@ -405,12 +412,12 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_configu
 // public static native void destroyConfiguredFont(long addr);
 #[no_mangle]
 pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_destroyConfiguredFont(
-    _env: JNIEnv,
+    mut env: JNIEnv,
     _class: JClass,
     addr: jlong,
 ) {
     if addr == 0 {
-        eprintln!("warn: was passed an address of 0; returning");
+        let _ = throw_null_ptr_exn(&mut env);
         return;
     }
     mem::drop(Box::from_raw(addr as usize as *mut ConfiguredFont));
