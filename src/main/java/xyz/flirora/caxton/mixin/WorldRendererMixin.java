@@ -17,7 +17,7 @@ import xyz.flirora.caxton.render.WorldRendererVertexConsumerProvider;
 @Mixin(WorldRenderer.class)
 public class WorldRendererMixin {
     @Unique
-    private boolean warnOnNonWrvcp = true;
+    private boolean warnOnNonWrvcp = !CaxtonModClient.FORCE_DISABLE_BATCHING_HACK;
 
     @Redirect(
             method = "render",

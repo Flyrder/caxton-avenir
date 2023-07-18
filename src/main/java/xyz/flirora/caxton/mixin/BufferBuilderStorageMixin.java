@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.Slice;
+import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.render.WorldRendererVertexConsumerProvider;
 
 import java.util.Map;
@@ -28,7 +29,8 @@ public class BufferBuilderStorageMixin {
                     to = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = "Lnet/minecraft/client/render/BufferBuilderStorage;entityVertexConsumers:Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;")),
             allow = 1)
     private VertexConsumerProvider.Immediate redirect(Map<RenderLayer, BufferBuilder> layerBuffers, BufferBuilder fallbackBuffer) {
-//        return VertexConsumerProvider.immediate(layerBuffers, fallbackBuffer);
+        if (CaxtonModClient.FORCE_DISABLE_BATCHING_HACK)
+            return VertexConsumerProvider.immediate(layerBuffers, fallbackBuffer);
         return new WorldRendererVertexConsumerProvider(fallbackBuffer, layerBuffers);
     }
 }

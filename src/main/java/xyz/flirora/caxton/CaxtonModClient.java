@@ -16,7 +16,6 @@ import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
 import org.slf4j.Logger;
 import xyz.flirora.caxton.command.DumpAtlasCommand;
 import xyz.flirora.caxton.dll.LibraryLoading;
@@ -35,8 +34,23 @@ public class CaxtonModClient implements ClientModInitializer {
     private static final Set<String> CALLSITE_BLACKLIST = ImmutableSet.of(TextHandler.class.getName(), TextRenderer.class.getName());
     private static final ConcurrentMap<StackTraceElement, StackTraceElement> PREVIOUS_BROKEN_METHOD_CALLERS = new ConcurrentHashMap<>();
 
+    /**
+     * The {@link FontType} for Caxton fonts.
+     */
     public static final FontType CAXTON_FONT_TYPE = ClassTinkerers.getEnum(FontType.class, "CAXTON");
 
+    /**
+     * Whether to force the batching hack in {@link xyz.flirora.caxton.mixin.BufferBuilderStorageMixin} to be disabled.
+     * <p>
+     * This is set when Iris is loaded.
+     */
+    public static final boolean FORCE_DISABLE_BATCHING_HACK = FabricLoader.getInstance().isModLoaded("iris");
+
+    /**
+     * The current global config for the mod.
+     * <p>
+     * This is set during initialization.
+     */
     public static CaxtonConfig CONFIG = null;
 
     private static boolean isAprilFools() {

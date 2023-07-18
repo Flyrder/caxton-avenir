@@ -20,7 +20,7 @@ use crate::{
 
 #[derive(Error, Debug)]
 pub enum CxtError {
-    #[error("{0}")]
+    #[error("{0:?}")]
     Mine(#[from] anyhow::Error),
     #[error("JNI error: {0:?}")]
     Jni(#[from] jni::errors::Error),
