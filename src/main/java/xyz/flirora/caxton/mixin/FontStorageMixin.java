@@ -13,6 +13,7 @@ import net.minecraft.text.Style;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -30,6 +31,7 @@ import java.util.stream.Stream;
 @Environment(EnvType.CLIENT)
 @Mixin(FontStorage.class)
 public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStorage {
+    @Unique
     private Int2ObjectMap<CaxtonGlyphPair>[] caxtonGlyphCache = null;
     @Shadow
     @Final
@@ -59,6 +61,7 @@ public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStora
         }
     }
 
+    @Unique
     private Int2ObjectMap<CaxtonGlyphPair> getCacheForStyle(Style style) {
         return caxtonGlyphCache[(style.isBold() ? 2 : 0) | (style.isItalic() ? 1 : 0)];
     }
@@ -80,6 +83,7 @@ public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStora
     }
 
     // Based on the findGlyph method.
+    @Unique
     private CaxtonGlyphPair findCaxtonGlyph(int codePoint, Style style) {
         Glyph glyph = null;
         for (Font font : this.fonts) {

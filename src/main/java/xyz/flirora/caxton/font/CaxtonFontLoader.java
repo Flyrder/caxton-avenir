@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A {@link FontLoader} for the {@code caxton} font type.
@@ -37,7 +38,7 @@ import java.util.Optional;
 public class CaxtonFontLoader implements FontLoader {
     public static final String FONT_PREFIX = "textures/font/";
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static final Map<Identifier, CaxtonFont> CACHE = new HashMap<>();
+    private static final Map<Identifier, CaxtonFont> CACHE = new ConcurrentHashMap<>();
     private static final JsonObject EMPTY = new JsonObject();
     private final ConfiguredCaxtonFont.Loader regular;
     @Nullable
@@ -69,38 +70,6 @@ public class CaxtonFontLoader implements FontLoader {
         this.bold = bold;
         this.italic = italic;
         this.boldItalic = boldItalic;
-    }
-
-    private static @Nullable ConfiguredCaxtonFont.Loader parseConfiguredFontLoader(@Nullable JsonElement element) {
-        if (element == null) return null;
-        if (element instanceof JsonObject object) {
-            return new ConfiguredCaxtonFont.Loader(
-                    Identifier.tryParse(JsonHelper.getString(object, "file")),
-                    object
-            );
-        } else if (element instanceof JsonPrimitive primitive) {
-            return new ConfiguredCaxtonFont.Loader(Identifier.tryParse(primitive.getAsString()), null);
-        }
-        throw new JsonParseException("expected identifier or object; got something else");
-    }
-
-    private static @Nullable Identifier getOptionalIdentifier(JsonObject json, String key) {
-        String id = JsonHelper.getString(json, key, null);
-        return id == null ? null : new Identifier(id);
-    }
-
-    /**
-     * Constructs a {@link CaxtonFontLoader} from a JSON object.
-     *
-     * @param json the JSON object describing the font settings
-     * @return a {@link CaxtonFontLoader}
-     */
-    public static FontLoader fromJson(JsonObject json) {
-        return new CaxtonFontLoader(
-                parseConfiguredFontLoader(json.get("regular")),
-                parseConfiguredFontLoader(json.get("bold")),
-                parseConfiguredFontLoader(json.get("italic")),
-                parseConfiguredFontLoader(json.get("bold_italic")));
     }
 
     /**
@@ -141,6 +110,7 @@ public class CaxtonFontLoader implements FontLoader {
      * Clears the font cache used by {@link CaxtonFontLoader#loadFontByIdentifier(ResourceManager, Identifier)}.
      */
     public static void clearFontCache() {
+        CACHE.forEach((id, font) -> font.close());
         CACHE.clear();
     }
 

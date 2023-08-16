@@ -51,7 +51,7 @@ public class CaxtonFont implements AutoCloseable {
     private long fontPtr;
     private boolean registered = false;
     // TODO: does this need to be atomic?
-    private int refCount = 0;
+    private int refCount = 1;
 
     /**
      * Constructs a new {@link CaxtonFont}.
@@ -134,15 +134,7 @@ public class CaxtonFont implements AutoCloseable {
         int remainingRefs = --this.refCount;
         if (remainingRefs < 0) {
             LOGGER.error("ERROR: Font closed with a refcount of 0.");
-            if (this.changes != null) {
-                LOGGER.error("Refcount changes:");
-                for (var change : this.changes) {
-                    LOGGER.error(change.second() ? "Reference added in:" : "Reference removed in:");
-                    for (var elem : change.first()) {
-                        LOGGER.error(elem.toString());
-                    }
-                }
-            }
+            this.logRefcountChanges();
             throw new IllegalStateException("font closed with a refcount of 0");
         }
         if (remainingRefs == 0) {
@@ -328,6 +320,18 @@ public class CaxtonFont implements AutoCloseable {
         }
         ++this.refCount;
         return this;
+    }
+
+    private void logRefcountChanges() {
+        if (this.changes != null) {
+            LOGGER.error("Refcount changes:");
+            for (var change : this.changes) {
+                LOGGER.error(change.second() ? "Reference added in:" : "Reference removed in:");
+                for (var elem : change.first()) {
+                    LOGGER.error(elem.toString());
+                }
+            }
+        }
     }
 
     /**
