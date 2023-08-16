@@ -36,6 +36,12 @@ who = "+merlan #flirora <uruwi@protonmail.com>"
 criteria = "safe-to-deploy"
 delta = "0.8.14 -> 0.8.15"
 
+[[audits.either]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+delta = "1.8.1 -> 1.9.0"
+notes = "no use of unsafe or ambient capabilities added"
+
 [[audits.generic-array]]
 who = "+merlan #flirora <uruwi@protonmail.com>"
 criteria = "safe-to-deploy"
@@ -52,6 +58,12 @@ who = "+merlan #flirora <uruwi@protonmail.com>"
 criteria = "safe-to-deploy"
 version = "1.0.6"
 
+[[audits.itoa]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+delta = "1.0.6 -> 1.0.9"
+notes = "only code changes is to add an explicit Copy impl for Buffer"
+
 [[audits.once_cell]]
 who = "+merlan #flirora <uruwi@protonmail.com>"
 criteria = "safe-to-deploy"
@@ -61,6 +73,12 @@ delta = "1.17.0 -> 1.17.1"
 who = "+merlan #flirora <uruwi@protonmail.com>"
 criteria = "safe-to-deploy"
 delta = "1.0.59 -> 1.0.60"
+
+[[audits.quote]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+delta = "1.0.31 -> 1.0.32"
+notes = "only documentation changes"
 
 [[audits.same-file]]
 who = "+merlan #flirora <uruwi@protonmail.com>"
@@ -92,6 +110,12 @@ criteria = "safe-to-deploy"
 delta = "1.0.107 -> 1.0.109"
 notes = "Only a small fix to whitespace handling following a newline in a string literal."
 
+[[audits.thiserror-impl]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+delta = "1.0.43 -> 1.0.46"
+notes = "Only renames some variables (both in the proc macro and in the generated code)"
+
 [[audits.ttf-parser]]
 who = "+merlan #flirora <uruwi@protonmail.com>"
 criteria = "safe-to-deploy"
@@ -115,6 +139,12 @@ who = "+merlan #flirora <uruwi@protonmail.com>"
 criteria = "safe-to-deploy"
 delta = "1.0.8 -> 1.0.6"
 notes = "Only doc and lint changes."
+
+[[audits.unicode-ident]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+delta = "1.0.9 -> 1.0.11"
+notes = "no code changes"
 
 [[audits.windows-targets]]
 who = "+merlan #flirora <uruwi@protonmail.com>"
