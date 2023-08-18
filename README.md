@@ -25,7 +25,7 @@ Available on [Modrinth](https://modrinth.com/mod/caxton)!
       of its base direction.
 * Font hinting will probably never be supported.
 
-#### Mod compatibility
+#### Mod and resource pack compatibility
 
 Caxton has been confirmed to work with [Sodium].
 
@@ -54,6 +54,8 @@ methods.
 * [Roughly Enough Items]
   uses [unsupported methods in some of its widgets](https://github.com/shedaniel/RoughlyEnoughItems/search?q=plainSubstrByWidth).
 
+Resource packs that modify core shaders related to text, such as the “Dark UI” and “Transparent UI” packs from [Vanilla Tweaks], will require modification to work with Caxton fonts.
+
 [Sodium]: https://modrinth.com/mod/sodium
 
 [ImmediatelyFast]: https://modrinth.com/mod/immediatelyfast
@@ -71,6 +73,8 @@ methods.
 [Roughly Enough Items]: https://modrinth.com/mod/rei
 
 [Emojiful]: https://github.com/InnovativeOnlineIndustries/Emojiful
+
+[Vanilla Tweaks]: https://vanillatweaks.net
 
 ## OS support
 
