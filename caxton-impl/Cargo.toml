@@ -17,6 +17,7 @@ jni = "0.21.1"
 msdfgen = { git = "https://github.com/bluebear94/msdfgen-rs", branch = "cross-compile-workaround", default-features = false, features = ["ttf-parser", "bindgen"] }
 rustybuzz = "0.8.0"
 serde = { version = "1.0.164", features = ["derive"] }
+serde_derive = "=1.0.171" # Avoid using any versions with precompiled binaries
 serde_json = "1.0.96"
 sha2 = "0.10.6"
 thiserror = "1.0.38"
