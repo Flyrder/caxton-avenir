@@ -8,6 +8,7 @@ use jni::{
     JNIEnv,
 };
 use jni::objects::{JCharArray, JIntArray, JObjectArray, JShortArray};
+use nanoserde::DeJson;
 use rustybuzz::{Direction, UnicodeBuffer};
 use thiserror::Error;
 use ttf_parser::GlyphId;
@@ -82,7 +83,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_createF
             env.get_direct_buffer_address(&font_data)?,
             env.get_direct_buffer_capacity(&font_data)?,
         );
-        let options: FontOptions = serde_json::from_str(
+        let options = FontOptions::deserialize_json(
             env.get_string(&options)?
                 .to_str()
                 .context("string decoding failed")?,
@@ -388,8 +389,8 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_configu
             return Err(CxtError::Null);
         }
         let font = &*(font_addr as usize as *const Font);
-        let settings: ConfiguredFontSettings = if !settings.is_null() {
-            serde_json::from_str(
+        let settings = if !settings.is_null() {
+            ConfiguredFontSettings::deserialize_json(
                 env.get_string(&settings)?
                     .to_str()
                     .context("string decoding failed")?,

@@ -16,9 +16,7 @@ jni = "0.21.1"
 # Stupid workaround until msdf-rs updates its ttf-parser dependency
 msdfgen = { git = "https://github.com/bluebear94/msdfgen-rs", branch = "cross-compile-workaround", default-features = false, features = ["ttf-parser", "bindgen"] }
 rustybuzz = "0.8.0"
-serde = { version = "1.0.164", features = ["derive"] }
-serde_derive = "1.0.185"
-serde_json = "1.0.96"
+nanoserde = "0.1.33"
 sha2 = "0.10.6"
 thiserror = "1.0.38"
 ttf-parser = "0.19.1"

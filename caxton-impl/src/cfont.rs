@@ -1,7 +1,8 @@
 use std::{slice, str::FromStr};
+use std::str::Chars;
 
 use rustybuzz::{Feature, GlyphBuffer, UnicodeBuffer};
-use serde::{de, Deserialize};
+use nanoserde::{DeJson, DeJsonErr, DeJsonState};
 
 use crate::font::Font;
 
@@ -9,21 +10,18 @@ use crate::font::Font;
 #[derive(Copy, Clone, Debug)]
 pub struct CxFeature(pub Feature);
 
-impl<'de> Deserialize<'de> for CxFeature {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let feature_string = <&str>::deserialize(deserializer)?;
-        let feature = Feature::from_str(feature_string).map_err(|_e| {
-            de::Error::invalid_value(de::Unexpected::Str(feature_string), &"a feature string")
+impl DeJson for CxFeature {
+    fn de_json(state: &mut DeJsonState, input: &mut Chars) -> Result<Self, DeJsonErr> {
+        let feature_string = String::de_json(state, input)?;
+        let feature = Feature::from_str(&feature_string).map_err(|_e| {
+            state.err_parse("feature string")
         })?;
         Ok(CxFeature(feature))
     }
 }
 
-#[derive(Deserialize)]
-#[serde(default)]
+#[derive(DeJson)]
+#[nserde(default)]
 pub struct ConfiguredFontSettings {
     pub features: Vec<CxFeature>,
 }

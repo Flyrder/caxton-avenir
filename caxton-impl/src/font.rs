@@ -3,6 +3,7 @@ use std::{
     path::Path,
     time::Instant,
 };
+use std::str::Chars;
 
 use ab_glyph_rasterizer::{Point, Rasterizer};
 use anyhow::{anyhow, Context};
@@ -13,7 +14,7 @@ use rayon::iter::{
     IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
 };
 use rustybuzz::{Face, Tag};
-use serde::{de, Deserialize};
+use nanoserde::{DeJson, DeJsonErr, DeJsonState};
 use sha2::{Digest, Sha256};
 use ttf_parser::{GlyphId, OutlineBuilder, Rect, Variation};
 
@@ -22,9 +23,9 @@ use crate::tlist::{TList, TListPendingEntry};
 
 const SALT: [u8; 4] = [0xE6, 0x26, 0x69, 0x11];
 
-#[derive(Deserialize)]
-struct CxVariationFormat<'a> {
-    axis: &'a str,
+#[derive(DeJson)]
+struct CxVariationFormat {
+    axis: String,
     value: f32,
 }
 
@@ -32,19 +33,17 @@ struct CxVariationFormat<'a> {
 #[derive(Debug, Copy, Clone)]
 pub struct CxVariation(pub Variation);
 
-impl<'de> Deserialize<'de> for CxVariation {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::Deserializer<'de>,
-    {
-        let format = CxVariationFormat::deserialize(deserializer)?;
+impl DeJson for CxVariation {
+    fn de_json(state: &mut DeJsonState, input: &mut Chars) -> Result<Self, DeJsonErr> {
+        let format = CxVariationFormat::de_json(state, input)?;
         let axis = if format.axis.len() == 4 {
             Tag::from_bytes_lossy(format.axis.as_bytes())
         } else {
-            return Err(de::Error::invalid_value(
-                de::Unexpected::Str(format.axis),
-                &"a string of 4 characters",
-            ));
+            return Err(DeJsonErr {
+                msg: "axis name must have 4 characters".to_string(),
+                line: state.line,
+                col: state.col,
+            });
         };
         Ok(CxVariation(Variation {
             axis,
@@ -53,12 +52,12 @@ impl<'de> Deserialize<'de> for CxVariation {
     }
 }
 
-#[derive(Deserialize, Debug, Default, Copy, Clone, Eq, PartialEq)]
+#[derive(DeJson, Debug, Default, Copy, Clone, Eq, PartialEq)]
 pub enum FontTech {
     #[default]
-    #[serde(rename = "msdf")]
+    #[nserde(rename = "msdf")]
     Msdf,
-    #[serde(rename = "raster")]
+    #[nserde(rename = "raster")]
     Raster,
 }
 
@@ -71,17 +70,24 @@ impl FontTech {
     }
 }
 
-#[derive(Deserialize, Debug)]
-#[serde(default)]
+#[derive(DeJson, Debug)]
 pub struct FontOptions {
+    #[nserde(default = "FontTech::Msdf")]
     pub tech: FontTech,
     // TODO: implement alternative ways to specify scale?
+    #[nserde(default = 32.0)]
     pub shrinkage: f64,
+    #[nserde(default)]
     pub margin: Option<u32>,
+    #[nserde(default = 4)]
     pub range: u32,
+    #[nserde(default)]
     pub invert: Option<bool>,
+    #[nserde(default)]
     pub variations: Vec<CxVariation>,
+    #[nserde(default = 0)]
     pub face_index: u32,
+    #[nserde(default = 0)]
     pub max_mipmap: u32,
 }
 
