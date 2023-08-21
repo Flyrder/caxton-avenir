@@ -27,11 +27,11 @@ public record ShapingResult(int[] data, int totalWidth, int totalLength) {
     }
 
     public int glyphId(int i) {
-        return data[6 * i] & 0xFFFF;
+        return data[6 * i] & 0xFF_FFFF;
     }
 
     public boolean isUnsafeToBreak(int i) {
-        return (data[6 * i] & 0x10000) != 0;
+        return (data[6 * i] & 0x100_0000) != 0;
     }
 
     public int clusterIndex(int i) {

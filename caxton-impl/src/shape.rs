@@ -23,7 +23,7 @@ impl ShapingResult {
             let position = &glyph_positions[i];
 
             data.push(ShapingResultEntry([
-                (info.glyph_id as i32) | (info.unsafe_to_break() as i32) << 16,
+                (info.glyph_id as i32) | (info.unsafe_to_break() as i32) << 24,
                 info.cluster as i32,
                 position.x_advance,
                 position.y_advance,
