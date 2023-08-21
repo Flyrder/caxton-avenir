@@ -2,8 +2,10 @@ package xyz.flirora.caxton.layout;
 
 import com.google.common.collect.ImmutableList;
 import com.ibm.icu.text.Bidi;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.font.FontStorage;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.StringVisitable;
@@ -27,7 +29,7 @@ import java.util.stream.Collectors;
 public record CaxtonText(List<RunGroup> runGroups, int totalLength, boolean rtl, String contents) {
     public static final CaxtonText EMPTY = new CaxtonText(ImmutableList.of(), 0, false, "");
 
-    public CaxtonText(List<RunGroup> runGroups, boolean rtl, String contents) {
+    private CaxtonText(List<RunGroup> runGroups, boolean rtl, String contents) {
         this(runGroups, runGroups.stream().mapToInt(RunGroup::getTotalLength).sum(), rtl, contents);
     }
 
@@ -117,6 +119,9 @@ public record CaxtonText(List<RunGroup> runGroups, int totalLength, boolean rtl,
 
     @NotNull
     private static Full computeFromRuns(List<Run> runs, boolean rtl, LayoutCache cache) {
+        // Try to catch #55 in action
+        if (FabricLoader.getInstance().isDevelopmentEnvironment())
+            RenderSystem.assertOnRenderThread();
         // Perform bidi analysis on the entire string.
         String contents = runs.stream().map(Run::text).collect(Collectors.joining());
         Bidi bidi = new Bidi(
