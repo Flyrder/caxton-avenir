@@ -8,6 +8,7 @@ pub mod font;
 pub mod jni;
 pub mod shape;
 pub mod tlist;
+pub mod error;
 
 #[cfg(test)]
 mod tests {

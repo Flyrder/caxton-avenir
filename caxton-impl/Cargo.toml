@@ -18,7 +18,6 @@ msdfgen = { git = "https://github.com/bluebear94/msdfgen-rs", branch = "cross-co
 rustybuzz = "0.8.0"
 nanoserde = "0.1.33"
 sha2 = "0.10.6"
-thiserror = "1.0.38"
 ttf-parser = "0.19.1"
 flate2 = "1.0.25"
 rayon = "1.6.1"

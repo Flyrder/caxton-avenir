@@ -1,33 +1,22 @@
 use std::{mem, ops::Deref, path::PathBuf, ptr, slice};
 
 use anyhow::Context;
-use jni::sys::jstring;
 use jni::{
     objects::{JByteBuffer, JClass, JObject, JString, JValue, ReleaseMode},
-    sys::{jchar, jint, jlong},
+    sys::{jchar, jint, jlong, jstring},
     JNIEnv,
 };
 use jni::objects::{JCharArray, JIntArray, JObjectArray, JShortArray};
 use nanoserde::DeJson;
 use rustybuzz::{Direction, UnicodeBuffer};
-use thiserror::Error;
 use ttf_parser::GlyphId;
 
 use crate::{
     cfont::{ConfiguredFont, ConfiguredFontSettings},
+    error::{CxtError, throw_null_ptr_exn},
     font::{Font, FontOptions},
     shape::ShapingResult,
 };
-
-#[derive(Error, Debug)]
-pub enum CxtError {
-    #[error("{0:?}")]
-    Mine(#[from] anyhow::Error),
-    #[error("JNI error: {0:?}")]
-    Jni(#[from] jni::errors::Error),
-    #[error("address was null")]
-    Null,
-}
 
 macro_rules! throw_as_exn {
     ($env:ident, $default:expr; $($tt:tt)*) => {
@@ -35,16 +24,8 @@ macro_rules! throw_as_exn {
             $($tt)*
         })() {
             Ok(value) => value,
-            Err(CxtError::Mine(err)) => {
-                let _ = $env.throw_new("xyz/flirora/caxton/dll/CaxtonNativeException", format!("{err:?}"));
-                $default
-            }
-            Err(CxtError::Jni(err)) => {
-                let _ = $env.throw_new("java/lang/RuntimeException", err.to_string());
-                $default
-            }
-            Err(CxtError::Null) => {
-                let _ = throw_null_ptr_exn(&mut $env);
+            Err(err) => {
+                let _ = err.throw_exn(&mut $env);
                 $default
             }
         }
@@ -55,10 +36,6 @@ macro_rules! throw_as_exn {
             $($tt)*
         }
     };
-}
-
-fn throw_null_ptr_exn(env: &mut JNIEnv) -> Result<(), jni::errors::Error> {
-    env.throw_new("java/lang/NullPointerException", "address was null")
 }
 
 /// JNI wrapper around [`Font::from_memory`].
