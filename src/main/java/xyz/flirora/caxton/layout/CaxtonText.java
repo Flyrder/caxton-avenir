@@ -12,6 +12,7 @@ import net.minecraft.text.StringVisitable;
 import net.minecraft.text.Style;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
+import xyz.flirora.caxton.CaxtonModClient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -120,8 +121,12 @@ public record CaxtonText(List<RunGroup> runGroups, int totalLength, boolean rtl,
     @NotNull
     private static Full computeFromRuns(List<Run> runs, boolean rtl, LayoutCache cache) {
         // Try to catch #55 in action
-        if (FabricLoader.getInstance().isDevelopmentEnvironment())
-            RenderSystem.assertOnRenderThread();
+        if (!RenderSystem.isOnRenderThread()) {
+            CaxtonModClient.LOGGER.warn("Tried to create Caxton text off render thread!");
+            CaxtonModClient.LOGGER.warn("This is unsupported and bad things might happen; please file an issue at <https://gitlab.com/Kyarei/caxton/-/issues>.");
+            if (FabricLoader.getInstance().isDevelopmentEnvironment())
+                throw new IllegalStateException("Tried to create Caxton text off render thread");
+        }
         // Perform bidi analysis on the entire string.
         String contents = runs.stream().map(Run::text).collect(Collectors.joining());
         Bidi bidi = new Bidi(
