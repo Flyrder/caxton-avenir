@@ -1,6 +1,6 @@
 FROM gradle:8.3.0-jdk17-jammy
 
-RUN apt-get install gcc
+RUN apt-get update && apt-get -y install gcc gcc-mingw-w64-x86-64-win32
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \

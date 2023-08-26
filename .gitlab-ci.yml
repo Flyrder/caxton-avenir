@@ -30,11 +30,12 @@ build:
       - .gradle
       - caxton-impl/build
       - caxton-impl/target
-  dependencies:
-    - build-image
+  needs:
+    - job: build-image
+      optional: true
   artifacts:
     paths:
-      - build/libraries/
+      - build/libs/
 
 #test:
 #  stage: test
