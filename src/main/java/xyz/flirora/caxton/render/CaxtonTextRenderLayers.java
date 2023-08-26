@@ -18,22 +18,25 @@ public class CaxtonTextRenderLayers {
     private final Group msdf = new Group(
             RenderLayerFunctions::ofText,
             RenderLayerFunctions::ofTextSeeThrough,
+            RenderLayerFunctions::ofTextOffset,
             RenderLayerFunctions::ofTextOutline);
     private final Group raster = new Group(
             RenderLayerFunctions::ofTextR,
             RenderLayerFunctions::ofTextSeeThroughR,
-            RenderLayerFunctions::ofTextOutlineR);
+            RenderLayerFunctions::ofTextOffsetR,
+            null);
     private final Group rasterAa = new Group(
             RenderLayerFunctions::ofTextRA,
             RenderLayerFunctions::ofTextSeeThroughRA,
-            RenderLayerFunctions::ofTextOutlineRA);
+            RenderLayerFunctions::ofTextOffsetRA,
+            null);
 
     public void clear() {
         msdf.clear();
         raster.clear();
     }
 
-    public RenderLayer text(CaxtonAtlas.Page page, TextRenderer.TextLayerType layerType, FontTech tech, boolean blur) {
+    public RenderLayer text(CaxtonAtlas.Page page, CaxtonTextLayerType layerType, FontTech tech, boolean blur) {
         return (switch (tech) {
             case MSDF -> msdf.text(page, layerType);
             case RASTER -> (blur ? rasterAa : raster).text(page, layerType);
@@ -44,26 +47,30 @@ public class CaxtonTextRenderLayers {
     public static class Group {
         private final ConcurrentHashMap<CaxtonAtlas.Page, RenderLayer> text = new ConcurrentHashMap<>();
         private final ConcurrentHashMap<CaxtonAtlas.Page, RenderLayer> textSeeThrough = new ConcurrentHashMap<>();
+        private final ConcurrentHashMap<CaxtonAtlas.Page, RenderLayer> textOffset = new ConcurrentHashMap<>();
         private final ConcurrentHashMap<CaxtonAtlas.Page, RenderLayer> textOutline = new ConcurrentHashMap<>();
-        private final Function<CaxtonAtlas.Page, RenderLayer> ofText, ofTextSeeThrough, ofTextOutline;
+        private final Function<CaxtonAtlas.Page, RenderLayer> ofText, ofTextSeeThrough, ofTextOffset, ofTextOutline;
 
-        public Group(Function<CaxtonAtlas.Page, RenderLayer> ofText, Function<CaxtonAtlas.Page, RenderLayer> ofTextSeeThrough, Function<CaxtonAtlas.Page, RenderLayer> ofTextOutline) {
+        public Group(Function<CaxtonAtlas.Page, RenderLayer> ofText, Function<CaxtonAtlas.Page, RenderLayer> ofTextSeeThrough, Function<CaxtonAtlas.Page, RenderLayer> ofTextOffset, Function<CaxtonAtlas.Page, RenderLayer> ofTextOutline) {
             this.ofText = ofText;
             this.ofTextSeeThrough = ofTextSeeThrough;
+            this.ofTextOffset = ofTextOffset;
             this.ofTextOutline = ofTextOutline;
         }
 
         public void clear() {
             text.clear();
             textSeeThrough.clear();
+            textOffset.clear();
             textOutline.clear();
         }
 
-        public RenderLayer text(CaxtonAtlas.Page page, TextRenderer.TextLayerType layerType) {
+        public RenderLayer text(CaxtonAtlas.Page page, CaxtonTextLayerType layerType) {
             return switch (layerType) {
                 case NORMAL -> text.computeIfAbsent(page, this.ofText);
                 case SEE_THROUGH -> textSeeThrough.computeIfAbsent(page, this.ofTextSeeThrough);
-                case POLYGON_OFFSET -> textOutline.computeIfAbsent(page, this.ofTextOutline);
+                case OUTLINE -> textOutline.computeIfAbsent(page, this.ofTextOutline);
+                case POLYGON_OFFSET -> textOffset.computeIfAbsent(page, this.ofTextOffset);
             };
         }
     }
@@ -103,6 +110,10 @@ public class CaxtonTextRenderLayers {
             return make("caxton_text_see_through", () -> CaxtonShaders.caxtonTextSeeThroughShader, page, false, false, true, false);
         }
 
+        private static RenderLayer ofTextOffset(CaxtonAtlas.Page page) {
+            return make("caxton_text_outline", () -> CaxtonShaders.caxtonTextShader, page, false, false, true, true);
+        }
+
         private static RenderLayer ofTextOutline(CaxtonAtlas.Page page) {
             return make("caxton_text_outline", () -> CaxtonShaders.caxtonTextOutlineShader, page, true, false, true, false);
         }
@@ -115,7 +126,7 @@ public class CaxtonTextRenderLayers {
             return make("caxton_text_see_through_raster", GameRenderer::getRenderTypeTextIntensitySeeThroughProgram, page, false, true, false, false);
         }
 
-        private static RenderLayer ofTextOutlineR(CaxtonAtlas.Page page) {
+        private static RenderLayer ofTextOffsetR(CaxtonAtlas.Page page) {
             return make("caxton_text_outline_raster", GameRenderer::getRenderTypeTextIntensityProgram, page, false, true, false, true);
         }
 
@@ -127,7 +138,7 @@ public class CaxtonTextRenderLayers {
             return make("caxton_text_see_through_raster", GameRenderer::getRenderTypeTextIntensitySeeThroughProgram, page, false, true, true, false);
         }
 
-        private static RenderLayer ofTextOutlineRA(CaxtonAtlas.Page page) {
+        private static RenderLayer ofTextOffsetRA(CaxtonAtlas.Page page) {
             return make("caxton_text_outline_raster", GameRenderer::getRenderTypeTextIntensityProgram, page, false, true, true, true);
         }
 
