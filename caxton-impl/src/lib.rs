@@ -1,6 +1,7 @@
 #![cfg_attr(test, feature(slice_flatten))]
 
 extern crate core;
+extern crate nalgebra as na;
 
 pub mod cfont;
 pub mod extrude;

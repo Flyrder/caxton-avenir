@@ -5,7 +5,7 @@ use anyhow::{bail, Context};
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
 use flate2::Compression;
-use msdfgen::Bitmap;
+use image::Rgba32FImage;
 
 #[repr(C)]
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default)]
@@ -206,19 +206,19 @@ impl TList {
 }
 
 impl<'a> TListPendingEntry<'a> {
-    pub fn put(&mut self, img: &Bitmap<msdfgen::Rgba<f32>>) {
-        let width = img.width() as u16;
-        let height = img.height() as u16;
+    pub fn put(&mut self, img: &Rgba32FImage) {
+        let width = img.width();
+        let height = img.height();
         assert_eq!(self.pixels.len(), 4 * (width as usize) * (height as usize));
-        let mtsdf_pixels = img.pixels();
         let mut i = 0;
         for y in (0..height).rev() {
             for x in 0..width {
-                let pixel = mtsdf_pixels[(x as usize) + (y as usize) * (width as usize)];
-                self.pixels[i] = (pixel.r * 255.0) as u8;
-                self.pixels[i + 1] = (pixel.g * 255.0) as u8;
-                self.pixels[i + 2] = (pixel.b * 255.0) as u8;
-                self.pixels[i + 3] = (pixel.a * 255.0) as u8;
+                let pixel = *img.get_pixel(x, y);
+                let [r, g, b, a] = pixel.0;
+                self.pixels[i] = (r * 255.0) as u8;
+                self.pixels[i + 1] = (g * 255.0) as u8;
+                self.pixels[i + 2] = (b * 255.0) as u8;
+                self.pixels[i + 3] = (a * 255.0) as u8;
                 i += 4;
             }
         }

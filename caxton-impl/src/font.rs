@@ -9,7 +9,13 @@ use ab_glyph_rasterizer::{Point, Rasterizer};
 use anyhow::{anyhow, Context};
 use base64::engine::general_purpose::URL_SAFE;
 use base64::Engine;
-use msdfgen::{Bitmap, FillRule, FontExt, Framing, MsdfGeneratorConfig, Pixel, Vector2};
+use fdsm::bezier::scanline::FillRule;
+use fdsm::generate::generate_mtsdf;
+use fdsm::render::correct_sign_mtsdf;
+use fdsm::shape::Shape;
+use fdsm::transform::Transform;
+use image::{Pixel, Rgba32FImage};
+use na::{Affine2, Similarity2, Vector2};
 use rayon::iter::{
     IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
 };
@@ -353,31 +359,27 @@ fn create_mtsdf(
     mipmap: u32,
     pe: &mut TListPendingEntry,
 ) -> anyhow::Result<()> {
-    // This should be passed as a parameter, but MsdfGeneratorConfig isn’t Sync
-    let msdf_config = MsdfGeneratorConfig::default();
-
     let Some(bounding_box) = bounding_box else { return Ok(()); };
 
     let (width, height) = dimensions_in_image(&Some(bounding_box), options);
     let width = adjust_dims(width, mipmap);
     let height = adjust_dims(height, mipmap);
 
-    let mut shape = face
-        .as_ref()
-        .glyph_shape(glyph_id)
-        .ok_or_else(|| anyhow!("could not load glyph #{}", glyph_id.0))?;
-    shape.edge_coloring_simple(3.0, 69);
-    let framing: Framing<f64> = framing(options, &bounding_box, mipmap);
+    let mut shape = Shape::load_from_face(face, glyph_id);
+    let framing: Affine2<f64> = framing(options, &bounding_box, mipmap);
+    shape.transform(&framing);
+    let shape = Shape::edge_coloring_simple(shape, 0.03, 69);
+    let prepared_shape = shape.prepare();
 
-    let mut mtsdf: Bitmap<msdfgen::Rgba<f32>> = Bitmap::new(width, height);
-    shape.generate_mtsdf(&mut mtsdf, &framing, &msdf_config);
+    let mut mtsdf: Rgba32FImage = Rgba32FImage::new(width, height);
+    generate_mtsdf(&prepared_shape, options.range as f64, &mut mtsdf);
     if options.invert.is_none() {
-        shape.correct_sign(&mut mtsdf, &framing, FillRule::NonZero);
+        correct_sign_mtsdf(&mut mtsdf, &prepared_shape, FillRule::Nonzero);
     }
 
-    let mtsdf_pixels = mtsdf.pixels_mut();
     if options.invert == Some(true) {
-        mtsdf_pixels.iter_mut().for_each(|pixel| pixel.invert());
+        let mtsdf_pixels = mtsdf.pixels_mut();
+        mtsdf_pixels.for_each(|pixel| pixel.invert());
     }
 
     pe.put(&mtsdf);
@@ -427,16 +429,17 @@ fn create_bitmap(
     Ok(())
 }
 
-fn framing(options: &FontOptions, bounding_box: &Rect, mipmap: u32) -> Framing<f64> {
-    let scale = (-(mipmap as f64)).exp2() / options.shrinkage;
-    Framing::new(
-        options.range as f64 * options.shrinkage,
-        Vector2 { x: scale, y: scale },
-        Vector2 {
-            x: options.margin() as f64 * options.shrinkage - bounding_box.x_min as f64,
-            y: options.margin() as f64 * options.shrinkage - bounding_box.y_min as f64,
-        },
-    )
+fn framing(options: &FontOptions, bounding_box: &Rect, mipmap: u32) -> Affine2<f64> {
+    let mipmap_scale = (-(mipmap as f64)).exp2();
+    let scale = mipmap_scale / options.shrinkage;
+    nalgebra::convert::<_, Affine2<f64>>(Similarity2::new(
+        Vector2::new(
+            options.margin() as f64 * mipmap_scale - bounding_box.x_min as f64 * scale,
+            options.margin() as f64 * mipmap_scale - bounding_box.y_min as f64 * scale,
+        ),
+        0.0,
+        scale,
+    ))
 }
 
 fn adjust_dims(n: u32, p: u32) -> u32 {
