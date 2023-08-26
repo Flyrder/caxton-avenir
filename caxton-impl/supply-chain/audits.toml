@@ -42,6 +42,12 @@ criteria = "safe-to-deploy"
 delta = "1.8.1 -> 1.9.0"
 notes = "no use of unsafe or ambient capabilities added"
 
+[[audits.fdsm]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+version = "0.1.1"
+notes = "I am the author of this crate. This crate additionally does not use unsafe code."
+
 [[audits.generic-array]]
 who = "+merlan #flirora <uruwi@protonmail.com>"
 criteria = "safe-to-deploy"
@@ -64,6 +70,11 @@ criteria = "safe-to-deploy"
 delta = "1.0.6 -> 1.0.9"
 notes = "only code changes is to add an explicit Copy impl for Buffer"
 
+[[audits.num-complex]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+delta = "0.4.2 -> 0.4.4"
+
 [[audits.once_cell]]
 who = "+merlan #flirora <uruwi@protonmail.com>"
 criteria = "safe-to-deploy"
@@ -78,6 +89,12 @@ delta = "1.0.59 -> 1.0.60"
 who = "+merlan #flirora <uruwi@protonmail.com>"
 criteria = "safe-to-deploy"
 delta = "1.0.31 -> 1.0.32"
+notes = "only documentation changes"
+
+[[audits.quote]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+delta = "1.0.32 -> 1.0.33"
 notes = "only documentation changes"
 
 [[audits.same-file]]
@@ -116,11 +133,23 @@ criteria = "safe-to-deploy"
 delta = "1.0.43 -> 1.0.46"
 notes = "Only renames some variables (both in the proc macro and in the generated code)"
 
+[[audits.thiserror-impl]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+delta = "1.0.46 -> 1.0.47"
+notes = "no code changes"
+
 [[audits.ttf-parser]]
 who = "+merlan #flirora <uruwi@protonmail.com>"
 criteria = "safe-to-deploy"
 delta = "0.19.0 -> 0.18.1"
 notes = "Does not use unsafe code."
+
+[[audits.ttf-parser]]
+who = "+merlan #flirora <uruwi@protonmail.com>"
+criteria = "safe-to-deploy"
+delta = "0.19.0 -> 0.19.1"
+notes = "Does not use unsafe"
 
 [[audits.unicode-bidi-mirroring]]
 who = "+merlan #flirora <uruwi@protonmail.com>"
