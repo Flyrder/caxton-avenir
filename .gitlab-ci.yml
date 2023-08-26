@@ -1,0 +1,51 @@
+before_script:
+  - GRADLE_USER_HOME="$(pwd)/.gradle"
+  - export GRADLE_USER_HOME
+
+build-image:
+  image: docker:24.0.5
+  stage: build
+  services:
+    - docker:24.0.5-dind
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IMAGE_TAG docker/
+    - docker push $IMAGE_TAG
+  rules:
+    - changes:
+        - docker/Dockerfile
+
+build:
+  image: $IMAGE_TAG
+  stage: build
+  script: gradle --build-cache assemble
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+    paths:
+      - build
+      - .gradle
+      - caxton-impl/build
+      - caxton-impl/target
+  dependencies:
+    - build-image
+  artifacts:
+    paths:
+      - build/libraries/
+
+#test:
+#  stage: test
+#  script: gradle check
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: pull
+#    paths:
+#      - build
+#      - .gradle
+#
+#deploy:
+#  stage: deploy
+#  script: echo "Define your deployment script!"
+#  environment: production
