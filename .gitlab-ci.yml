@@ -1,3 +1,6 @@
+variables:
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+
 before_script:
   - GRADLE_USER_HOME="$(pwd)/.gradle"
   - export GRADLE_USER_HOME
@@ -7,8 +10,6 @@ build-image:
   stage: build
   services:
     - docker:24.0.5-dind
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker build -t $IMAGE_TAG docker/
@@ -20,7 +21,7 @@ build-image:
 build:
   image: $IMAGE_TAG
   stage: build
-  script: gradle --build-cache assemble
+  script: gradle --build-cache build -Dxyz.flirora.caxton.additionalTargets=x86_64-pc-windows-gnu
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
