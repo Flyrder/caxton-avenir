@@ -1,5 +1,7 @@
 FROM gradle:8.3.0-jdk17-jammy
 
+RUN apt-get install gcc
+
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
