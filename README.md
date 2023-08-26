@@ -252,14 +252,15 @@ The following options are available in `config/caxton.json`:
 
 If you want to build Caxton from source, then you’ll need to install the [Rust toolchain] and [Clang] in addition to Gradle.
 
-By default, the native library will be built for the host platform only. To build it for additional platforms, you will need to install [cross].
-Then specify the additional targets by their [target triples] (separated by commas) in the
+By default, the native library will be built for the host platform only. To build it for additional platforms, specify the additional targets by their [target triples] (separated by commas) in the
 `xyz.flirora.caxton.additionalTargets` property. For instance, if you want to build the library for x86_64 Windows, then
 you can invoke
 
 ```sh
 gradle build -Dxyz.flirora.caxton.additionalTargets=x86_64-pc-windows-gnu
 ```
+
+If you get an error about unknown targets, then modify the `cargoCrossBuildTasks` variable in `caxton-impl/build.gradle`.
 
 [Rust toolchain]: https://www.rust-lang.org/tools/install
 [Clang]: https://rust-lang.github.io/rust-bindgen/requirements.html

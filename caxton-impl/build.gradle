@@ -15,7 +15,8 @@ import com.google.common.collect.ImmutableSet
 Map.Entry<String, TaskProvider<Task>> registerCrossBuildTask(String taskName, String targetName, String dllName) {
     def cargoTask = tasks.register(taskName + ".cargo", CargoTask) {
         def configuration = new CargoExtension()
-        configuration.cargoCommand = 'cross'
+        // Not needed for now:
+        // configuration.cargoCommand = 'cross'
         configuration.arguments = ['--target', targetName]
         configuration.outputs = [(targetName): dllName]
         configuration.profile = 'release'
