@@ -46,8 +46,13 @@ build:
 #    paths:
 #      - build
 #      - .gradle
-#
-#deploy:
-#  stage: deploy
-#  script: echo "Define your deployment script!"
-#  environment: production
+
+deploy-maven-snapshot:
+  image: $IMAGE_TAG
+  stage: deploy
+  script: gradle publish
+  environment: production
+  dependencies:
+    - build
+  needs:
+    - job: build
