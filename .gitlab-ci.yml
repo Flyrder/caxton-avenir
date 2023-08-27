@@ -24,7 +24,7 @@ build:
   script: gradle --build-cache build -Dxyz.flirora.caxton.additionalTargets=x86_64-pc-windows-gnu
   cache:
     key: "$CI_COMMIT_REF_NAME"
-    policy: push
+    policy: pull-push
     paths:
       - build
       - .gradle
@@ -50,9 +50,17 @@ build:
 deploy-maven-snapshot:
   image: $IMAGE_TAG
   stage: deploy
-  script: gradle publish
+  script: gradle publish -Dxyz.flirora.caxton.additionalTargets=x86_64-pc-windows-gnu
   environment: production
   dependencies:
     - build
   needs:
     - job: build
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - build
+      - .gradle
+      - caxton-impl/build
+      - caxton-impl/target
