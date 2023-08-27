@@ -26,16 +26,16 @@ build:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull-push
     paths:
-      - build
+      - "**/build"
       - .gradle
-      - caxton-impl/build
       - caxton-impl/target
   needs:
     - job: build-image
       optional: true
   artifacts:
     paths:
-      - build/libs/
+      - forge/build/libs/
+      - fabric/build/libs/
 
 #test:
 #  stage: test
@@ -60,7 +60,6 @@ deploy-maven-snapshot:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
     paths:
-      - build
+      - "**/build"
       - .gradle
-      - caxton-impl/build
       - caxton-impl/target
