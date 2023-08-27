@@ -24,11 +24,12 @@ dependencies {
     modApi "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
     // Remove the next line if you don't want to depend on the API
     // modApi "dev.architectury:architectury-fabric:${rootProject.architectury_version}"
-    include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:${mixinextras_version}")))
-    include(implementation('com.github.ben-manes.caffeine:caffeine:3.1.2'))
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
+
+    include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:${mixinextras_version}")))
+    include(implementation('com.github.ben-manes.caffeine:caffeine:3.1.2'))
 
     // Used for extending the FontType enum.
     modImplementation include("com.github.Chocohead:Fabric-ASM:v2.3") {

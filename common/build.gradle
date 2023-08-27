@@ -24,7 +24,7 @@ dependencies {
     // modApi "dev.architectury:architectury:${rootProject.architectury_version}"
 
     // Used for more precise mixins (e.g. for registering new shaders).
-    implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:${mixinextras_version}"))
+    annotationProcessor(implementation("io.github.llamalad7:mixinextras-common:${mixinextras_version}"))
 
 //    modLocalRuntime "com.terraformersmc:modmenu:6.1.0-beta.3"
     // Known to break Caxton in the past (#37).
