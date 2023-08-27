@@ -35,7 +35,10 @@
     "minecraft": ">=1.20 <=1.20.1"
   },
   "conflicts": {
-    "emojiful": "*",
     "iris": "*"
+  },
+  "breaks": {
+    "emojiful": "*",
+    "todo_memoryleakfix": "<=1.1.1"
   }
 }

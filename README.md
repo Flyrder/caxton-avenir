@@ -42,6 +42,8 @@ As a result, text rendered in world using such fonts will not render at all when
 Caxton is not compatible with [Emojiful], which replaces Minecraft’s default text renderer with its own implementation
 and does not delegate to the original text renderer’s methods.
 
+Caxton 0.5.0 and later are incompatible with [MemoryLeakFix] version 1.1.1 and earlier.
+
 If [Exordium]’s sign buffering feature is enabled, then [text on signs will look pixelated]. If this happens, then
 disable sign buffering for Exordium.
 
@@ -63,6 +65,8 @@ Resource packs that modify core shaders related to text, such as the “Dark UI�
 [Iris Shaders]: https://github.com/IrisShaders/Iris
 
 [custom core shaders, which Iris does not support]: https://github.com/IrisShaders/Iris/blob/1.18.2/docs/development/compatibility/core-shaders.md
+
+[MemoryLeakFix]: https://modrinth.com/mod/memoryleakfix
 
 [Exordium]: https://modrinth.com/mod/exordium
 
