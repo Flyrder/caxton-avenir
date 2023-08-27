@@ -26,7 +26,6 @@ public class CaxtonModResourceLocationFlavor {
 
     @SubscribeEvent
     public void addPackFinders(AddPackFindersEvent event) {
-        System.err.println("dolphins");
         if (event.getPackType() == ResourceType.CLIENT_RESOURCES) {
             IModFile file = ModList.get().getModFileById(CaxtonModClient.MOD_ID).getFile();
             for (String id : BUILTIN_PACKS) {
