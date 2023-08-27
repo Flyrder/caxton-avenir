@@ -6,7 +6,6 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.loader.api.FabricLoader;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.FileReader;
@@ -31,7 +30,7 @@ public class CaxtonConfig {
 
     public CaxtonConfig() {
         // Set options to bypass mod conflicts
-        boolean isImmediatelyFastLoaded = FabricLoader.getInstance().isModLoaded("immediatelyfast");
+        boolean isImmediatelyFastLoaded = CaxtonModClient.getPlatformHooks().isModLoaded("immediatelyfast");
         if (isImmediatelyFastLoaded) {
             this.tweakExpText = false;
             this.reuseTextRendererDrawer = false;

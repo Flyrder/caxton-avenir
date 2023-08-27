@@ -10,6 +10,6 @@ public class CaxtonModResourceLocationFlavor {
         // Submit our event bus to let architectury register our content on the right time
 //        EventBuses.registerModEventBus(CaxtonModClient.MOD_ID, FMLJavaModLoadingContext.get().getModEventBus());
         var modBus = FMLJavaModLoadingContext.get().getModEventBus();
-        CaxtonModClient.init();
+        CaxtonModClient.init(new PlatformHooksResourceLocationFlavor());
     }
 }

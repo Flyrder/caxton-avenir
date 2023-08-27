@@ -5,7 +5,6 @@ import com.ibm.icu.text.Bidi;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.font.FontStorage;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.StringVisitable;
@@ -124,7 +123,7 @@ public record CaxtonText(List<RunGroup> runGroups, int totalLength, boolean rtl,
         if (!RenderSystem.isOnRenderThread()) {
             CaxtonModClient.LOGGER.warn("Tried to create Caxton text off render thread!");
             CaxtonModClient.LOGGER.warn("This is unsupported and bad things might happen; please file an issue at <https://gitlab.com/Kyarei/caxton/-/issues>.");
-            if (FabricLoader.getInstance().isDevelopmentEnvironment())
+            if (CaxtonModClient.getPlatformHooks().isDevelopmentEnvironment())
                 throw new IllegalStateException("Tried to create Caxton text off render thread");
         }
         // Perform bidi analysis on the entire string.

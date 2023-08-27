@@ -14,7 +14,7 @@ import xyz.flirora.caxton.fabric.command.DumpAtlasCommand;
 public class CaxtonModIdentifierFlavor implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
-        CaxtonModClient.init();
+        CaxtonModClient.init(new PlatformHooksIdentifierFlavor());
 
         ModContainer modContainer = FabricLoader.getInstance().getModContainer(CaxtonModClient.MOD_ID).get();
         CaxtonModClient.LOGGER.info("Registering /caxtondumpatlas client command");

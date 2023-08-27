@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableSet;
 import com.mojang.logging.LogUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.font.FontType;
 import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.font.TextRenderer;
@@ -24,6 +23,7 @@ public class CaxtonModClient {
     public static final boolean APRIL_FOOLS = isAprilFools();
     private static final Set<String> CALLSITE_BLACKLIST = ImmutableSet.of(TextHandler.class.getName(), TextRenderer.class.getName());
     private static final ConcurrentMap<StackTraceElement, StackTraceElement> PREVIOUS_BROKEN_METHOD_CALLERS = new ConcurrentHashMap<>();
+    private static PlatformHooks platformHooks;
 
     private static FontType getCaxtonFontType() {
         for (FontType variant : FontType.class.getEnumConstants()) {
@@ -44,7 +44,7 @@ public class CaxtonModClient {
      * <p>
      * This is set when Iris is loaded.
      */
-    public static final boolean FORCE_DISABLE_BATCHING_HACK = FabricLoader.getInstance().isModLoaded("iris");
+    public static boolean FORCE_DISABLE_BATCHING_HACK = false;
 
     /**
      * The current global config for the mod.
@@ -80,7 +80,14 @@ public class CaxtonModClient {
         }
     }
 
-    public static void init() {
+    public static PlatformHooks getPlatformHooks() {
+        return CaxtonModClient.platformHooks;
+    }
+
+    public static void init(PlatformHooks platformHooks) {
+        CaxtonModClient.platformHooks = platformHooks;
+        FORCE_DISABLE_BATCHING_HACK = platformHooks.isModLoaded("iris");
+
         LOGGER.info(APRIL_FOOLS ? "Ufhed Gaadn ghap Muzsar!" : "Initializing mod...");
 
         CONFIG = CaxtonConfig.readFromFile();

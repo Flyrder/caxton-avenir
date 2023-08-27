@@ -2,14 +2,20 @@ package xyz.flirora.caxton.mixin;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.BufferBuilderStorage;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.WorldRenderer;
+import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
+import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.Slice;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.render.WorldRendererVertexConsumerProvider;
 
@@ -17,7 +23,12 @@ import xyz.flirora.caxton.render.WorldRendererVertexConsumerProvider;
 @Mixin(WorldRenderer.class)
 public class WorldRendererMixin {
     @Unique
-    private boolean warnOnNonWrvcp = !CaxtonModClient.FORCE_DISABLE_BATCHING_HACK;
+    private boolean warnOnNonWrvcp;
+
+    @Inject(method = "<init>", at = @At("RETURN"))
+    private void initFields(MinecraftClient client, EntityRenderDispatcher entityRenderDispatcher, BlockEntityRenderDispatcher blockEntityRenderDispatcher, BufferBuilderStorage bufferBuilders, CallbackInfo ci) {
+        warnOnNonWrvcp = !CaxtonModClient.FORCE_DISABLE_BATCHING_HACK;
+    }
 
     @Redirect(
             method = "render",
