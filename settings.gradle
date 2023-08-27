@@ -4,8 +4,15 @@ pluginManagement {
             name = 'Fabric'
             url = 'https://maven.fabricmc.net/'
         }
+        maven { url "https://maven.architectury.dev/" }
+        maven { url "https://maven.minecraftforge.net/" }
         gradlePluginPortal()
     }
 }
 
-include 'caxton-impl'
+include("common")
+include("common:caxton-impl")
+include("fabric")
+include("forge")
+
+rootProject.name = "caxton"

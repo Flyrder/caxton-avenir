@@ -20,7 +20,6 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.JsonHelper;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import xyz.flirora.caxton.CaxtonEarlyRiser;
 import xyz.flirora.caxton.CaxtonModClient;
 
 import java.io.BufferedReader;

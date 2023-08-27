@@ -1,23 +1,14 @@
 package xyz.flirora.caxton;
 
-import com.chocohead.mm.api.ClassTinkerers;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.logging.LogUtils;
-import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
 import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.client.font.FontType;
 import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
-import xyz.flirora.caxton.command.DumpAtlasCommand;
 import xyz.flirora.caxton.dll.LibraryLoading;
 
 import java.util.Calendar;
@@ -27,17 +18,26 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 @Environment(EnvType.CLIENT)
-public class CaxtonModClient implements ClientModInitializer {
+public class CaxtonModClient {
     public static final String MOD_ID = "caxton";
     public static final Logger LOGGER = LogUtils.getLogger();
     public static final boolean APRIL_FOOLS = isAprilFools();
     private static final Set<String> CALLSITE_BLACKLIST = ImmutableSet.of(TextHandler.class.getName(), TextRenderer.class.getName());
     private static final ConcurrentMap<StackTraceElement, StackTraceElement> PREVIOUS_BROKEN_METHOD_CALLERS = new ConcurrentHashMap<>();
 
+    private static FontType getCaxtonFontType() {
+        for (FontType variant : FontType.class.getEnumConstants()) {
+            if (variant.name().equals("CAXTON")) {
+                return variant;
+            }
+        }
+        throw new EnumConstantNotPresentException(FontType.class, "Could not find CAXTON font type");
+    }
+
     /**
      * The {@link FontType} for Caxton fonts.
      */
-    public static final FontType CAXTON_FONT_TYPE = ClassTinkerers.getEnum(FontType.class, "CAXTON");
+    public static final FontType CAXTON_FONT_TYPE = getCaxtonFontType();
 
     /**
      * Whether to force the batching hack in {@link xyz.flirora.caxton.mixin.BufferBuilderStorageMixin} to be disabled.
@@ -80,23 +80,11 @@ public class CaxtonModClient implements ClientModInitializer {
         }
     }
 
-    @Override
-    public void onInitializeClient() {
+    public static void init() {
         LOGGER.info(APRIL_FOOLS ? "Ufhed Gaadn ghap Muzsar!" : "Initializing mod...");
 
         CONFIG = CaxtonConfig.readFromFile();
 
         LibraryLoading.loadNativeLibrary(LOGGER);
-
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            DumpAtlasCommand.register(dispatcher, registryAccess);
-        });
-
-        LOGGER.info("Registering built-in resource packs");
-
-        ModContainer modContainer = FabricLoader.getInstance().getModContainer(MOD_ID).get();
-
-        ResourceManagerHelper.registerBuiltinResourcePack(new Identifier(MOD_ID, "inter"), modContainer, Text.translatable("caxton.resourcePack.inter"), ResourcePackActivationType.NORMAL);
-        ResourceManagerHelper.registerBuiltinResourcePack(new Identifier(MOD_ID, "opensans"), modContainer, Text.translatable("caxton.resourcePack.opensans"), ResourcePackActivationType.NORMAL);
     }
 }
