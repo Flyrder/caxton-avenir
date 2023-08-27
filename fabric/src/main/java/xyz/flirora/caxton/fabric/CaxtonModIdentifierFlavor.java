@@ -1,4 +1,4 @@
-package xyz.flirora.caxton;
+package xyz.flirora.caxton.fabric;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -8,7 +8,8 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import xyz.flirora.caxton.command.DumpAtlasCommand;
+import xyz.flirora.caxton.CaxtonModClient;
+import xyz.flirora.caxton.fabric.command.DumpAtlasCommand;
 
 public class CaxtonModIdentifierFlavor implements ClientModInitializer {
     @Override

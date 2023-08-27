@@ -1,4 +1,4 @@
-package xyz.flirora.caxton;
+package xyz.flirora.caxton.fabric;
 
 import com.chocohead.mm.api.ClassTinkerers;
 import com.llamalad7.mixinextras.MixinExtrasBootstrap;

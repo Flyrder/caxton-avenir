@@ -14,8 +14,8 @@ loom {
         convertAccessWideners = true
         extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
 
-        mixinConfig "examplemod-common.mixins.json"
-        mixinConfig "examplemod.mixins.json"
+        mixinConfig "caxton.mixins.json"
+//        mixinConfig "examplemod.mixins.json"
     }
 }
 
@@ -33,7 +33,7 @@ dependencies {
     // modApi "dev.architectury:architectury-forge:${rootProject.architectury_version}"
     implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:${mixinextras_version}"))
     implementation(include("io.github.llamalad7:mixinextras-forge:${mixinextras_version}"))
-    include(implementation('com.github.ben-manes.caffeine:caffeine:3.1.2'))
+    forgeRuntimeLibrary(implementation('com.github.ben-manes.caffeine:caffeine:3.1.2'))
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive = false }

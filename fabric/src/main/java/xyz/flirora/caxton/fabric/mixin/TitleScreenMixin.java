@@ -1,4 +1,4 @@
-package xyz.flirora.caxton.mixin;
+package xyz.flirora.caxton.fabric.mixin;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

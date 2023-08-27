@@ -17,16 +17,17 @@
   "environment": "client",
   "entrypoints": {
     "client": [
-      "xyz.flirora.caxton.CaxtonModIdentifierFlavor"
+      "xyz.flirora.caxton.fabric.CaxtonModIdentifierFlavor"
     ],
     "main": [
     ],
     "mm:early_risers": [
-      "xyz.flirora.caxton.CaxtonEarlyRiser"
+      "xyz.flirora.caxton.fabric.CaxtonEarlyRiser"
     ]
   },
   "mixins": [
-    "caxton.mixins.json"
+    "caxton.mixins.json",
+    "caxton.fabric.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.14.17",

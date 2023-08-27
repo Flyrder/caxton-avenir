@@ -1,4 +1,4 @@
-package xyz.flirora.caxton.command;
+package xyz.flirora.caxton.fabric.command;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 

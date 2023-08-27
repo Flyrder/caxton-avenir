@@ -1,0 +1,35 @@
+modLoader = "javafml"
+loaderVersion = "[47,)"
+issueTrackerURL = "https://gitlab.com/Kyarei/caxton/-/issues"
+license = "MIT"
+
+[[mods]]
+modId = "caxton"
+version = "${version}"
+displayName = "Caxton"
+authors = "+merlan #flirora"
+description = '''
+Adds TTF and OTF font support to Minecraft.
+'''
+logoFile = "assets/caxton/icon.png"
+
+[[dependencies.caxton]]
+modId = "forge"
+mandatory = true
+versionRange = "[47,)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.caxton]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.20,1.20.1]"
+ordering = "NONE"
+side = "CLIENT"
+
+#[[dependencies.examplemod]]
+#modId = "architectury"
+#mandatory = true
+#versionRange = "[8.1.79,)"
+#ordering = "AFTER"
+#side = "BOTH"
