@@ -39,6 +39,6 @@
   },
   "breaks": {
     "emojiful": "*",
-    "todo_memoryleakfix": "<=1.1.1"
+    "memoryleakfix": "<=1.1.1"
   }
 }

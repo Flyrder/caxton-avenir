@@ -42,7 +42,7 @@ As a result, text rendered in world using such fonts will not render at all when
 Caxton is not compatible with [Emojiful], which replaces Minecraft’s default text renderer with its own implementation
 and does not delegate to the original text renderer’s methods.
 
-Caxton 0.5.0 and later are incompatible with [MemoryLeakFix] version 1.1.1 and earlier.
+Caxton 0.5.0 and later are incompatible with [MemoryLeakFix] version 1.1.1 and earlier; update the latter mod to 1.1.2 or later.
 
 If [Exordium]’s sign buffering feature is enabled, then [text on signs will look pixelated]. If this happens, then
 disable sign buffering for Exordium.
