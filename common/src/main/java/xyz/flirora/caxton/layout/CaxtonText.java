@@ -122,7 +122,7 @@ public record CaxtonText(List<RunGroup> runGroups, int totalLength, boolean rtl,
         // Try to catch #55 in action
         if (!RenderSystem.isOnRenderThread()) {
             CaxtonModClient.LOGGER.warn("Tried to create Caxton text off render thread!");
-            CaxtonModClient.LOGGER.warn("This is unsupported and bad things might happen; please file an issue at <https://gitlab.com/Kyarei/caxton/-/issues>.");
+            CaxtonModClient.LOGGER.warn("This is unsupported and bad things might happen; please comment on <https://gitlab.com/Kyarei/caxton/-/issues/58>.");
             if (CaxtonModClient.getPlatformHooks().isDevelopmentEnvironment())
                 throw new IllegalStateException("Tried to create Caxton text off render thread");
         }
