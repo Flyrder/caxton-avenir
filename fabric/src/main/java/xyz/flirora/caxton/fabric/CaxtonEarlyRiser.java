@@ -1,7 +1,6 @@
 package xyz.flirora.caxton.fabric;
 
 import com.chocohead.mm.api.ClassTinkerers;
-import com.llamalad7.mixinextras.MixinExtrasBootstrap;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.MappingResolver;
 import xyz.flirora.caxton.font.CaxtonFontLoader;
