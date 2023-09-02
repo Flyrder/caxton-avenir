@@ -123,7 +123,8 @@ public record CaxtonText(List<RunGroup> runGroups, int totalLength, boolean rtl,
         if (!RenderSystem.isOnRenderThread()) {
             CaxtonModClient.LOGGER.warn("Tried to create Caxton text off render thread!");
             CaxtonModClient.LOGGER.warn("This is unsupported and bad things might happen; please comment on <https://gitlab.com/Kyarei/caxton/-/issues/58>.");
-            if (CaxtonModClient.getPlatformHooks().isDevelopmentEnvironment())
+            CaxtonModClient.LOGGER.warn("Stack trace: " + new RuntimeException());
+            if (FabricLoader.getInstance().isDevelopmentEnvironment())
                 throw new IllegalStateException("Tried to create Caxton text off render thread");
         }
         // Perform bidi analysis on the entire string.
