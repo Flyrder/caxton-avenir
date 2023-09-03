@@ -119,14 +119,6 @@ public record CaxtonText(List<RunGroup> runGroups, int totalLength, boolean rtl,
 
     @NotNull
     private static Full computeFromRuns(List<Run> runs, boolean rtl, LayoutCache cache) {
-        // Try to catch #55 in action
-        if (!RenderSystem.isOnRenderThread()) {
-            CaxtonModClient.LOGGER.warn("Tried to create Caxton text off render thread!");
-            CaxtonModClient.LOGGER.warn("This is unsupported and bad things might happen; please comment on <https://gitlab.com/Kyarei/caxton/-/issues/58>.");
-            new RuntimeException().printStackTrace();
-            if (CaxtonModClient.getPlatformHooks().isDevelopmentEnvironment())
-                throw new IllegalStateException("Tried to create Caxton text off render thread");
-        }
         // Perform bidi analysis on the entire string.
         String contents = runs.stream().map(Run::text).collect(Collectors.joining());
         Bidi bidi = new Bidi(

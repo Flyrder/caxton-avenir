@@ -57,7 +57,9 @@ public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStora
     @Inject(at = @At(value = "HEAD"), method = "setFonts(Ljava/util/List;)V")
     private void onSetFonts(List<Font> fonts, CallbackInfo ci) {
         for (Int2ObjectMap<CaxtonGlyphPair> cacheEntry : caxtonGlyphCache) {
-            cacheEntry.clear();
+            synchronized (cacheEntry) {
+                cacheEntry.clear();
+            }
         }
     }
 
@@ -106,6 +108,9 @@ public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStora
 
     @Override
     public CaxtonGlyphResult getCaxtonGlyph(int codePoint, boolean validateAdvance, Style style) {
-        return getCacheForStyle(style).computeIfAbsent(codePoint, c -> findCaxtonGlyph(c, style)).getGlyph(validateAdvance);
+        Int2ObjectMap<CaxtonGlyphPair> cache = getCacheForStyle(style);
+        synchronized (cache) {
+            return cache.computeIfAbsent(codePoint, c -> findCaxtonGlyph(c, style)).getGlyph(validateAdvance);
+        }
     }
 }
