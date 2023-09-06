@@ -37,7 +37,7 @@ dependencies {
 
     implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:${mixinextras_version}"))
     implementation(include("io.github.llamalad7:mixinextras-forge:${mixinextras_version}"))
-    include(implementation('com.github.ben-manes.caffeine:caffeine:3.1.2'))
+    forgeRuntimeLibrary(implementation('com.github.ben-manes.caffeine:caffeine:3.1.2'))
 }
 
 processResources {
