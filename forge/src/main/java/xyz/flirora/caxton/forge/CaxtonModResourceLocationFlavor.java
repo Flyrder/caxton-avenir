@@ -26,15 +26,13 @@ public class CaxtonModResourceLocationFlavor {
         CaxtonModClient.init(new PlatformHooksResourceLocationFlavor());
     }
 
-    private static final String[] BUILTIN_PACKS = {"inter", "opensans"};
-
     public void addPackFinders(AddPackFindersEvent event) {
         if (event.getPackType() == ResourceType.CLIENT_RESOURCES) {
             IModFile file = ModList.get().getModFileById(CaxtonModClient.MOD_ID).getFile();
-            for (String id : BUILTIN_PACKS) {
+            for (String id : CaxtonModClient.BUILTIN_PACKS) {
                 Path sourcePath = file.findResource("resourcepacks/" + id);
                 var pack = ResourcePackProfile.create(
-                        "builtin/font-" + id,
+                        CaxtonModClient.MOD_ID + ":" + id,
                         Text.translatable("caxton.resourcePack." + id),
                         false,
                         path -> new DirectoryResourcePack(path, sourcePath, false),

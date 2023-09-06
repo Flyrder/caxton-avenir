@@ -22,7 +22,8 @@ public class CaxtonModIdentifierFlavor implements ClientModInitializer {
             FabricDumpAtlasCommand.register(dispatcher, registryAccess);
         });
         CaxtonModClient.LOGGER.info("Registering built-in resource packs");
-        ResourceManagerHelper.registerBuiltinResourcePack(new Identifier(CaxtonModClient.MOD_ID, "inter"), modContainer, Text.translatable("caxton.resourcePack.inter"), ResourcePackActivationType.NORMAL);
-        ResourceManagerHelper.registerBuiltinResourcePack(new Identifier(CaxtonModClient.MOD_ID, "opensans"), modContainer, Text.translatable("caxton.resourcePack.opensans"), ResourcePackActivationType.NORMAL);
+        for (String id : CaxtonModClient.BUILTIN_PACKS) {
+            ResourceManagerHelper.registerBuiltinResourcePack(new Identifier(CaxtonModClient.MOD_ID, id), modContainer, Text.translatable("caxton.resourcePack." + id), ResourcePackActivationType.NORMAL);
+        }
     }
 }

@@ -1,5 +1,6 @@
 package xyz.flirora.caxton;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.logging.LogUtils;
 import net.fabricmc.api.EnvType;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import xyz.flirora.caxton.dll.LibraryLoading;
 
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,6 +21,7 @@ import java.util.concurrent.ConcurrentMap;
 @Environment(EnvType.CLIENT)
 public class CaxtonModClient {
     public static final String MOD_ID = "caxton";
+    public static final List<String> BUILTIN_PACKS = ImmutableList.of("inter", "opensans");
     public static final Logger LOGGER = LogUtils.getLogger();
     public static final boolean APRIL_FOOLS = isAprilFools();
     private static final Set<String> CALLSITE_BLACKLIST = ImmutableSet.of(TextHandler.class.getName(), TextRenderer.class.getName());
