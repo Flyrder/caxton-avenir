@@ -16,15 +16,16 @@ var FieldNode = Java.type("org.objectweb.asm.tree.FieldNode");
 
 // TODO: we probably need to use SRG names in prod
 
-// In a prod env, this will be mapped to the SRG name (m_135820_), while
-// in a dev env, it will be mapped to the Yarn name (tryParse).
-var identifierTryParse = ASMAPI.mapMethod("m_135820_");
-var isDevEnv = identifierTryParse != "m_135820_";
+// m_135832_ is named:
+// * Identifier#split in Yarn
+// * ResourceLocation#decompose in Mojmap
+var identifierTryParse = ASMAPI.mapMethod("m_135832_");
+var isYarn = identifierTryParse == "split";
 
 // Coremod doesn’t support remapped classes directly (https://github.com/MinecraftForge/CoreMods/issues/25).
-// Branch on isDevEnv instead.
-var FONT_TYPE_CLASS = isDevEnv ? 'net.minecraft.client.font.FontType' : 'net.minecraft.client.gui.font.providers.GlyphProviderType';
-var FONT_TYPE_CLASS_INTL = isDevEnv ? 'net/minecraft/client/font/FontType' : 'net/minecraft/client/gui/font/providers/GlyphProviderType';
+// Branch on isYarn instead.
+var FONT_TYPE_CLASS = isYarn ? 'net.minecraft.client.font.FontType' : 'net.minecraft.client.gui.font.providers.GlyphProviderType';
+var FONT_TYPE_CLASS_INTL = isYarn ? 'net/minecraft/client/font/FontType' : 'net/minecraft/client/gui/font/providers/GlyphProviderType';
 var FONT_TYPE_DESC = 'L' + FONT_TYPE_CLASS_INTL + ';';
 // For methods, we can use the ASMAPI.mapMethod function directly.
 var VALUES_FACTORY_METHOD = ASMAPI.mapMethod("m_285865_"); // method_36876
