@@ -11,7 +11,7 @@ repository = "https://gitlab.com/Kyarei/caxton"
 [dependencies]
 anyhow = "1.0.68"
 base64 = "0.21.0"
-fdsm = { version = "0.1.1", features = ["ttf-parser"] }
+fdsm = { version = "0.1.2", features = ["ttf-parser"] }
 image = { version = "0.24.6", default-features = false }
 jni = "0.21.1"
 rustybuzz = "0.8.0"

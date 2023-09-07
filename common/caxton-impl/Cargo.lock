@@ -210,9 +210,9 @@ checksum = "a26ae43d7bcc3b814de94796a5e736d4029efb0ee900c12e2d54c993ad1a1e07"
 
 [[package]]
 name = "fdsm"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09789215539709a5a270ad41e91056a2155edc372c828fa7147a74c42aaa1e48"
+checksum = "1037ced2b6b2b6478f8fea73d9d8a06457b2768b2979a59200e501f255d49bcf"
 dependencies = [
  "image",
  "nalgebra",
