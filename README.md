@@ -343,7 +343,7 @@ Caxton would not have been possible without the following projects:
 * [RustyBuzz] (RazrFalcon, MIT)
 * [ttf-parser] (RazrFalcon, MIT/Apache-2.0)
 * [fdsm] (me, MIT)
-    * Versions 0.4.11 and earlier used [msdfgen] (Chlumsky, MIT) and the [msdfgen-rs] bindings (Kayo Phoenix, MIT), both of which have subsequently been invaluable in the development of fdsm.
+    * Versions before 0.5 used [msdfgen] (Chlumsky, MIT) and the [msdfgen-rs] bindings (Kayo Phoenix, MIT), both of which have subsequently been invaluable in the development of fdsm.
     * Versions 0.2.3 and earlier used the [msdf-rs] bindings (Penple, MIT) instead.
 * [ab-glyph-rasterizer] (alexheretic, Apache-2.0)
 * [JNI bindings for Rust] (MIT/Apache-2.0)
