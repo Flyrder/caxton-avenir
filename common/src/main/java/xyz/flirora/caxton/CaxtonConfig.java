@@ -32,8 +32,10 @@ public class CaxtonConfig {
         // Set options to bypass mod conflicts
         boolean isImmediatelyFastLoaded = CaxtonModClient.getPlatformHooks().isModLoaded("immediatelyfast");
         if (isImmediatelyFastLoaded) {
-            this.tweakExpText = false;
             this.reuseTextRendererDrawer = false;
+            if (!CaxtonModClient.getBatchingApi().isEnabled()) {
+                this.tweakExpText = false;
+            }
         }
     }
 

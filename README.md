@@ -207,6 +207,9 @@ The following options are available in `config/caxton.json`:
   // This option primarily serves to make the experience level text look better
   // in outline fonts. It used to act as a workaround for a misrendering issue
   // with ImmediatelyFast but poses issues on newer versions of that mod.
+  // Starting from Caxton 0.5.0, Caxton will detect if ImmediatelyFast 1.2.0 or
+  // later is present and use its API to mitigate issues with this setting
+  // turned on.
   // See:
   // * https://gitlab.com/Kyarei/caxton/-/issues/31
   // * https://github.com/RaphiMC/ImmediatelyFast/issues/49

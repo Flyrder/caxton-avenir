@@ -9,6 +9,7 @@ import net.minecraft.client.font.FontType;
 import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.font.TextRenderer;
 import org.slf4j.Logger;
+import xyz.flirora.caxton.compat.immediatelyfast.BatchingApi;
 import xyz.flirora.caxton.dll.LibraryLoading;
 
 import java.util.Calendar;
@@ -27,6 +28,7 @@ public class CaxtonModClient {
     private static final Set<String> CALLSITE_BLACKLIST = ImmutableSet.of(TextHandler.class.getName(), TextRenderer.class.getName());
     private static final ConcurrentMap<StackTraceElement, StackTraceElement> PREVIOUS_BROKEN_METHOD_CALLERS = new ConcurrentHashMap<>();
     private static PlatformHooks platformHooks;
+    private static BatchingApi batchingApi;
 
     private static FontType getCaxtonFontType() {
         for (FontType variant : FontType.class.getEnumConstants()) {
@@ -87,8 +89,13 @@ public class CaxtonModClient {
         return CaxtonModClient.platformHooks;
     }
 
+    public static BatchingApi getBatchingApi() {
+        return CaxtonModClient.batchingApi;
+    }
+
     public static void init(PlatformHooks platformHooks) {
         CaxtonModClient.platformHooks = platformHooks;
+        CaxtonModClient.batchingApi = BatchingApi.createImpl(platformHooks);
         FORCE_DISABLE_BATCHING_HACK = platformHooks.isModLoaded("iris");
 
         LOGGER.info(APRIL_FOOLS ? "Ufhed Gaadn ghap Muzsar!" : "Initializing mod...");
