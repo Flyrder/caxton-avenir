@@ -66,9 +66,9 @@ processResources {
 
     from(configurations.backend) {
         eachFile {
-            if (!name.contains("-")) {
-                def hostTarget = identifyHostRustcPlatform.get().output()
-                name = hostTarget + "-" + name
+            if (!name.contains("-") && !name.contains("checksum")) {
+                // Exclude the artifact from the default Cargo task
+                exclude()
             }
             path = "natives/" + path
         }
