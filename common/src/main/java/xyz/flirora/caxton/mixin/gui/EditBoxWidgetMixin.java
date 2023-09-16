@@ -8,6 +8,7 @@ import net.minecraft.client.gui.widget.ScrollableWidget;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import net.minecraft.util.Util;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -35,8 +36,9 @@ public abstract class EditBoxWidgetMixin extends ScrollableWidget {
     @Shadow
     @Final
     private Text placeholder;
+
     @Shadow
-    private int tick;
+    private long lastSwitchFocusTime;
 
     public EditBoxWidgetMixin(int i, int j, int k, int l, Text text) {
         super(i, j, k, l, text);
@@ -48,7 +50,7 @@ public abstract class EditBoxWidgetMixin extends ScrollableWidget {
         CaxtonTextHandler cth = ctr.getHandler();
         String text = this.editBox.getText();
         int cursorPos = this.editBox.getCursor();
-        boolean drawCursor = this.isFocused() && this.tick / 6 % 2 == 0;
+        boolean drawCursor = this.isFocused() && (Util.getMeasuringTimeMs() - this.lastSwitchFocusTime) / 300L % 2L == 0L;
         boolean cursorVertical = cursorPos < text.length();
 
         int x = 0;

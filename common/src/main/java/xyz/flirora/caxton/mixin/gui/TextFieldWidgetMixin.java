@@ -7,6 +7,7 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Drawable;
 import net.minecraft.client.gui.Element;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.render.RenderLayer;
@@ -15,6 +16,7 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -60,8 +62,6 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     @Shadow
     private int uneditableColor;
     @Shadow
-    private int focusedTicks;
-    @Shadow
     private boolean drawsBackground;
     @Shadow
     private int firstCharacterIndex;
@@ -92,10 +92,13 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     protected abstract int getMaxLength();
 
     @Shadow
-    public abstract void setCursor(int cursor);
+    public abstract void setCursor(int cursor, boolean shiftKeyPressed);
 
     @Shadow
     public abstract void setSelectionStart(int cursor);
+
+    @Shadow
+    private long lastSwitchFocusTime;
 
     @Override
     public void updateCaxtonText(boolean changed) {
@@ -151,8 +154,8 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
         return me;
     }
 
-    @ModifyReceiver(method = "eraseCharacters", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;setCursor(I)V"))
-    private TextFieldWidget updateCaxtonTextOnEraseCharacters(TextFieldWidget me, int cursor) {
+    @ModifyReceiver(method = "eraseCharacters", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;setCursor(IZ)V"))
+    private TextFieldWidget updateCaxtonTextOnEraseCharacters(TextFieldWidget me, int cursor, boolean shiftKeyPressed) {
         this.setSelectionStart(cursor);
         this.selectionEnd = selectionStart;
         updateCaxtonText(true);
@@ -192,7 +195,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
         float cursorLocation = selectionStartLocation - firstCharLocation;
 
         boolean cursorInBounds = 0 <= cursorLocation && cursorLocation < getInnerWidth();
-        boolean showCursor = isFocused() && focusedTicks / 6 % 2 == 0 && cursorInBounds;
+        boolean showCursor = this.isFocused() && (Util.getMeasuringTimeMs() - this.lastSwitchFocusTime) / 300L % 2L == 0L && cursorInBounds;
 
         float cursorX = Math.round(x + cursorLocation);
 
@@ -243,14 +246,13 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
 
         int index = ctr.getHandler().getCharIndexAtX(caxtonText, xOffset, firstCharacterIndex);
 
-        this.setCursor(index);
+        this.setCursor(index, Screen.hasShiftDown());
         ci.cancel();
     }
 
-    @Inject(at = @At("HEAD"), method = "setSelectionEnd", cancellable = true)
-    private void onSetSelectionEnd(int index, CallbackInfo ci) {
+    @Inject(at = @At("HEAD"), method = "updateFirstCharacterIndex", cancellable = true)
+    private void onUpdateFirstCharacterIndex(int cursor, CallbackInfo ci) {
         int length = this.text.length();
-        this.selectionEnd = MathHelper.clamp(index, 0, length);
 
         if (this.textRenderer != null && this.caxtonText != null) {
             if (this.firstCharacterIndex > length) {
@@ -262,27 +264,26 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
             CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
 
             float firstCharLocation = ctr.getHandler().getOffsetAtIndex(caxtonText, firstCharacterIndex, DirectionSetting.FORCE_LTR);
-            float selectionEndLocation = ctr.getHandler().getOffsetAtIndex(caxtonText, selectionEnd, DirectionSetting.AUTO);
-//            System.err.println("setSelectionEnd: text = " + this.text);
-//            System.err.println("firstCharacterIndex = " + firstCharacterIndex + ", selectionEnd = " + selectionEnd);
-//            System.err.println("firstCharLocation = " + firstCharLocation + ", selectionEndLocation = " + selectionEndLocation);
+            float cursorLocation = ctr.getHandler().getOffsetAtIndex(caxtonText, cursor, DirectionSetting.AUTO);
+//            System.err.println("updateFirstCharacterIndex: text = " + this.text);
+//            System.err.println("firstCharacterIndex = " + firstCharacterIndex + ", cursor = " + cursor);
+//            System.err.println("firstCharLocation = " + firstCharLocation + ", cursorLocation = " + cursorLocation);
 //            System.err.println("width = " + width + " (raw: " + this.width + ")");
 
-            if (this.selectionEnd == this.firstCharacterIndex) {
+            if (cursor == this.firstCharacterIndex) {
                 // Be compatible with mods that set the text of a text field before its width.
                 // See #47 and #48
-                this.firstCharacterIndex = ctr.getHandler().getCharIndexAtX(caxtonText, selectionEndLocation - width, -1);
-            } else if (selectionEndLocation < firstCharLocation) {
+                this.firstCharacterIndex = ctr.getHandler().getCharIndexAtX(caxtonText, cursorLocation - width, -1);
+            } else if (cursorLocation < firstCharLocation) {
                 // Update firstCharacterIndex to point to a char farther to the left
-                this.firstCharacterIndex = ctr.getHandler().getCharIndexAtX(caxtonText, Math.min(firstCharLocation - width, selectionEndLocation), -1);
-            } else if (selectionEndLocation >= firstCharLocation + width) {
+                this.firstCharacterIndex = ctr.getHandler().getCharIndexAtX(caxtonText, Math.min(firstCharLocation - width, cursorLocation), -1);
+            } else if (cursorLocation >= firstCharLocation + width) {
                 // Update firstCharacterIndex to point to a char farther to the right
-                this.firstCharacterIndex = ctr.getHandler().getCharIndexAfterX(caxtonText, selectionEndLocation - width, -1);
+                this.firstCharacterIndex = ctr.getHandler().getCharIndexAfterX(caxtonText, cursorLocation - width, -1);
             }
 
             this.firstCharacterIndex = MathHelper.clamp(this.firstCharacterIndex, 0, length);
         }
-
         ci.cancel();
     }
 

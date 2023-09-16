@@ -1,6 +1,6 @@
 {
-    "pack": {
-        "pack_format": 15,
-        "description": "Inter font"
-    }
+  "pack": {
+    "pack_format": 18,
+    "description": "Inter font"
+  }
 }

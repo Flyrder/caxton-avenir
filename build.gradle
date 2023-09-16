@@ -15,7 +15,11 @@ subprojects {
         apply plugin: "dev.architectury.loom"
 
         dependencies {
-            minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+            if (project.name == "forge") {
+                minecraft "com.mojang:minecraft:${rootProject.minecraft_version_resource_location}"
+            } else {
+                minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+            }
             mappings "net.fabricmc:yarn:${rootProject.yarn_mappings}:v2"
         }
     }
