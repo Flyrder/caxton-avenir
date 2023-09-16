@@ -65,6 +65,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     private boolean drawsBackground;
     @Shadow
     private int firstCharacterIndex;
+    @Unique
     private CaxtonText caxtonText;
     @Shadow
     private int selectionStart;

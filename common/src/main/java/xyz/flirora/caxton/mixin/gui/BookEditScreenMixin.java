@@ -21,10 +21,7 @@ import net.minecraft.text.Text;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableInt;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.Slice;
@@ -43,11 +40,11 @@ import java.util.List;
 @Environment(EnvType.CLIENT)
 @Mixin(BookEditScreen.class)
 public abstract class BookEditScreenMixin extends Screen {
+    @Unique
     private static final float XSCALE = 16.0f;
     @Shadow
     @Final
     private SelectionManager currentPageSelectionManager;
-    private int charIndexOfCursor;
 
     protected BookEditScreenMixin(Text title) {
         super(title);
@@ -60,12 +57,6 @@ public abstract class BookEditScreenMixin extends Screen {
 
     @Shadow
     protected abstract String getCurrentPageContent();
-
-    @Shadow
-    protected abstract Rect2i getLineSelectionRectangle(String string, TextHandler handler, int selectionStart, int selectionEnd, int lineY, int lineStart);
-
-    @Shadow
-    protected abstract Rect2i getRectFromCorners(BookEditScreen.Position start, BookEditScreen.Position end);
 
     @Shadow
     protected abstract BookEditScreen.Position absolutePositionToScreenPosition(BookEditScreen.Position position);

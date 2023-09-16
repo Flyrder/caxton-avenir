@@ -8,6 +8,7 @@ import net.minecraft.client.gui.screen.ingame.BookEditScreen;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -36,7 +37,9 @@ public class BookEditScreenPageContentMixin implements BookEditScreenPageContent
     @Shadow
     @Final
     private String pageContent;
+    @Unique
     private List<CaxtonText> caxtonTexts;
+    @Unique
     private FcIndexConverter warts;
 
     @Inject(at = @At("RETURN"), method = "<clinit>")
