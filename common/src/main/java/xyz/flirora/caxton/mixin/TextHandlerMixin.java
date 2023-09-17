@@ -9,6 +9,7 @@ import net.minecraft.text.StringVisitable;
 import net.minecraft.text.Style;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -22,7 +23,9 @@ import java.util.function.BiConsumer;
 @Environment(EnvType.CLIENT)
 @Mixin(TextHandler.class)
 public class TextHandlerMixin implements TextHandlerExt {
+    @Unique
     private static final Logger LOGGER = LogUtils.getLogger();
+    @Unique
     private CaxtonTextHandler caxtonTextHandler;
 
     @Override
