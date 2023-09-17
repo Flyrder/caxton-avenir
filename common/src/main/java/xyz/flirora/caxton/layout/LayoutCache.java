@@ -11,6 +11,11 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A cache for expensive layout computations.
+ * <p>
+ * Currently, this is a singleton class.
+ */
 @Environment(EnvType.CLIENT)
 public class LayoutCache {
     private static final LayoutCache INSTANCE = new LayoutCache();
@@ -24,6 +29,9 @@ public class LayoutCache {
                 .build();
     }
 
+    /**
+     * @return The only instance of {@link LayoutCache}.
+     */
     public static LayoutCache getInstance() {
         return INSTANCE;
     }
@@ -32,6 +40,14 @@ public class LayoutCache {
         return shapingCaches;
     }
 
+    /**
+     * Gets the shaping cache for a Caxton font.
+     * <p>
+     * This holds shaping results for strings.
+     *
+     * @param font The {@link ConfiguredCaxtonFont} for which to get the shaping cache.
+     * @return The shaping cache for {@code font}.
+     */
     public Cache<ShapedString, ShapingResult> getShapingCacheFor(ConfiguredCaxtonFont font) {
         return shapingCaches.computeIfAbsent(
                 font,
@@ -41,15 +57,31 @@ public class LayoutCache {
                         .build());
     }
 
+    /**
+     * Gets the reorder cache.
+     * <p>
+     * This is responsible for caching the results of laying out lists of runs into {@link CaxtonText.Full} objects.
+     *
+     * @return The reorder cache.
+     */
     public Cache<FromRunsInput, CaxtonText.Full> getReorderCache() {
         return reorderCache;
     }
 
+    /**
+     * Clears this cache.
+     */
     public void clear() {
         shapingCaches.clear();
         reorderCache.invalidateAll();
     }
 
+    /**
+     * Contains a list of runs, along with their overall directionality.
+     *
+     * @param runs The list of runs computed from some text.
+     * @param rtl  Whether this text should be laid out right-to-left, as opposed to left-to-right.
+     */
     public record FromRunsInput(List<Run> runs, boolean rtl) {
     }
 }
