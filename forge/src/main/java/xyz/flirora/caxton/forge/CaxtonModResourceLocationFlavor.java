@@ -35,7 +35,17 @@ public class CaxtonModResourceLocationFlavor {
                         CaxtonModClient.MOD_ID + ":" + id,
                         Text.translatable("caxton.resourcePack." + id),
                         false,
-                        path -> new DirectoryResourcePack(path, sourcePath, false),
+                        new ResourcePackProfile.PackFactory() {
+                            @Override
+                            public ResourcePack open(String name) {
+                                return new DirectoryResourcePack(name, sourcePath, false);
+                            }
+
+                            @Override
+                            public ResourcePack openWithOverlays(String name, ResourcePackProfile.Metadata metadata) {
+                                return new DirectoryResourcePack(name, sourcePath, false);
+                            }
+                        },
                         ResourceType.CLIENT_RESOURCES,
                         ResourcePackProfile.InsertionPosition.TOP,
                         ResourcePackSource.BUILTIN);
