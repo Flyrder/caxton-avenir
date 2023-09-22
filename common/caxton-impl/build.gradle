@@ -82,8 +82,7 @@ def createFileDigests = tasks.register('createFileDigests') {
             byte[] contents = file.bytes
             digest.update(contents)
             String digestStr = Base64.encoder.encodeToString(digest.digest())
-            output.write("" + file.name + "\t" + contents.length + "\
-t" + digestStr + "\n")
+            output.write("" + file.name + "\t" + contents.length + "\t" + digestStr + "\n")
         }
     }
 }
