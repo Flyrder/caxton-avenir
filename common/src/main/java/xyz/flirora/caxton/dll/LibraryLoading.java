@@ -30,9 +30,9 @@ public class LibraryLoading {
                     .append(Text.translatable("caxton.gui.unsupportedPlatform.description.osx2")
                             .formatted(Formatting.BOLD));
     private static final Text LIBRARY_LOADING_FAILED_DESC = Text.translatable("caxton.gui.libraryLoadingFailed.description");
-    public static String ISSUES_URL = "https://gitlab.com/Kyarei/caxton/-/issues";
+    public static final String ISSUES_URL = "https://gitlab.com/Kyarei/caxton/-/issues";
     private static final Text LIBRARY_LOADING_FAILED_LINK = Text.translatable("caxton.gui.libraryLoadingFailed.link", ISSUES_URL);
-    public static String OS_SUPPORT_URL = "https://gitlab.com/Kyarei/caxton#os-support";
+    public static final String OS_SUPPORT_URL = "https://gitlab.com/Kyarei/caxton#os-support";
     private static final Text UNSUPPORTED_PLATFORM_LINK = Text.translatable("caxton.gui.unsupportedPlatform.link", OS_SUPPORT_URL);
 
     private static Exception loadingException = new IllegalStateException("library not yet loaded");
