@@ -17,7 +17,6 @@ public class CaxtonModIdentifierFlavor implements ClientModInitializer {
         CaxtonModClient.init(new PlatformHooksIdentifierFlavor());
 
         ModContainer modContainer = FabricLoader.getInstance().getModContainer(CaxtonModClient.MOD_ID).get();
-        CaxtonModClient.LOGGER.info("Registering /caxtondumpatlas client command");
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             CaxtonCommands.register(new ClientCommandRegistrarIdentifierFlavor(dispatcher));
         });
