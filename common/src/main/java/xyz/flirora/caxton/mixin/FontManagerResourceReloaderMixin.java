@@ -18,13 +18,15 @@ import xyz.flirora.caxton.render.CaxtonTextRenderer;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 @Environment(EnvType.CLIENT)
 @Mixin(FontManager.class)
 public class FontManagerResourceReloaderMixin {
     // Clear font cache before reloading fonts.
-    @Inject(at = @At("HEAD"), method = "reload(Lnet/minecraft/client/font/FontManager$ProviderIndex;Lnet/minecraft/util/profiler/Profiler;)V")
-    private void onPrepare(FontManager.ProviderIndex index, Profiler profiler, CallbackInfo ci) {
+    @Inject(at = @At("HEAD"), method = "loadIndex")
+    private void onPrepare(ResourceManager resourceManager, Executor executor, CallbackInfoReturnable<CompletableFuture<FontManager.ProviderIndex>> cir) {
         CaxtonFontLoader.clearFontCache();
         RenderSystem.recordRenderCall(() -> {
             CaxtonTextRenderer.getInstance().clearCaches();
