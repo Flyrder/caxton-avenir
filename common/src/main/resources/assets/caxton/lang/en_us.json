@@ -12,5 +12,10 @@
   "caxton.resourcePack.opensans": "Sample Font: Open Sans",
   "caxton.command.caxtondumpatlas.success": "Saved atlas info at %s",
   "caxton.command.caxtondumpatlas.atlasFailed": "Failed to save image for atlas page #%s",
-  "caxton.command.caxtondumpatlas.locationDataFailed": "Failed to save glyph location data"
+  "caxton.command.caxtondumpatlas.locationDataFailed": "Failed to save glyph location data",
+  "caxton.command.caxtonshape.fontNotFound": "Font ‘%s’ not found",
+  "caxton.command.caxtonshape.shapingBuffer": "Shaping buffer: %s",
+  "caxton.command.caxtonshape.language": "Inferred language: %s",
+  "caxton.command.caxtonshape.script": "Inferred script: %s",
+  "caxton.command.caxtonshape.direction": "Inferred direction: %s"
 }

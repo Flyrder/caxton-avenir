@@ -1,19 +1,21 @@
 use std::{mem, ops::Deref, path::PathBuf, ptr, slice};
 
 use anyhow::Context;
+use jni::objects::{JCharArray, JIntArray, JObjectArray, JShortArray};
+use jni::sys::jobject;
 use jni::{
     objects::{JByteBuffer, JClass, JObject, JString, JValue, ReleaseMode},
     sys::{jchar, jint, jlong, jstring},
     JNIEnv,
 };
-use jni::objects::{JCharArray, JIntArray, JObjectArray, JShortArray};
 use nanoserde::DeJson;
-use rustybuzz::{Direction, UnicodeBuffer};
+use rustybuzz::{Direction, SerializeFlags, UnicodeBuffer};
+use std::borrow::Cow;
 use ttf_parser::GlyphId;
 
 use crate::{
     cfont::{ConfiguredFont, ConfiguredFontSettings},
-    error::{CxtError, throw_null_ptr_exn},
+    error::{throw_null_ptr_exn, CxtError},
     font::{Font, FontOptions},
     shape::ShapingResult,
 };
@@ -346,6 +348,95 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontGly
     val.into_raw()
 }
 
+/// JNI wrapper for getting debug shaping results on a font.
+///
+/// # Safety
+///
+/// `addr` must have previously been returned by [`Java_xyz_flirora_caxton_dll_CaxtonInternal_createFont`]
+/// and must not have been previously passed into [`Java_xyz_flirora_caxton_dll_CaxtonInternal_destroyFont`].
+// public static native DebugShapeInfo fontShapeForDebug(long addr, String s);
+#[no_mangle]
+pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontShapeForDebug(
+    mut env: JNIEnv,
+    _class: JClass,
+    font_addr: jlong,
+    text: JString,
+) -> jobject {
+    throw_as_exn! {
+        env, ptr::null_mut();
+        if font_addr == 0 {
+            return Err(CxtError::Null);
+        }
+        let font = &*(font_addr as usize as *const Font);
+
+        let debug_shape_info_class = env.find_class("xyz/flirora/caxton/command/DebugShapeInfo")?;
+        let debug_shape_info_ctor =
+            env.get_method_id("xyz/flirora/caxton/command/DebugShapeInfo", "<init>", "()V")?;
+        let mut result =
+            env.new_object_unchecked(debug_shape_info_class, debug_shape_info_ctor, &[])?;
+
+        // Safety: the signature of the Java method guarantees that `text` is a `String`
+        let text = env.get_string_unchecked(&text)?;
+        let text: Cow<'_, str> = (&text).into();
+
+        let mut buffer = UnicodeBuffer::new();
+        buffer.push_str(&text);
+        buffer.guess_segment_properties();
+
+        let inferred_language = match buffer.language() {
+            Some(lang) => Some(env.new_string(lang.as_str())?),
+            None => None,
+        };
+        let inferred_script = env.new_string(&buffer.script().tag().to_string())?;
+        let null = JObject::null();
+
+        env.set_field(
+            &mut result,
+            "inferredLanguage",
+            "Ljava/lang/String;",
+            match &inferred_language {
+                Some(lang) => JValue::Object(lang.deref()),
+                None => JValue::Object(&null),
+            },
+        )?;
+        env.set_field(
+            &mut result,
+            "inferredScript",
+            "Ljava/lang/String;",
+            JValue::Object(inferred_script.deref()),
+        )?;
+        env.set_field(
+            &mut result,
+            "inferredDirection",
+            "Ljava/lang/String;",
+            JValue::Object(
+                env.new_string(match buffer.direction() {
+                    Direction::Invalid => "invalid",
+                    Direction::LeftToRight => "ltr",
+                    Direction::RightToLeft => "rtl",
+                    Direction::TopToBottom => "ttb",
+                    Direction::BottomToTop => "btt",
+                })?
+                .deref(),
+            ),
+        )?;
+
+        let buffer = rustybuzz::shape(&font.face, &[], buffer);
+
+        env.set_field(
+            &mut result,
+            "buffer",
+            "Ljava/lang/String;",
+            JValue::Object(
+                env.new_string(buffer.serialize(&font.face, SerializeFlags::default()))?
+                    .deref(),
+            ),
+        )?;
+
+        Ok(result.into_raw())
+    }
+}
+
 /// JNI wrapper for constructing a [`ConfiguredFont`].
 ///
 /// # Safety
@@ -452,6 +543,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_shape<'
                     i += c.len_utf16() as u32;
                 }
             }
+            buffer.guess_segment_properties();
             buffer.set_direction(if level % 2 == 0 {
                 Direction::LeftToRight
             } else {

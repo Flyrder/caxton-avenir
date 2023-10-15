@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 import xyz.flirora.caxton.CaxtonModClient;
+import xyz.flirora.caxton.command.DebugShapeInfo;
 import xyz.flirora.caxton.dll.CaxtonInternal;
 
 import java.io.File;
@@ -294,6 +295,10 @@ public class CaxtonFont implements AutoCloseable {
 
     public int getTlistSize() {
         return tlistEntryCount;
+    }
+
+    public DebugShapeInfo shapeForDebug(String s) {
+        return CaxtonInternal.fontShapeForDebug(this.fontPtr, s);
     }
 
     private String getCacheDir() {

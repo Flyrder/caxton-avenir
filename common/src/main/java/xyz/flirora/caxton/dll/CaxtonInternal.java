@@ -1,5 +1,6 @@
 package xyz.flirora.caxton.dll;
 
+import xyz.flirora.caxton.command.DebugShapeInfo;
 import xyz.flirora.caxton.layout.ShapingResult;
 
 import java.nio.ByteBuffer;
@@ -32,6 +33,8 @@ public class CaxtonInternal {
     public static native int fontBytesPerPixel(long addr);
 
     public static native String fontGlyphName(long addr, int glyphId);
+
+    public static native DebugShapeInfo fontShapeForDebug(long addr, String s);
 
     public static native long configureFont(long fontAddr, String settings);
 

@@ -125,6 +125,7 @@ public class CaxtonFontLoader implements FontLoader {
     }
 
     public static Stream<Identifier> getAvailableFontIds() {
+        System.err.println(CACHE);
         return CACHE.keySet().stream();
     }
 

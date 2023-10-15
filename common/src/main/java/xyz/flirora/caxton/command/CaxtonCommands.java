@@ -6,6 +6,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.command.argument.IdentifierArgumentType;
+import net.minecraft.server.command.CommandManager;
 import net.minecraft.util.Identifier;
 import xyz.flirora.caxton.CaxtonModClient;
 
@@ -24,7 +25,7 @@ public class CaxtonCommands {
     }
 
     private static <S> LiteralArgumentBuilder<S> caxtonShape(Command<S> command) {
-        return LiteralArgumentBuilder.<S>literal("caxtonShape")
+        return LiteralArgumentBuilder.<S>literal("caxtonshape")
                 .then(RequiredArgumentBuilder.<S, Identifier>argument("font", IdentifierArgumentType.identifier())
                         .suggests((SuggestionProvider<S>) CaxtonSuggestionProviders.CAXTON_FONTS)
                         .then(RequiredArgumentBuilder.<S, String>argument("text", StringArgumentType.greedyString())
