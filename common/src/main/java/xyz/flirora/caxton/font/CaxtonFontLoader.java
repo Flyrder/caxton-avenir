@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 /**
  * A {@link FontLoader} for the {@code caxton} font type.
@@ -121,6 +122,10 @@ public class CaxtonFontLoader implements FontLoader {
      */
     public static CaxtonFont getFontById(Identifier id) {
         return CACHE.get(id);
+    }
+
+    public static Stream<Identifier> getAvailableFontIds() {
+        return CACHE.keySet().stream();
     }
 
     /**

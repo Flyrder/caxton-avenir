@@ -7,19 +7,18 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import xyz.flirora.caxton.command.ClientCommandRegistrar;
-import xyz.flirora.caxton.command.CommonDumpAtlasCommand;
 import xyz.flirora.caxton.command.GenericArgumentBuilderFactory;
 
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 public record ClientCommandRegistrarIdentifierFlavor(
         CommandDispatcher<FabricClientCommandSource> dispatcher) implements ClientCommandRegistrar {
     @Override
-    public void registerClientCommand(GenericArgumentBuilderFactory builder, Function<MinecraftClient, Either<Text, Text>> runner) {
-        dispatcher.register(builder.<FabricClientCommandSource>create().executes(context -> {
+    public void registerClientCommand(GenericArgumentBuilderFactory builder, BiFunction<CommandContext<?>, MinecraftClient, Either<Text, Text>> runner) {
+        dispatcher.register(builder.create(context -> {
             net.minecraft.client.MinecraftClient client = context.getSource().getClient();
 
-            return reportResult(CommonDumpAtlasCommand.run(client), context);
+            return reportResult(runner.apply(context, client), context);
         }));
     }
 

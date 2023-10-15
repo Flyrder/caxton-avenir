@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.datafixers.util.Either;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
@@ -24,11 +25,11 @@ import java.io.FileWriter;
 import java.util.List;
 import java.util.Map;
 
-public class CommonDumpAtlasCommand {
+public class DumpAtlasCommand {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    public static Either<Text, Text> run(MinecraftClient client) {
+    public static Either<Text, Text> run(CommandContext<?> ctx, MinecraftClient client) {
         File debugDir = new File(client.runDirectory, "debug");
         File outputDir = new File(debugDir, "dumped-atlas-" + Util.getFormattedCurrentTime() + "-client");
         outputDir.mkdirs();
