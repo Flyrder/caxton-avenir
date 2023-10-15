@@ -13,6 +13,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.forgespi.locating.IModFile;
 import xyz.flirora.caxton.CaxtonModClient;
+import xyz.flirora.caxton.command.CaxtonCommands;
 import xyz.flirora.caxton.command.CommonDumpAtlasCommand;
 
 import java.nio.file.Path;
@@ -20,7 +21,7 @@ import java.nio.file.Path;
 @Mod(CaxtonModClient.MOD_ID)
 public class CaxtonModResourceLocationFlavor {
     public CaxtonModResourceLocationFlavor() {
-        MinecraftForge.EVENT_BUS.addListener(CaxtonCommandsResourceLocationFlavor::register);
+        MinecraftForge.EVENT_BUS.addListener(CaxtonModResourceLocationFlavor::registerCommands);
         var modBus = FMLJavaModLoadingContext.get().getModEventBus();
         modBus.addListener(this::addPackFinders);
         CaxtonModClient.init(new PlatformHooksResourceLocationFlavor());
@@ -52,5 +53,9 @@ public class CaxtonModResourceLocationFlavor {
                 event.addRepositorySource(profileAdder -> profileAdder.accept(pack));
             }
         }
+    }
+
+    private static void registerCommands(RegisterClientCommandsEvent event) {
+        CaxtonCommands.register(new ClientCommandRegistrarResourceLocationFlavor(event.getDispatcher()));
     }
 }

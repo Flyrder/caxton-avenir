@@ -3,18 +3,26 @@ package xyz.flirora.caxton.fabric;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.datafixers.util.Either;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.text.Text;
+import xyz.flirora.caxton.command.ClientCommandRegistrar;
 import xyz.flirora.caxton.command.CommonDumpAtlasCommand;
+import xyz.flirora.caxton.command.GenericArgumentBuilderFactory;
 
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
+import java.util.function.Function;
 
-@Environment(EnvType.CLIENT)
-public class CaxtonCommandsIdentifierFlavor {
+public record ClientCommandRegistrarIdentifierFlavor(
+        CommandDispatcher<FabricClientCommandSource> dispatcher) implements ClientCommandRegistrar {
+    @Override
+    public void registerClientCommand(GenericArgumentBuilderFactory builder, Function<MinecraftClient, Either<Text, Text>> runner) {
+        dispatcher.register(builder.<FabricClientCommandSource>create().executes(context -> {
+            net.minecraft.client.MinecraftClient client = context.getSource().getClient();
+
+            return reportResult(CommonDumpAtlasCommand.run(client), context);
+        }));
+    }
+
     private static int reportResult(Either<Text, Text> result, CommandContext<FabricClientCommandSource> context) {
         return result.map(
                 err -> {
@@ -26,13 +34,5 @@ public class CaxtonCommandsIdentifierFlavor {
                     return 1;
                 }
         );
-    }
-
-    public static void register(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess) {
-        dispatcher.register(literal("caxtondumpatlas").executes(context -> {
-            MinecraftClient client = context.getSource().getClient();
-
-            return reportResult(CommonDumpAtlasCommand.run(client), context);
-        }));
     }
 }
