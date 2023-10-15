@@ -9,7 +9,6 @@ import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import xyz.flirora.caxton.CaxtonModClient;
-import xyz.flirora.caxton.fabric.command.FabricDumpAtlasCommand;
 
 public class CaxtonModIdentifierFlavor implements ClientModInitializer {
     @Override
@@ -19,7 +18,7 @@ public class CaxtonModIdentifierFlavor implements ClientModInitializer {
         ModContainer modContainer = FabricLoader.getInstance().getModContainer(CaxtonModClient.MOD_ID).get();
         CaxtonModClient.LOGGER.info("Registering /caxtondumpatlas client command");
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            FabricDumpAtlasCommand.register(dispatcher, registryAccess);
+            CaxtonCommandsIdentifierFlavor.register(dispatcher, registryAccess);
         });
         CaxtonModClient.LOGGER.info("Registering built-in resource packs");
         for (String id : CaxtonModClient.BUILTIN_PACKS) {

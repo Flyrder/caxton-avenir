@@ -20,7 +20,7 @@ import java.nio.file.Path;
 @Mod(CaxtonModClient.MOD_ID)
 public class CaxtonModResourceLocationFlavor {
     public CaxtonModResourceLocationFlavor() {
-        MinecraftForge.EVENT_BUS.addListener(this::addClientCommands);
+        MinecraftForge.EVENT_BUS.addListener(CaxtonCommandsResourceLocationFlavor::register);
         var modBus = FMLJavaModLoadingContext.get().getModEventBus();
         modBus.addListener(this::addPackFinders);
         CaxtonModClient.init(new PlatformHooksResourceLocationFlavor());
@@ -52,22 +52,5 @@ public class CaxtonModResourceLocationFlavor {
                 event.addRepositorySource(profileAdder -> profileAdder.accept(pack));
             }
         }
-    }
-
-    public void addClientCommands(RegisterClientCommandsEvent event) {
-        event.getDispatcher().register(LiteralArgumentBuilder.<ServerCommandSource>literal("caxtondumpatlas").executes(context -> {
-            MinecraftClient client = MinecraftClient.getInstance();
-
-            return CommonDumpAtlasCommand.run(client).map(
-                    err -> {
-                        context.getSource().sendError(err);
-                        return 0;
-                    },
-                    msg -> {
-                        context.getSource().sendFeedback(() -> msg, false);
-                        return 1;
-                    }
-            );
-        }));
     }
 }
