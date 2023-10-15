@@ -5,7 +5,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.datafixers.util.Either;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import net.minecraft.client.MinecraftClient;
@@ -29,7 +31,11 @@ public class DumpAtlasCommand {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    public static Either<Text, Text> run(CommandContext<?> ctx, MinecraftClient client) {
+    private static final DynamicCommandExceptionType ATLAS_FAILED = new DynamicCommandExceptionType(i -> Text.translatable("caxton.command.caxtondumpatlas.atlasFailed", i));
+    private static final SimpleCommandExceptionType LOCATION_DATA_FAILED = new SimpleCommandExceptionType(Text.translatable("caxton.command.caxtondumpatlas.locationDataFailed"));
+
+    public static int run(CommandContext<?> context, ClientCommandSource source) throws CommandSyntaxException {
+        MinecraftClient client = source.getClient();
         File debugDir = new File(client.runDirectory, "debug");
         File outputDir = new File(debugDir, "dumped-atlas-" + Util.getFormattedCurrentTime() + "-client");
         outputDir.mkdirs();
@@ -53,7 +59,7 @@ public class DumpAtlasCommand {
                     image.writeTo(imageOut);
                 } catch (Exception exception) {
                     LOGGER.warn("Couldn’t save atlas page #" + i + ", level " + mipmap, exception);
-                    return Either.left(Text.translatable("caxton.command.caxtondumpatlas.atlasFailed", i));
+                    throw ATLAS_FAILED.create(i);
                 }
             }
         }
@@ -86,9 +92,10 @@ public class DumpAtlasCommand {
             jsonWriter.endObject();
         } catch (Exception exception) {
             LOGGER.warn("Couldn’t save location data", exception);
-            return Either.left(Text.translatable("caxton.command.caxtondumpatlas.locationDataFailed"));
+            throw LOCATION_DATA_FAILED.create();
         }
 
-        return Either.right(Text.translatable("caxton.command.caxtondumpatlas.success", outputDir));
+        source.sendFeedback(() -> Text.translatable("caxton.command.caxtondumpatlas.success", outputDir));
+        return 1;
     }
 }

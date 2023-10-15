@@ -7,6 +7,7 @@
   ],
   "client": [
     "BufferBuilderStorageMixin",
+    "CommandContextAccessor",
     "DrawContextAccessor",
     "FontManagerAccessor",
     "FontManagerResourceReloaderMixin",

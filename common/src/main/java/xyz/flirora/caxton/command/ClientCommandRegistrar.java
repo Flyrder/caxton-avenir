@@ -15,7 +15,7 @@ public interface ClientCommandRegistrar {
      * Registers a new client command.
      *
      * @param builder A {@link GenericArgumentBuilderFactory} that creates a literal argument builder with the correct type parameters.
-     * @param runner  A callback that executes a command, returning either the result of {@link Either#right(Object)} for a success of or {@link Either#left(Object)} for an error.
+     * @param command A {@link ClientCommand} that executes the command.
      */
-    void registerClientCommand(GenericArgumentBuilderFactory builder, BiFunction<CommandContext<?>, MinecraftClient, Either<Text, Text>> runner);
+    void registerClientCommand(GenericArgumentBuilderFactory builder, ClientCommand command);
 }
