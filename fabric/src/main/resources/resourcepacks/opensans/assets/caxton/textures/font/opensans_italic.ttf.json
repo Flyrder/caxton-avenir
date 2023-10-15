@@ -1,7 +1,6 @@
 {
   "shrinkage": 32.0,
-  "margin": 4,
-  "range": 4,
+  "margin": 8,
   "invert": false,
   "variations": [
     {
