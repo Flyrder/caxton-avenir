@@ -1,5 +1,6 @@
 package xyz.flirora.caxton.layout;
 
+import com.ibm.icu.lang.UScript;
 import com.ibm.icu.text.Bidi;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -88,14 +89,34 @@ public class ShapingRunSegmenter {
 //                    System.err.println("limit = " + bidi.getRunLimit(i));
 //                    System.err.println("level = " + bidi.getRunLevel(i));
 //                }
-            int j = i - firstBidiRunInGroup;
-            bidiRunsList.add(Math.max(
+            int start = Math.max(
                     0,
-                    bidi.getRunStart(i) - firstBidiStringIndex));
-            bidiRunsList.add(Math.min(
+                    bidi.getRunStart(i) - firstBidiStringIndex);
+            int end = Math.min(
                     currentBidiStringIndex - firstBidiStringIndex,
-                    bidi.getRunLimit(i) - firstBidiStringIndex));
-            bidiRunsList.add(bidi.getRunLevel(i));
+                    bidi.getRunLimit(i) - firstBidiStringIndex);
+            if (end > start) {
+                int level = bidi.getRunLevel(i);
+                int c = contents.codePointAt(start);
+                int script = UScript.getScript(c);
+                int cur = start + Character.charCount(c);
+                while (cur < end) {
+                    int c2 = contents.codePointAt(cur);
+                    int script2 = UScript.getScript(c2);
+                    if (script != script2) {
+                        // We need to start a new run
+                        bidiRunsList.add(start);
+                        bidiRunsList.add(cur);
+                        bidiRunsList.add(level);
+                        start = cur;
+                        script = script2;
+                    }
+                    cur += Character.charCount(c2);
+                }
+                bidiRunsList.add(start);
+                bidiRunsList.add(end);
+                bidiRunsList.add(level);
+            }
         }
         int[] bidiRuns = reorderBidiRuns(bidiRunsList);
         int runLevel = bidi.getRunLevel(firstBidiRunInGroup);
