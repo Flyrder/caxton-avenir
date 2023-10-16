@@ -1,6 +1,8 @@
 package xyz.flirora.caxton.layout;
 
 import com.ibm.icu.text.Bidi;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +17,7 @@ public class ShapingRunSegmenter {
     private int currentBidiRun = 0;
     private int currentBidiStringIndex = 0;
     private final int totalBidiRuns;
+    private final IntList bidiRunsList;
 
     public ShapingRunSegmenter(List<Run> runs, boolean rtl, LayoutCache cache) {
         contents = runs.stream().map(Run::text).collect(Collectors.joining());
@@ -25,6 +28,7 @@ public class ShapingRunSegmenter {
         this.runGroups = new ArrayList<>();
         this.totalBidiRuns = this.bidi.countRuns();
         this.cache = cache;
+        this.bidiRunsList = new IntArrayList(6);
 
         List<Run> last = null;
         for (Run run : runs) {
@@ -58,6 +62,8 @@ public class ShapingRunSegmenter {
     }
 
     private void addRunGroup(List<Run> runs) {
+        // We don’t use Bidi#getLogicalRun(int) because it’s O(n) and will make
+        // the whole segmentation process O(n^2).
         int firstBidiRunInGroup = currentBidiRun;
         int firstBidiStringIndex = currentBidiStringIndex;
         for (Run run : runs) {
@@ -73,7 +79,7 @@ public class ShapingRunSegmenter {
             --currentBidiRun;
         // Always compute bidi runs for this run group;
         // this information is useful for reshaping in legacy fonts.
-        int[] bidiRuns = new int[3 * (currentBidiRun - firstBidiRunInGroup + 1)];
+        bidiRunsList.clear();
         for (int i = firstBidiRunInGroup; i <= currentBidiRun; ++i) {
 //                if (totalBidiRuns > 1) {
 //                    System.err.println("i = " + i);
@@ -83,15 +89,15 @@ public class ShapingRunSegmenter {
 //                    System.err.println("level = " + bidi.getRunLevel(i));
 //                }
             int j = i - firstBidiRunInGroup;
-            bidiRuns[3 * j] = Math.max(
+            bidiRunsList.add(Math.max(
                     0,
-                    bidi.getRunStart(i) - firstBidiStringIndex);
-            bidiRuns[3 * j + 1] = Math.min(
+                    bidi.getRunStart(i) - firstBidiStringIndex));
+            bidiRunsList.add(Math.min(
                     currentBidiStringIndex - firstBidiStringIndex,
-                    bidi.getRunLimit(i) - firstBidiStringIndex);
-            bidiRuns[3 * j + 2] = bidi.getRunLevel(i);
+                    bidi.getRunLimit(i) - firstBidiStringIndex));
+            bidiRunsList.add(bidi.getRunLevel(i));
         }
-        bidiRuns = reorderBidiRuns(bidiRuns);
+        int[] bidiRuns = reorderBidiRuns(bidiRunsList);
         int runLevel = bidi.getRunLevel(firstBidiRunInGroup);
 //            System.out.println(group);
 //            System.out.println(Arrays.toString(bidiRuns));
@@ -104,23 +110,23 @@ public class ShapingRunSegmenter {
             ++currentBidiRun;
     }
 
-    private static int[] reorderBidiRuns(int[] runs) {
-        int nRuns = runs.length / 3;
-        if (nRuns == 0) return runs;
+    private static int[] reorderBidiRuns(IntList runs) {
+        int nRuns = runs.size() / 3;
+        if (nRuns == 0) return runs.toIntArray();
 
         byte[] levels = new byte[nRuns];
         for (int i = 0; i < nRuns; ++i) {
-            levels[i] = (byte) runs[3 * i + 2];
+            levels[i] = (byte) runs.getInt(3 * i + 2);
         }
         int[] indices = Bidi.reorderVisual(levels);
 
-        int[] runsOut = new int[runs.length];
+        int[] runsOut = new int[runs.size()];
 
         for (int i = 0; i < nRuns; ++i) {
             int j = indices[i];
-            runsOut[3 * i] = runs[3 * j];
-            runsOut[3 * i + 1] = runs[3 * j + 1];
-            runsOut[3 * i + 2] = runs[3 * j + 2];
+            runsOut[3 * i] = runs.getInt(3 * j);
+            runsOut[3 * i + 1] = runs.getInt(3 * j + 1);
+            runsOut[3 * i + 2] = runs.getInt(3 * j + 2);
         }
 
         return runsOut;
