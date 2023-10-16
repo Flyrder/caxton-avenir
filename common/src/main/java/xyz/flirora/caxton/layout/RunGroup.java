@@ -1,6 +1,5 @@
 package xyz.flirora.caxton.layout;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import com.ibm.icu.lang.UCharacter;
 import com.ibm.icu.text.ArabicShaping;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -16,6 +15,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static xyz.flirora.caxton.layout.Interleaving.*;
 
 /**
  * A group of runs that can be shaped together, even if they have different
@@ -111,10 +112,10 @@ public class RunGroup {
      */
     public boolean accept(DirectionalCharacterVisitor visitor) {
         ArabicShaping shaper = new ArabicShaping(ArabicShaping.LETTERS_SHAPE | ArabicShaping.TEXT_DIRECTION_VISUAL_LTR);
-        for (int i = 0; i < bidiRuns.length / 3; ++i) {
-            int start = bidiRuns[3 * i];
-            int end = bidiRuns[3 * i + 1];
-            int level = bidiRuns[3 * i + 2];
+        for (int i = 0; i < bidiRuns.length / SHAPING_RUN_STRIDE; ++i) {
+            int start = bidiRuns[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_START];
+            int end = bidiRuns[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_END];
+            int level = bidiRuns[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_LEVEL];
             if (level % 2 != 0) {
                 // RTL
                 int j = end;
@@ -337,12 +338,12 @@ public class RunGroup {
         // Determine which runs need to be shaped
         int[] bidiRuns = this.getBidiRuns();
         IntList uncachedBidiRuns = new IntArrayList(bidiRuns.length);
-        ShapingResult[] shapingResults = new ShapingResult[bidiRuns.length / 3];
+        ShapingResult[] shapingResults = new ShapingResult[bidiRuns.length / SHAPING_RUN_STRIDE];
 //        var cachedShapingResults = shapingCacheForFont.getAllPresent();
-        for (int i = 0; i < bidiRuns.length / 3; ++i) {
-            int start = bidiRuns[3 * i];
-            int end = bidiRuns[3 * i + 1];
-            int level = bidiRuns[3 * i + 2];
+        for (int i = 0; i < bidiRuns.length / SHAPING_RUN_STRIDE; ++i) {
+            int start = bidiRuns[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_START];
+            int end = bidiRuns[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_END];
+            int level = bidiRuns[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_LEVEL];
             String s = new String(this.getJoined(), start, end - start);
             ShapedString key = new ShapedString(s, level % 2 != 0);
             ShapingResult sr = shapingCacheForFont.getIfPresent(key);
@@ -359,13 +360,13 @@ public class RunGroup {
             ShapingResult[] newlyComputed = font.shape(joined, uncachedBidiRuns.toIntArray());
 
             // Fill in blanks from before
-            for (int i = 0, j = 0; i < bidiRuns.length / 3; ++i) {
+            for (int i = 0, j = 0; i < bidiRuns.length / SHAPING_RUN_STRIDE; ++i) {
                 if (shapingResults[i] == null) {
                     shapingResults[i] = newlyComputed[j];
 
-                    int start = bidiRuns[3 * i];
-                    int end = bidiRuns[3 * i + 1];
-                    int level = bidiRuns[3 * i + 2];
+                    int start = bidiRuns[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_START];
+                    int end = bidiRuns[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_END];
+                    int level = bidiRuns[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_LEVEL];
                     String s = new String(this.getJoined(), start, end - start);
                     ShapedString key = new ShapedString(s, level % 2 != 0);
                     shapingCacheForFont.put(key, newlyComputed[j]);

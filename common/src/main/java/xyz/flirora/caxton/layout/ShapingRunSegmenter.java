@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static xyz.flirora.caxton.layout.Interleaving.*;
+
 public class ShapingRunSegmenter {
     private final String contents;
     private final Bidi bidi;
@@ -132,12 +134,12 @@ public class ShapingRunSegmenter {
     }
 
     private static int[] reorderBidiRuns(IntList runs) {
-        int nRuns = runs.size() / 3;
+        int nRuns = runs.size() / SHAPING_RUN_STRIDE;
         if (nRuns == 0) return runs.toIntArray();
 
         byte[] levels = new byte[nRuns];
         for (int i = 0; i < nRuns; ++i) {
-            levels[i] = (byte) runs.getInt(3 * i + 2);
+            levels[i] = (byte) runs.getInt(SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_LEVEL);
         }
         int[] indices = Bidi.reorderVisual(levels);
 
@@ -145,9 +147,9 @@ public class ShapingRunSegmenter {
 
         for (int i = 0; i < nRuns; ++i) {
             int j = indices[i];
-            runsOut[3 * i] = runs.getInt(3 * j);
-            runsOut[3 * i + 1] = runs.getInt(3 * j + 1);
-            runsOut[3 * i + 2] = runs.getInt(3 * j + 2);
+            runsOut[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_START] = runs.getInt(SHAPING_RUN_STRIDE * j + SHAPING_RUN_OFF_START);
+            runsOut[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_END] = runs.getInt(SHAPING_RUN_STRIDE * j + SHAPING_RUN_OFF_END);
+            runsOut[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_LEVEL] = runs.getInt(SHAPING_RUN_STRIDE * j + SHAPING_RUN_OFF_LEVEL);
         }
 
         return runsOut;
