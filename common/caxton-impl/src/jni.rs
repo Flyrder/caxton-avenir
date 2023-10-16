@@ -9,9 +9,9 @@ use jni::{
     JNIEnv,
 };
 use nanoserde::DeJson;
-use rustybuzz::{Direction, SerializeFlags, UnicodeBuffer};
+use rustybuzz::{Direction, Script, SerializeFlags, UnicodeBuffer};
 use std::borrow::Cow;
-use ttf_parser::GlyphId;
+use ttf_parser::{GlyphId, Tag};
 
 use crate::{
     cfont::{ConfiguredFont, ConfiguredFontSettings},
@@ -521,16 +521,17 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_shape<'
         let bidi_runs = bidi_runs.deref();
         let font = &*(font_addr as usize as *const ConfiguredFont);
 
-        let num_bidi_runs = bidi_runs.len() / 3;
+        let num_bidi_runs = bidi_runs.len() / 4;
         let output =
             env.new_object_array(num_bidi_runs as i32, &shaping_result_class, JObject::null())?;
 
         let mut buffer = UnicodeBuffer::new();
 
         for i in 0..num_bidi_runs {
-            let start = bidi_runs[3 * i] as usize;
-            let end = bidi_runs[3 * i + 1] as usize;
-            let level = bidi_runs[3 * i + 2];
+            let start = bidi_runs[4 * i] as usize;
+            let end = bidi_runs[4 * i + 1] as usize;
+            let level = bidi_runs[4 * i + 2];
+            let script = Script::from_iso15924_tag(Tag(bidi_runs[4 * i + 3] as u32));
             let substring = &string[start..end];
             // This is not ideal – rustybuzz only exposes a UTF-8
             // `push_str` method for `UnicodeBuffer` and doesn’t expose
@@ -543,12 +544,15 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_shape<'
                     i += c.len_utf16() as u32;
                 }
             }
-            buffer.guess_segment_properties();
             buffer.set_direction(if level % 2 == 0 {
                 Direction::LeftToRight
             } else {
                 Direction::RightToLeft
             });
+            if let Some(script) = script {
+                buffer.set_script(script);
+            }
+            buffer.guess_segment_properties();
 
             let shaped = font.shape(mem::take(&mut buffer));
             let sr = ShapingResult::from_glyph_buffer(&shaped);

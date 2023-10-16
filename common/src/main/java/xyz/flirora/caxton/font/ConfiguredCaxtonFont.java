@@ -99,7 +99,7 @@ public record ConfiguredCaxtonFont(CaxtonFont font, long ptr, float shadowOffset
      *
      * @param s        the array of UTF-16 code units for the entire text
      * @param bidiRuns an array of integers consisting of interleaved {@code [start, end, level]} triples
-     * @return an array of {@link ShapingResult}s whose length is {@code bidiRuns.length / 3}, such that {@code result[i]} corresponds to {@code new String(s, bidiRuns[3 * i], bidiRuns[3 * i + 1] - bidiRuns[3 * i]}
+     * @return an array of {@link ShapingResult}s whose length is {@code bidiRuns.length / 4}, such that {@code result[i]} corresponds to {@code new String(s, bidiRuns[4 * i], bidiRuns[4 * i + 1] - bidiRuns[4 * i]}
      */
     public ShapingResult[] shape(char[] s, int[] bidiRuns) {
         return CaxtonInternal.shape(ptr, s, bidiRuns);

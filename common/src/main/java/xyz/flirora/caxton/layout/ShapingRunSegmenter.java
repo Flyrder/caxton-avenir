@@ -124,6 +124,7 @@ public class ShapingRunSegmenter {
                         bidiRunsList.add(start);
                         bidiRunsList.add(cur);
                         bidiRunsList.add(level);
+                        bidiRunsList.add(ScriptTags.USCRIPT_VALUES_TO_TAGS[script]);
                         start = cur;
                         script = script2;
                         c = c2;
@@ -133,6 +134,7 @@ public class ShapingRunSegmenter {
                 bidiRunsList.add(start);
                 bidiRunsList.add(end);
                 bidiRunsList.add(level);
+                bidiRunsList.add(ScriptTags.USCRIPT_VALUES_TO_TAGS[script]);
             }
         }
         int[] bidiRuns = reorderBidiRuns(bidiRunsList);
@@ -178,6 +180,7 @@ public class ShapingRunSegmenter {
             runsOut[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_START] = runs.getInt(SHAPING_RUN_STRIDE * j + SHAPING_RUN_OFF_START);
             runsOut[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_END] = runs.getInt(SHAPING_RUN_STRIDE * j + SHAPING_RUN_OFF_END);
             runsOut[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_LEVEL] = runs.getInt(SHAPING_RUN_STRIDE * j + SHAPING_RUN_OFF_LEVEL);
+            runsOut[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_SCRIPT] = runs.getInt(SHAPING_RUN_STRIDE * j + SHAPING_RUN_OFF_SCRIPT);
         }
 
         return runsOut;
