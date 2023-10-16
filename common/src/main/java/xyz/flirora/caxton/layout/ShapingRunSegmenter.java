@@ -1,5 +1,7 @@
 package xyz.flirora.caxton.layout;
 
+import com.ibm.icu.lang.UCharacter;
+import com.ibm.icu.lang.UCharacterCategory;
 import com.ibm.icu.lang.UScript;
 import com.ibm.icu.text.Bidi;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -97,6 +99,8 @@ public class ShapingRunSegmenter {
             int end = Math.min(
                     currentBidiStringIndex - firstBidiStringIndex,
                     bidi.getRunLimit(i) - firstBidiStringIndex);
+            // Segment this bidi run by script.
+            // See UAX #24 <https://www.unicode.org/reports/tr24/> for more info.
             if (end > start) {
                 int level = bidi.getRunLevel(i);
                 int c = contents.codePointAt(start);
@@ -105,13 +109,24 @@ public class ShapingRunSegmenter {
                 while (cur < end) {
                     int c2 = contents.codePointAt(cur);
                     int script2 = UScript.getScript(c2);
-                    if (script != script2) {
+                    // Handle cases when one of the scripts is common or inherited.
+                    // Check script extensions (UAX #24, §3) in this case.
+                    // Some characters have an explicit script property but have multiple
+                    // scripts in its extension.
+                    if (isCommonOrInherited(script2) && includesScript(c2, script)) {
+                        script2 = script;
+                    } else if (isCommonOrInherited(script) && includesScript(c, script2)) {
+                        script = script2;
+                    }
+                    // UAX #24, §5.2
+                    if (script != script2 && !isCombiningMark(c)) {
                         // We need to start a new run
                         bidiRunsList.add(start);
                         bidiRunsList.add(cur);
                         bidiRunsList.add(level);
                         start = cur;
                         script = script2;
+                        c = c2;
                     }
                     cur += Character.charCount(c2);
                 }
@@ -131,6 +146,19 @@ public class ShapingRunSegmenter {
 
         if (currentBidiRun < totalBidiRuns && currentBidiStringIndex >= bidi.getRunLimit(currentBidiRun))
             ++currentBidiRun;
+    }
+
+    private static boolean isCombiningMark(int c) {
+        int cat = UCharacter.getType(c);
+        return cat == UCharacter.COMBINING_SPACING_MARK || cat == UCharacter.NON_SPACING_MARK || cat == UCharacter.ENCLOSING_MARK;
+    }
+
+    private static boolean isCommonOrInherited(int script) {
+        return script == UScript.COMMON || script == UScript.INHERITED;
+    }
+
+    private static boolean includesScript(int codePoint, int script) {
+        return UScript.hasScript(codePoint, script) || UScript.hasScript(codePoint, UScript.COMMON) || UScript.hasScript(codePoint, UScript.INHERITED);
     }
 
     private static int[] reorderBidiRuns(IntList runs) {
