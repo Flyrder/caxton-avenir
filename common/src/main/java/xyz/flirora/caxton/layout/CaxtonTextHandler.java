@@ -19,6 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import xyz.flirora.caxton.font.ConfiguredCaxtonFont;
 import xyz.flirora.caxton.mixin.TextHandlerAccessor;
 
+import static xyz.flirora.caxton.layout.Interleaving.*;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -237,7 +239,7 @@ public class CaxtonTextHandler {
                         float width = scale * shapingResult.advanceX(i);
                         if (x < (after ? 0 : width)) {
                             int[] bidiRuns = runGroup.getBidiRuns();
-                            int start = bidiRuns[3 * runIndex];
+                            int start = bidiRuns[SHAPING_RUN_STRIDE * runIndex + SHAPING_RUN_OFF_START];
                             return runGroup.getCharOffset() + start + shapingResult.clusterIndex(i);
                         }
                         x -= width;
@@ -350,7 +352,7 @@ public class CaxtonTextHandler {
                         float width = scale * shapingResult.advanceX(i);
                         if (x < width) {
                             int[] bidiRuns = runGroup.getBidiRuns();
-                            int start = bidiRuns[3 * runIndex];
+                            int start = bidiRuns[SHAPING_RUN_STRIDE * runIndex + SHAPING_RUN_OFF_START];
                             return runGroup.getStyleAt(start + shapingResult.clusterIndex(i));
                         }
                         x -= width;
@@ -404,8 +406,8 @@ public class CaxtonTextHandler {
 
                 int runIndex = 0;
                 for (ShapingResult shapingResult : shapingResults) {
-                    int start = bidiRuns[3 * runIndex];
-                    int level = bidiRuns[3 * runIndex + 2];
+                    int start = bidiRuns[SHAPING_RUN_STRIDE * runIndex + SHAPING_RUN_OFF_START];
+                    int level = bidiRuns[SHAPING_RUN_STRIDE * runIndex + SHAPING_RUN_OFF_LEVEL];
                     for (int i = 0; i < shapingResult.numGlyphs(); ++i) {
                         int r0 = runGroup.getCharOffset() + start + shapingResult.clusterIndex(i);
                         int r1 = runGroup.getCharOffset() + start + shapingResult.clusterLimit(i);
@@ -457,8 +459,8 @@ public class CaxtonTextHandler {
 
                 int runIndex = 0;
                 for (ShapingResult shapingResult : shapingResults) {
-                    int start = bidiRuns[3 * runIndex];
-                    boolean rtl = bidiRuns[3 * runIndex + 2] % 2 != 0;
+                    int start = bidiRuns[SHAPING_RUN_STRIDE * runIndex + SHAPING_RUN_OFF_START];
+                    boolean rtl = bidiRuns[SHAPING_RUN_STRIDE * runIndex + SHAPING_RUN_OFF_LEVEL] % 2 != 0;
                     for (int i = 0; i < shapingResult.numGlyphs(); ++i) {
                         int r0 = runGroup.getCharOffset() + start + shapingResult.clusterIndex(i);
                         int r1 = runGroup.getCharOffset() + start + shapingResult.clusterLimit(i);

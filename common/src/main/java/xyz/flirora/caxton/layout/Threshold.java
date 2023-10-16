@@ -3,6 +3,8 @@ package xyz.flirora.caxton.layout;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
+import static xyz.flirora.caxton.layout.Interleaving.*;
+
 /**
  * A class used to help skip over glyphs before a given character index.
  */
@@ -56,7 +58,7 @@ public class Threshold {
      */
     public boolean updateCaxton(RunGroup runGroup, int bri, ShapingResult shapingResult, int sri) {
         int[] bidiRuns = runGroup.getBidiRuns();
-        int start = bidiRuns[3 * bri];
+        int start = bidiRuns[SHAPING_RUN_STRIDE * bri + SHAPING_RUN_OFF_START];
         int r0 = runGroup.getCharOffset() + start + shapingResult.clusterIndex(sri);
         int r1 = runGroup.getCharOffset() + start + shapingResult.clusterLimit(sri);
         if (threshold >= 0 && !(r0 <= threshold && threshold < r1)) {

@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.Function;
 
+import static xyz.flirora.caxton.layout.Interleaving.*;
+
 public class LineWrapper {
     private final CaxtonText text;
     private final Bidi bidi;
@@ -68,7 +70,7 @@ public class LineWrapper {
                 ShapingResult[] shapingResults = runGroup.getShapingResults();
                 for (int j = 0; j < shapingResults.length; j++) {
                     ShapingResult shapingResult = shapingResults[j];
-                    int runStart = bidiRuns[3 * j];
+                    int runStart = bidiRuns[SHAPING_RUN_STRIDE * j + SHAPING_RUN_OFF_START];
                     for (int i = 0; i < shapingResult.numGlyphs(); ++i) {
                         int index = shapingResult.clusterIndex(i);
                         int advance = shapingResult.advanceX(i);

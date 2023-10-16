@@ -35,6 +35,8 @@ import xyz.flirora.caxton.mixin.TextRendererDrawerAccessor;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static xyz.flirora.caxton.layout.Interleaving.*;
+
 @Environment(EnvType.CLIENT)
 public class CaxtonTextRenderer {
     // Copied from TextRenderer
@@ -281,7 +283,7 @@ public class CaxtonTextRenderer {
         float shadowOffset = configuredFont.shadowOffset();
         float pageSize = CaxtonAtlas.PAGE_SIZE;
 
-        int offset = runGroup.getBidiRuns()[3 * index];
+        int offset = runGroup.getBidiRuns()[SHAPING_RUN_STRIDE * index + SHAPING_RUN_OFF_START];
 
         int underlinePosition = font.getMetrics(CaxtonFont.Metrics.UNDERLINE_POSITION);
         int underlineThickness = font.getMetrics(CaxtonFont.Metrics.UNDERLINE_THICKNESS);
