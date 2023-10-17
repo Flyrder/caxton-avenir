@@ -17,5 +17,13 @@
   "caxton.command.caxtonshape.shapingBuffer": "Shaping buffer: %s",
   "caxton.command.caxtonshape.language": "Inferred language: %s",
   "caxton.command.caxtonshape.script": "Inferred script: %s",
-  "caxton.command.caxtonshape.direction": "Inferred direction: %s"
+  "caxton.command.caxtonshape.direction": "Inferred direction: %s",
+  "caxton.command.caxtontext.summary": "Layout information for %s (len = %s, %s)",
+  "caxton.command.caxtontext.ltr": "left-to-right",
+  "caxton.command.caxtontext.rtl": "right-to-left",
+  "caxton.command.caxtontext.runGroup.summary": "Run group for %s (offset = %s, run level = %s)",
+  "caxton.command.caxtontext.styleRun.summary.noFont": "Style run for %s (style = %s), legacy",
+  "caxton.command.caxtontext.styleRun.summary.font": "Style run for %s (style = %s), with Caxton font %s",
+  "caxton.command.caxtontext.bidiRun.summary": "Bidi run for %s (%s – %s, level = %s, script = %s)",
+  "caxton.command.caxtontext.shapingResult.summary": "%s (width = %s)"
 }

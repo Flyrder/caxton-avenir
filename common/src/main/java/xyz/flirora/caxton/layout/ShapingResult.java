@@ -2,6 +2,7 @@ package xyz.flirora.caxton.layout;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import xyz.flirora.caxton.font.CaxtonFont;
 
 /*
  0 | glyph id, plus (1 << 16) if unsafe_to_break
@@ -69,11 +70,25 @@ public record ShapingResult(int[] data, int totalWidth, int totalLength) {
 
     public String toString() {
         StringBuilder builder = new StringBuilder("ShapingResult[glyphs=[");
+        this.serializeGlyphs(builder, null);
+        builder.append("], totalWidth=");
+        builder.append(totalWidth);
+        builder.append("]");
+        return builder.toString();
+    }
+
+    public void serializeGlyphs(StringBuilder builder, CaxtonFont font) {
+        // Emulate HB’s serialization format. *sigh*
+        // https://harfbuzz.github.io/harfbuzz-hb-buffer.html#hb-buffer-serialize-glyphs
         for (int i = 0; i < numGlyphs(); ++i) {
             if (i > 0) {
                 builder.append("|");
             }
-            builder.append(glyphId(i));
+            if (font != null) {
+                builder.append(font.getGlyphName(glyphId(i)));
+            } else {
+                builder.append(glyphId(i));
+            }
             if (isUnsafeToBreak(i)) {
                 builder.append("!");
             }
@@ -93,9 +108,5 @@ public record ShapingResult(int[] data, int totalWidth, int totalLength) {
                 builder.append(advanceY);
             }
         }
-        builder.append("], totalWidth=");
-        builder.append(totalWidth);
-        builder.append("]");
-        return builder.toString();
     }
 }

@@ -6,7 +6,8 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.command.argument.IdentifierArgumentType;
-import net.minecraft.server.command.CommandManager;
+import net.minecraft.command.argument.TextArgumentType;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import xyz.flirora.caxton.CaxtonModClient;
 
@@ -15,6 +16,7 @@ public class CaxtonCommands {
         CaxtonModClient.LOGGER.info("Registering client commands");
         registrar.registerClientCommand(CaxtonCommands::caxtonDumpAtlas, DumpAtlasCommand::run);
         registrar.registerClientCommand(CaxtonCommands::caxtonShape, ShapeCommand::run);
+        registrar.registerClientCommand(CaxtonCommands::caxtonText, TextCommand::run);
     }
 
     // We have to define these methods because Java doesn’t allow lambdas for
@@ -30,5 +32,11 @@ public class CaxtonCommands {
                         .suggests((SuggestionProvider<S>) CaxtonSuggestionProviders.CAXTON_FONTS)
                         .then(RequiredArgumentBuilder.<S, String>argument("text", StringArgumentType.greedyString())
                                 .executes(command)));
+    }
+
+    private static <S> LiteralArgumentBuilder<S> caxtonText(Command<S> command) {
+        return LiteralArgumentBuilder.<S>literal("caxtontext")
+                .then(RequiredArgumentBuilder.<S, Text>argument("text", TextArgumentType.text())
+                        .executes(command));
     }
 }

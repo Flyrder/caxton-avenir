@@ -201,9 +201,8 @@ public class RunGroup {
      * Returns the list of style runs in logical order.
      *
      * @return a list of {@link Run}s
-     * @deprecated This is probably not what you want. For rendering legacy-font text, use {@link RunGroup#accept} instead.
+     * @apiNote For rendering legacy-font text, use {@link RunGroup#accept} instead.
      */
-    @Deprecated(forRemoval = false)
     public List<Run> getStyleRuns() {
         return styleRuns;
     }
@@ -215,7 +214,7 @@ public class RunGroup {
      * <p>
      * The returned array must not be modified.
      *
-     * @return an array of integers consisting of interleaved {@code [start, end, level]} triples
+     * @return an array of integers consisting of interleaved {@code [start, end, level, script]} 4-tuples
      */
     public int[] getBidiRuns() {
         return bidiRuns;
@@ -230,6 +229,15 @@ public class RunGroup {
      */
     public char[] getJoined() {
         return joined;
+    }
+
+    /**
+     * Gets the text of this run group, without formatting.
+     *
+     * @return the text of this run group as a string
+     */
+    public String getJoinedStr() {
+        return joinedStr;
     }
 
     /**
@@ -316,7 +324,7 @@ public class RunGroup {
      * @see RunGroup#RunGroup(List, int, int, int[], LayoutCache)
      * @see ConfiguredCaxtonFont#shape(char[], int[])
      */
-    public ShapingResult[] getShapingResults() {
+    public ShapingResult @Nullable [] getShapingResults() {
         return shapingResults;
     }
 
@@ -344,6 +352,7 @@ public class RunGroup {
             int start = bidiRuns[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_START];
             int end = bidiRuns[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_END];
             int level = bidiRuns[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_LEVEL];
+            int script = bidiRuns[SHAPING_RUN_STRIDE * i + SHAPING_RUN_OFF_SCRIPT];
             String s = new String(this.getJoined(), start, end - start);
             ShapedString key = new ShapedString(s, level % 2 != 0);
             ShapingResult sr = shapingCacheForFont.getIfPresent(key);
@@ -353,6 +362,7 @@ public class RunGroup {
                 uncachedBidiRuns.add(start);
                 uncachedBidiRuns.add(end);
                 uncachedBidiRuns.add(level);
+                uncachedBidiRuns.add(script);
             }
         }
 

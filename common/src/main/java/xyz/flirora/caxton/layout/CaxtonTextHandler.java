@@ -58,6 +58,10 @@ public class CaxtonTextHandler {
         ((TextHandlerExt) this.vanillaHandler).setCaxtonTextHandler(this);
     }
 
+    public CaxtonText layoutText(OrderedText text, boolean validateAdvance, boolean rtl) {
+        return CaxtonText.from(text, this.fontStorageAccessor, validateAdvance, rtl, this.cache);
+    }
+
     /**
      * @return The {@link LayoutCache} used by this handler.
      */
