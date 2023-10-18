@@ -9,7 +9,7 @@ use jni::{
     JNIEnv,
 };
 use nanoserde::DeJson;
-use rustybuzz::{Direction, Script, SerializeFlags, UnicodeBuffer};
+use rustybuzz::{BufferClusterLevel, Direction, Script, SerializeFlags, UnicodeBuffer};
 use std::borrow::Cow;
 use ttf_parser::{GlyphId, Tag};
 
@@ -382,6 +382,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontSha
         let mut buffer = UnicodeBuffer::new();
         buffer.push_str(&text);
         buffer.guess_segment_properties();
+        buffer.set_cluster_level(BufferClusterLevel::MonotoneCharacters);
 
         let inferred_language = match buffer.language() {
             Some(lang) => Some(env.new_string(lang.as_str())?),
@@ -553,6 +554,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_shape<'
                 buffer.set_script(script);
             }
             buffer.guess_segment_properties();
+            buffer.set_cluster_level(BufferClusterLevel::MonotoneCharacters);
 
             let shaped = font.shape(mem::take(&mut buffer));
             let sr = ShapingResult::from_glyph_buffer(&shaped);
