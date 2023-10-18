@@ -24,7 +24,10 @@ public class CaxtonGlyphCache {
     }
 
     public Font forFont(CaxtonFont font) {
-        return new Font(font, cache.computeIfAbsent(font, f -> new Int2LongOpenHashMap()));
+        return new Font(font, cache.computeIfAbsent(font, f -> {
+            LOGGER.info("Adding entry for font {}", font);
+            return new Int2LongOpenHashMap();
+        }));
     }
 
     public Identifier getAtlasPage(int pageNum) {
