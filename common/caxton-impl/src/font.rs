@@ -1,26 +1,27 @@
+use std::str::Chars;
 use std::{
     fs::{self, OpenOptions},
     path::Path,
     time::Instant,
 };
-use std::str::Chars;
 
 use ab_glyph_rasterizer::{Point, Rasterizer};
 use anyhow::{anyhow, Context};
 use base64::engine::general_purpose::URL_SAFE;
 use base64::Engine;
 use fdsm::bezier::scanline::FillRule;
+use fdsm::correct_error::{correct_error_mtsdf, ErrorCorrectionConfig};
 use fdsm::generate::generate_mtsdf;
 use fdsm::render::correct_sign_mtsdf;
 use fdsm::shape::Shape;
 use fdsm::transform::Transform;
 use image::{Pixel, Rgba32FImage};
 use na::{Affine2, Similarity2, Vector2};
+use nanoserde::{DeJson, DeJsonErr, DeJsonState};
 use rayon::iter::{
     IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
 };
 use rustybuzz::{Face, Tag};
-use nanoserde::{DeJson, DeJsonErr, DeJsonState};
 use sha2::{Digest, Sha256};
 use ttf_parser::{GlyphId, OutlineBuilder, Rect, Variation};
 
@@ -359,7 +360,9 @@ fn create_mtsdf(
     mipmap: u32,
     pe: &mut TListPendingEntry,
 ) -> anyhow::Result<()> {
-    let Some(bounding_box) = bounding_box else { return Ok(()); };
+    let Some(bounding_box) = bounding_box else {
+        return Ok(());
+    };
 
     let (width, height) = dimensions_in_image(&Some(bounding_box), options);
     let width = adjust_dims(width, mipmap);
@@ -373,6 +376,13 @@ fn create_mtsdf(
 
     let mut mtsdf: Rgba32FImage = Rgba32FImage::new(width, height);
     generate_mtsdf(&prepared_shape, options.range as f64, &mut mtsdf);
+    correct_error_mtsdf(
+        &mut mtsdf,
+        &shape,
+        &prepared_shape,
+        options.range as f64,
+        &ErrorCorrectionConfig::default(),
+    );
     if options.invert.is_none() {
         correct_sign_mtsdf(&mut mtsdf, &prepared_shape, FillRule::Nonzero);
     }
@@ -397,7 +407,9 @@ fn create_bitmap(
     pe_outline: &mut TListPendingEntry,
     kernel: &Kernel,
 ) -> anyhow::Result<()> {
-    let Some(bounding_box) = bounding_box else { return Ok(()); };
+    let Some(bounding_box) = bounding_box else {
+        return Ok(());
+    };
     let (width, height) = dimensions_in_image(&Some(bounding_box), options);
     let width = adjust_dims(width, mipmap);
     let height = adjust_dims(height, mipmap);
@@ -483,11 +495,8 @@ impl<'a> OutlineBuilder for AbOutlineBuilder<'a> {
 
     fn quad_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
         let end_point = self.point(x, y);
-        self.rasterizer.draw_quad(
-            self.last_point.unwrap(),
-            self.point(x1, y1),
-            end_point,
-        );
+        self.rasterizer
+            .draw_quad(self.last_point.unwrap(), self.point(x1, y1), end_point);
         self.last_point = Some(end_point);
     }
 
@@ -505,7 +514,8 @@ impl<'a> OutlineBuilder for AbOutlineBuilder<'a> {
     fn close(&mut self) {
         // Fix for issue #46
         if self.last_point != self.open_point {
-            self.rasterizer.draw_line(self.last_point.unwrap(), self.open_point.unwrap());
+            self.rasterizer
+                .draw_line(self.last_point.unwrap(), self.open_point.unwrap());
         }
     }
 }
