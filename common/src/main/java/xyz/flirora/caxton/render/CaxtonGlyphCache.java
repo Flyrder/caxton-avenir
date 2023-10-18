@@ -44,6 +44,7 @@ public class CaxtonGlyphCache {
 
     // Hack to avoid crashing when loading a server resource pack.
     public synchronized void clear() {
+        LOGGER.info("Clearing glyph atlas");
         atlas.clear();
         cache.clear();
     }

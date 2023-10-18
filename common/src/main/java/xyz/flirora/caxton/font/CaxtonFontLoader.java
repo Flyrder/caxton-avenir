@@ -83,6 +83,7 @@ public class CaxtonFontLoader implements FontLoader {
     public static CaxtonFont loadFontByIdentifier(ResourceManager manager, @Nullable Identifier id) {
         if (id == null) return null;
         return CACHE.computeIfAbsent(id, id1 -> {
+            LOGGER.info("Loading font {}", id);
             try {
                 Identifier fontId = id1.withPrefixedPath(FONT_PREFIX);
                 Identifier metaId = fontId.withPath(path -> path + ".json");
@@ -110,6 +111,7 @@ public class CaxtonFontLoader implements FontLoader {
      * Clears the font cache used by {@link CaxtonFontLoader#loadFontByIdentifier(ResourceManager, Identifier)}.
      */
     public static void clearFontCache() {
+        LOGGER.info("Clearing {} loaded font(s)", CACHE.size());
         CACHE.forEach((id, font) -> font.close());
         CACHE.clear();
     }
