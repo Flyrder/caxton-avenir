@@ -103,11 +103,11 @@ public class ShapingRunSegmenter {
             // See UAX #24 <https://www.unicode.org/reports/tr24/> for more info.
             if (end > start) {
                 int level = bidi.getRunLevel(i);
-                int c = contents.codePointAt(start);
+                int c = contents.codePointAt(firstBidiStringIndex + start);
                 int script = UScript.getScript(c);
                 int cur = start + Character.charCount(c);
                 while (cur < end) {
-                    int c2 = contents.codePointAt(cur);
+                    int c2 = contents.codePointAt(firstBidiStringIndex + cur);
                     int script2 = UScript.getScript(c2);
                     // Handle cases when one of the scripts is common or inherited.
                     // Check script extensions (UAX #24, §3) in this case.
