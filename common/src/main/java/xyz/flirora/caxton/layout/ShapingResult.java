@@ -39,10 +39,28 @@ public record ShapingResult(int[] data, int totalWidth, int totalLength) {
         return data[6 * i + 1];
     }
 
+    private int leftboundLimit(int i) {
+        int curr = clusterIndex(i);
+        for (int j = i - 1; j >= 0; --j) {
+            int prev = clusterIndex(j);
+            if (prev != curr) return prev;
+        }
+        return -1;
+    }
+
+    private int rightboundLimit(int i) {
+        int curr = clusterIndex(i);
+        for (int j = i + 1; j < this.numGlyphs(); ++j) {
+            int next = clusterIndex(j);
+            if (next != curr) return next;
+        }
+        return -1;
+    }
+
     public int clusterLimit(int i) {
         int curr = clusterIndex(i);
-        int prev = i == 0 ? -1 : this.clusterIndex(i - 1);
-        int next = i == this.numGlyphs() - 1 ? -1 : this.clusterIndex(i + 1);
+        int prev = this.leftboundLimit(i);
+        int next = this.rightboundLimit(i);
         if (prev < 0 && next < curr) {
             prev = this.totalLength;
         }
