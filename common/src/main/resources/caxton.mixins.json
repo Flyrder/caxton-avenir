@@ -36,7 +36,8 @@
     "gui.ChatInputSuggestorMixin",
     "gui.EditBoxMixin",
     "gui.EditBoxWidgetMixin",
-    "gui.TextFieldWidgetMixin"
+    "gui.TextFieldWidgetMixin",
+    "gui.UtilMixin"
   ],
   "injectors": {
     "defaultRequire": 1
