@@ -211,7 +211,8 @@ public class CaxtonAtlas implements AutoCloseable {
         }
         shelves.clear();
         unallocatedSpaces.clear();
-        unallocatedSpaces.add(0);
+        if (this.pages.size() > 0)
+            unallocatedSpaces.add(0);
     }
 
     public static class Page extends AbstractTexture {
