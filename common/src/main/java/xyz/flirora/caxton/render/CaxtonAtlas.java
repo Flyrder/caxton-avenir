@@ -198,6 +198,7 @@ public class CaxtonAtlas implements AutoCloseable {
             page.close();
         }
         this.pages.clear();
+        this.unallocatedSpaces.clear();
     }
 
     public void clear() {
