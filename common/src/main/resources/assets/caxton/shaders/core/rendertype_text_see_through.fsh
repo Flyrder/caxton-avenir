@@ -1,6 +1,6 @@
 #version 150
 
-#moj_import <caxton_sdf.glsl>
+#moj_import <caxton:caxton_sdf.glsl>
 
 uniform sampler2D Sampler0;
 

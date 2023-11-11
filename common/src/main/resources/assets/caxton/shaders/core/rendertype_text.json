@@ -4,16 +4,20 @@
     "srcrgb": "srcalpha",
     "dstrgb": "1-srcalpha"
   },
-  "vertex": "caxton_rendertype_text_see_through",
-  "fragment": "caxton_rendertype_text_see_through",
+  "vertex": "caxton:rendertype_text",
+  "fragment": "caxton:rendertype_text",
   "attributes": [
     "Position",
     "Color",
-    "UV0"
+    "UV0",
+    "UV2"
   ],
   "samplers": [
     {
       "name": "Sampler0"
+    },
+    {
+      "name": "Sampler2"
     }
   ],
   "uniforms": [
@@ -64,6 +68,22 @@
       ]
     },
     {
+      "name": "IViewRotMat",
+      "type": "matrix3x3",
+      "count": 9,
+      "values": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
       "name": "ColorModulator",
       "type": "float",
       "count": 4,
@@ -72,6 +92,41 @@
         1.0,
         1.0,
         1.0
+      ]
+    },
+    {
+      "name": "FogStart",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "FogEnd",
+      "type": "float",
+      "count": 1,
+      "values": [
+        1.0
+      ]
+    },
+    {
+      "name": "FogColor",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "FogShape",
+      "type": "int",
+      "count": 1,
+      "values": [
+        0
       ]
     },
     {

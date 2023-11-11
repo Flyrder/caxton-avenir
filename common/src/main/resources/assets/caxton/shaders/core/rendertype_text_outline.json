@@ -4,8 +4,8 @@
     "srcrgb": "srcalpha",
     "dstrgb": "1-srcalpha"
   },
-  "vertex": "caxton_rendertype_text_outline",
-  "fragment": "caxton_rendertype_text_outline",
+  "vertex": "caxton:rendertype_text_outline",
+  "fragment": "caxton:rendertype_text_outline",
   "attributes": [
     "Position",
     "Color0",

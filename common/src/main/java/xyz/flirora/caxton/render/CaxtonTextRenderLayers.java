@@ -2,7 +2,6 @@ package xyz.flirora.caxton.render;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gl.GlUniform;
 import net.minecraft.client.render.*;
 import xyz.flirora.caxton.CaxtonModClient;
@@ -148,7 +147,7 @@ public class CaxtonTextRenderLayers {
             };
             return shader -> {
                 if (shader == null) return;
-                GlUniform unitRange = ((ShaderExt) shader).getUnitRange();
+                GlUniform unitRange = ((ShaderExt) shader).caxton$getUnitRange();
                 if (unitRange != null) {
                     unitRange.set(((float) texId.getRange()) / CaxtonAtlas.PAGE_SIZE);
                 }
