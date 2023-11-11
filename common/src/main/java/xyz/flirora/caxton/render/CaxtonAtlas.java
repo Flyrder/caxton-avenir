@@ -11,8 +11,11 @@ import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL44;
 import org.slf4j.Logger;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -202,17 +205,12 @@ public class CaxtonAtlas implements AutoCloseable {
     }
 
     public void clear() {
-        if (this.pages.size() > 0) {
-            for (int i = 1; i < this.pages.size(); i++) {
-                Page page = this.pages.get(i);
-                page.close();
-            }
-            this.pages.subList(1, this.pages.size()).clear();
+        for (Page page : this.pages) {
+            page.close();
         }
+        this.pages.clear();
         shelves.clear();
         unallocatedSpaces.clear();
-        if (this.pages.size() > 0)
-            unallocatedSpaces.add(0);
     }
 
     public static class Page extends AbstractTexture {
@@ -231,6 +229,10 @@ public class CaxtonAtlas implements AutoCloseable {
                 case LUMINANCE -> NativeImage.InternalFormat.RED;
             };
             TextureUtil.prepareImage(internalFormat, this.getGlId(), numMipmapLevels - 1, PAGE_SIZE, PAGE_SIZE);
+            // Technically, the contents of this texture are undefined at this
+            // point, which can pose a problem with the edges of any inserted
+            // textures. Hopefully this doesn’t blow up on us at some point!
+            // this.clearContents();
             this.id = new Identifier("caxton", "atlas/" + pageNum);
             this.range = range;
             this.numMipmapLevels = numMipmapLevels;
