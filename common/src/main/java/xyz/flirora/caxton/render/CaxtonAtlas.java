@@ -11,11 +11,8 @@ import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL44;
 import org.slf4j.Logger;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
