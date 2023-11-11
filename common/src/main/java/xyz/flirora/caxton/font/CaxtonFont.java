@@ -25,7 +25,9 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Holds information related to a single font file.
@@ -45,14 +47,14 @@ public class CaxtonFont implements AutoCloseable {
     private final long bboxes;
     private final CaxtonFontOptions options;
     private final Int2ObjectMap<IntList> glyphsByWidth;
-    private final List<Pair<StackTraceElement[], Boolean>> changes;
     private final long[] pixelData;
     private final NativeImage.Format format;
     private ByteBuffer fontData;
     private long fontPtr;
-    private boolean registered = false;
-    // TODO: does this need to be atomic?
-    private int refCount = 1;
+    // CaxtonFont.{cloneReference, close} are called infrequently, so it wouldn’t
+    // hurt much to protect them against race conditions.
+    private AtomicInteger refCount = new AtomicInteger(1);
+    private final List<ChangeEntry> changes;
 
     /**
      * Constructs a new {@link CaxtonFont}.
@@ -111,10 +113,10 @@ public class CaxtonFont implements AutoCloseable {
                 this.glyphsByWidth.computeIfAbsent(width, w -> new IntArrayList())
                         .add(glyphId);
             }
-            this.changes = CaxtonModClient.CONFIG.debugRefcountChanges ? new ArrayList<>() : null;
+            this.changes = CaxtonModClient.CONFIG.debugRefcountChanges ? Collections.synchronizedList(new ArrayList<>()) : null;
         } catch (Exception e) {
             try {
-                this.cloneReference();
+//                this.cloneReference();
                 this.close();
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -132,7 +134,7 @@ public class CaxtonFont implements AutoCloseable {
      */
     @Override
     public void close() {
-        int remainingRefs = --this.refCount;
+        int remainingRefs = this.refCount.decrementAndGet();
         if (remainingRefs < 0) {
             LOGGER.error("ERROR: Font closed with a refcount of 0.");
             this.logRefcountChanges();
@@ -145,7 +147,7 @@ public class CaxtonFont implements AutoCloseable {
             fontData = null;
         }
         if (this.changes != null) {
-            this.changes.add(Pair.of(Thread.currentThread().getStackTrace(), false));
+            this.changes.add(ChangeEntry.capture(false));
         }
     }
 
@@ -321,9 +323,9 @@ public class CaxtonFont implements AutoCloseable {
      */
     public CaxtonFont cloneReference() {
         if (this.changes != null) {
-            this.changes.add(Pair.of(Thread.currentThread().getStackTrace(), true));
+            this.changes.add(ChangeEntry.capture(true));
         }
-        ++this.refCount;
+        this.refCount.incrementAndGet();
         return this;
     }
 
@@ -331,10 +333,21 @@ public class CaxtonFont implements AutoCloseable {
         if (this.changes != null) {
             LOGGER.error("Refcount changes:");
             for (var change : this.changes) {
-                LOGGER.error(change.second() ? "Reference added in:" : "Reference removed in:");
-                for (var elem : change.first()) {
-                    LOGGER.error(elem.toString());
-                }
+                change.log(LOGGER);
+            }
+        }
+    }
+
+    private record ChangeEntry(Thread thread, StackTraceElement[] stackTrace, boolean added) {
+        private static ChangeEntry capture(boolean added) {
+            Thread currentThread = Thread.currentThread();
+            return new ChangeEntry(currentThread, currentThread.getStackTrace(), added);
+        }
+
+        private void log(Logger logger) {
+            logger.error(this.added ? "Reference added in thread {}:" : "Reference removed in thread {}:", this.thread);
+            for (var elem : this.stackTrace) {
+                logger.error(elem.toString());
             }
         }
     }
