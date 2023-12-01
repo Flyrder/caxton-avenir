@@ -155,7 +155,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
         return me;
     }
 
-    @ModifyReceiver(method = "eraseCharacters", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;setCursor(IZ)V"))
+    @ModifyReceiver(method = "eraseCharactersTo", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;setCursor(IZ)V"))
     private TextFieldWidget updateCaxtonTextOnEraseCharacters(TextFieldWidget me, int cursor, boolean shiftKeyPressed) {
         this.setSelectionStart(cursor);
         this.selectionEnd = selectionStart;
@@ -175,7 +175,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
         updateCaxtonText(false);
     }
 
-    @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;getInnerWidth()I"), method = "renderButton", cancellable = true)
+    @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;getInnerWidth()I"), method = "renderWidget", cancellable = true)
     private void onRenderButton(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
 
