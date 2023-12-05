@@ -61,7 +61,6 @@ function initializeCoreMod() {
 }
 
 function transformFontType(cls) {
-    print("iaj zav; xbsio la, n v km l s zioa");
     cls.fields.add(new FieldNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "CAXTON", FONT_TYPE_DESC, null, null));
     return cls;
 }
