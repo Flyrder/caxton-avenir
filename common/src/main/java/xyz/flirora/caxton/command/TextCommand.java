@@ -57,7 +57,7 @@ public class TextCommand {
                                 Text.translatable(
                                         "caxton.command.caxtontext.styleRun.summary.noFont",
                                         escape(styleRun.text()),
-                                        styleRun.style()
+                                        styleRun.style().toString()
                                 ).formatted(Formatting.GOLD)
                         ));
             } else {
@@ -68,7 +68,7 @@ public class TextCommand {
                                         "caxton.command.caxtontext.styleRun.summary.font",
                                         escape(styleRun.text()),
                                         styleRun.style(),
-                                        styleRun.font().font().getId()
+                                        styleRun.font().font().getId().toString()
                                 ).formatted(Formatting.GOLD)
                         ));
             }

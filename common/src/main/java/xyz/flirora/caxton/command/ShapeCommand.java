@@ -16,7 +16,7 @@ public class ShapeCommand {
         String text = context.getArgument("text", String.class);
         CaxtonFont font = CaxtonFontLoader.getFontById(fontId);
         if (font == null) {
-            throw FONT_NOT_FOUND.create(fontId);
+            throw FONT_NOT_FOUND.create(fontId.toString());
         }
 
         DebugShapeInfo dsi = font.shapeForDebug(text);
