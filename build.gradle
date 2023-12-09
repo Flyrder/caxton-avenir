@@ -14,7 +14,16 @@ subprojects {
 
         dependencies {
             minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
-            mappings "net.fabricmc:yarn:${rootProject.yarn_mappings}:v2"
+            // Forge adds an Explosion#getPosition() method, which conflicts
+            // with method_55109, which is named getPosition in Yarn and
+            // something else in Mojmap.
+            // NeoForge has fixed this issue: https://github.com/neoforged/NeoForge/pull/339
+            // TODO: remove this workaround if/when we drop Forge support or Forge fixes this issue
+            // Thanks to embeddedt for the solution.
+            mappings loom.layered() {
+                it.mappings("net.fabricmc:yarn:${project.yarn_mappings}:v2")
+                it.mappings file("../mappings/yarnpatch.tiny")
+            }
         }
     }
 }
