@@ -15,7 +15,7 @@ loom {
         extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
 
         mixinConfig "caxton.mixins.json"
-//        mixinConfig "examplemod.mixins.json"
+        mixinConfig "caxton.forge.mixins.json"
     }
 }
 
