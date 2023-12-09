@@ -13,6 +13,6 @@ pluginManagement {
 include("common")
 include("common:caxton-impl")
 include("fabric")
-// include("forge")
+include("forge")
 
 rootProject.name = "caxton"
