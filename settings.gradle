@@ -14,5 +14,6 @@ include("common")
 include("common:caxton-impl")
 include("fabric")
 include("forge")
+include("neoforge")
 
 rootProject.name = "caxton"
