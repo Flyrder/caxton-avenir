@@ -39,7 +39,7 @@ modId = "emojiful"
 type = "incompatible"
 ordering = "NONE"
 side = "CLIENT"
-reason = "Emojiful replaces the text renderer, ignoring Caxton’’s changes"
+reason = "Emojiful replaces the text renderer, ignoring Caxton’s changes"
 
 #[[dependencies.examplemod]]
 #modId = "architectury"
