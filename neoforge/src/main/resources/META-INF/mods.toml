@@ -15,17 +15,31 @@ logoFile = "assets/caxton/icon.png"
 
 [[dependencies.caxton]]
 modId = "neoforge"
-mandatory = true
+type = "required"
 versionRange = "[20.4-beta,)"
 ordering = "NONE"
 side = "CLIENT"
 
 [[dependencies.caxton]]
 modId = "minecraft"
-mandatory = true
+type = "required"
 versionRange = "[1.20.4,)"
 ordering = "NONE"
 side = "CLIENT"
+
+[[dependencies.caxton]]
+modId = "oculus"
+type = "discouraged"
+ordering = "NONE"
+side = "CLIENT"
+reason = "Caxton uses core shaders for MSDF rendering"
+
+[[dependencies.caxton]]
+modId = "emojiful"
+type = "incompatible"
+ordering = "NONE"
+side = "CLIENT"
+reason = "Emojiful replaces the text renderer, ignoring Caxton’’s changes"
 
 #[[dependencies.examplemod]]
 #modId = "architectury"
