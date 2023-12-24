@@ -26,8 +26,7 @@
     ]
   },
   "mixins": [
-    "caxton.mixins.json",
-    "caxton.fabric.mixins.json"
+    "caxton.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.14.17",
