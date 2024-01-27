@@ -6,10 +6,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.FontStorage;
-import net.minecraft.client.font.Glyph;
-import net.minecraft.client.font.GlyphRenderer;
-import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.font.*;
 import net.minecraft.client.font.TextRenderer.Drawer;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
@@ -51,9 +48,9 @@ public class CaxtonTextRenderer {
     private final CaxtonTextRenderLayers renderLayers;
     public boolean rtl;
 
-    public CaxtonTextRenderer(Function<Identifier, FontStorage> fontStorageAccessor, TextRenderer vanillaTextRenderer, Supplier<CaxtonGlyphCache> cacheSupplier) {
+    public CaxtonTextRenderer(Function<Identifier, FontStorage> fontStorageAccessor, TextRenderer vanillaTextRenderer, TextHandler vanillaTextHandler, Supplier<CaxtonGlyphCache> cacheSupplier) {
         this.fontStorageAccessor = fontStorageAccessor;
-        this.handler = new CaxtonTextHandler(fontStorageAccessor, vanillaTextRenderer.getTextHandler());
+        this.handler = new CaxtonTextHandler(fontStorageAccessor, vanillaTextHandler);
         this.vanillaTextRenderer = vanillaTextRenderer;
         this.cacheSupplier = cacheSupplier;
         this.renderLayers = new CaxtonTextRenderLayers();
