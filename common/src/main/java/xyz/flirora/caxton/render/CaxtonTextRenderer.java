@@ -27,6 +27,7 @@ import xyz.flirora.caxton.font.CaxtonFont;
 import xyz.flirora.caxton.font.CaxtonFontOptions;
 import xyz.flirora.caxton.font.ConfiguredCaxtonFont;
 import xyz.flirora.caxton.layout.*;
+import xyz.flirora.caxton.mixin.TextRendererAccessor;
 import xyz.flirora.caxton.mixin.TextRendererDrawerAccessor;
 
 import java.util.Objects;
@@ -40,7 +41,6 @@ public class CaxtonTextRenderer {
     // Copied from TextRenderer
     private static final Vector3f FORWARD_SHIFT = new Vector3f(0.0f, 0.0f, 0.03f);
     private static final Logger LOGGER = LogUtils.getLogger();
-    private final Function<Identifier, FontStorage> fontStorageAccessor;
     private final CaxtonTextHandler handler;
     private final TextRenderer vanillaTextRenderer;
     private final Random RANDOM = Random.createLocal();
@@ -49,9 +49,8 @@ public class CaxtonTextRenderer {
     private final CaxtonTextRenderLayers renderLayers;
     public boolean rtl;
 
-    public CaxtonTextRenderer(Function<Identifier, FontStorage> fontStorageAccessor, TextRenderer vanillaTextRenderer, TextHandler vanillaTextHandler, Supplier<CaxtonGlyphCache> cacheSupplier) {
-        this.fontStorageAccessor = Objects.requireNonNull(fontStorageAccessor, "fontStorageAccessor must not be null");
-        this.handler = new CaxtonTextHandler(fontStorageAccessor, vanillaTextHandler);
+    public CaxtonTextRenderer(TextRenderer vanillaTextRenderer, TextHandler vanillaTextHandler, Supplier<CaxtonGlyphCache> cacheSupplier) {
+        this.handler = new CaxtonTextHandler(this::getFontStorage, vanillaTextHandler);
         this.vanillaTextRenderer = vanillaTextRenderer;
         this.cacheSupplier = cacheSupplier;
         this.renderLayers = new CaxtonTextRenderLayers();
@@ -87,23 +86,19 @@ public class CaxtonTextRenderer {
         return 0.0f;
     }
 
-    public Function<Identifier, FontStorage> getFontStorageAccessor() {
-        return fontStorageAccessor;
-    }
-
-    private FontStorage getFontStorage(Identifier id) {
-        return this.fontStorageAccessor.apply(id);
+    public FontStorage getFontStorage(Identifier id) {
+        return ((TextRendererAccessor) this.vanillaTextRenderer).callGetFontStorage(id);
     }
 
     public float drawLayer(String text, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider, TextRenderer.TextLayerType layerType, int backgroundColor, int light, int leftmostCodePoint, float maxWidth) {
-        CaxtonText runGroups = CaxtonText.fromFormatted(text, fontStorageAccessor, Style.EMPTY, false, this.rtl, handler.getCache());
+        CaxtonText runGroups = CaxtonText.fromFormatted(text, this::getFontStorage, Style.EMPTY, false, this.rtl, handler.getCache());
         float newX = drawRunGroups(x, y, color, shadow, matrix, vertexConsumerProvider, CaxtonTextLayerType.fromVanilla(layerType), backgroundColor, light, runGroups, leftmostCodePoint, maxWidth, getMinThickness(matrix));
         if (!shadow) this.rtl = false;
         return newX;
     }
 
     public float drawLayer(OrderedText text, float x, float y, int color, boolean shadow, Matrix4f matrix, VertexConsumerProvider vertexConsumerProvider, TextRenderer.TextLayerType layerType, int backgroundColor, int light, int leftmostCodePoint, float maxWidth) {
-        CaxtonText runGroups = CaxtonText.from(text, fontStorageAccessor, false, this.rtl, handler.getCache());
+        CaxtonText runGroups = CaxtonText.from(text, this::getFontStorage, false, this.rtl, handler.getCache());
         return drawRunGroups(x, y, color, shadow, matrix, vertexConsumerProvider, CaxtonTextLayerType.fromVanilla(layerType), backgroundColor, light, runGroups, leftmostCodePoint, maxWidth, getMinThickness(matrix));
     }
 
@@ -112,7 +107,7 @@ public class CaxtonTextRenderer {
         Threshold NO_THRESHOLD = new Threshold(-1);
         float minThickness = getMinThickness(matrix);
 
-        CaxtonText runGroups = CaxtonText.from(text, fontStorageAccessor, false, this.rtl, handler.getCache());
+        CaxtonText runGroups = CaxtonText.from(text, this::getFontStorage, false, this.rtl, handler.getCache());
         int effectiveOutlineColor = tweakTransparency(outlineColor);
         int effectiveColor = tweakTransparency(color);
 

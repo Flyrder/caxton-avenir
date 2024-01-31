@@ -94,7 +94,7 @@ public abstract class BookEditScreenMixin extends Screen {
             lineStartsList.add(start);
             BookEditScreen.Line bookLine = new BookEditScreen.Line(style, strippedLine, screenPosition.x, screenPosition.y);
             lines.add(bookLine);
-            caxtonTexts.add(CaxtonText.fromFormatted(strippedLine, ctr.getFontStorageAccessor(), style, Style.EMPTY, false, rtl, cth.getCache())); // ← ADDED
+            caxtonTexts.add(CaxtonText.fromFormatted(strippedLine, ctr::getFontStorage, style, Style.EMPTY, false, rtl, cth.getCache())); // ← ADDED
         });
 //        System.err.println(warts);
 //        System.err.println(caxtonTexts);

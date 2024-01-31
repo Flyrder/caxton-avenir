@@ -20,7 +20,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import xyz.flirora.caxton.render.CaxtonGlyphCache;
-import xyz.flirora.caxton.render.CaxtonTextLayerType;
 import xyz.flirora.caxton.render.CaxtonTextRenderer;
 import xyz.flirora.caxton.render.HasCaxtonTextRenderer;
 
@@ -41,7 +40,7 @@ public class TextRendererMixin implements HasCaxtonTextRenderer {
 
     @Inject(at = @At("TAIL"), method = "<init>(Ljava/util/function/Function;Z)V")
     private void onInit(Function<Identifier, FontStorage> fontStorageAccessor, boolean validateAdvance, CallbackInfo ci) {
-        this.caxtonRenderer = new CaxtonTextRenderer(fontStorageAccessor, (TextRenderer) (Object) this, handler, CACHE);
+        this.caxtonRenderer = new CaxtonTextRenderer((TextRenderer) (Object) this, handler, CACHE);
     }
 
     // Stub out TextRenderer#mirror call; we will call this on each

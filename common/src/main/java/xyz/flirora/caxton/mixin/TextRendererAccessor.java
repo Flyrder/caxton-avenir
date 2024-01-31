@@ -7,12 +7,13 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
+import org.spongepowered.asm.mixin.gen.Invoker;
 
 import java.util.function.Function;
 
 @Environment(EnvType.CLIENT)
 @Mixin(TextRenderer.class)
 public interface TextRendererAccessor {
-    @Accessor
-    Function<Identifier, FontStorage> getFontStorageAccessor();
+    @Invoker
+    FontStorage callGetFontStorage(Identifier id);
 }

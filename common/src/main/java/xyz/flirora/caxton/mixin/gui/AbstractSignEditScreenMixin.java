@@ -54,7 +54,7 @@ public abstract class AbstractSignEditScreenMixin
     private int drawRowTextProxy(DrawContext instance, TextRenderer textRenderer, String currentLine, int x, int y, int color, boolean shadow) {
         CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
         CaxtonTextHandler cth = ctr.getHandler();
-        this.rowText = CaxtonText.fromFormatted(currentLine, ctr.getFontStorageAccessor(), Style.EMPTY, false, this.textRenderer.isRightToLeft(), cth.getCache());
+        this.rowText = CaxtonText.fromFormatted(currentLine, ctr::getFontStorage, Style.EMPTY, false, this.textRenderer.isRightToLeft(), cth.getCache());
         // The use of `==` is intentional; this check will pass if we are
         // indeed on the current row.
         if (currentLine == this.messages[this.currentRow]) this.currentRowText = rowText;

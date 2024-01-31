@@ -69,7 +69,7 @@ public abstract class EditBoxWidgetMixin extends ScrollableWidget {
                             (float) (this.getX() + this.getPadding()),
                             (float) y,
                             0xffe0e0e0) - 1;
-                    float cursorX = this.getX() + this.getPadding() + cth.getOffsetAtIndex(CaxtonText.fromForwards(lineStr, ctr.getFontStorageAccessor(), Style.EMPTY, false, false, cth.getCache()), cursorPos - line.beginIndex(), DirectionSetting.AUTO);
+                    float cursorX = this.getX() + this.getPadding() + cth.getOffsetAtIndex(CaxtonText.fromForwards(lineStr, ctr::getFontStorage, Style.EMPTY, false, false, cth.getCache()), cursorPos - line.beginIndex(), DirectionSetting.AUTO);
                     Voepfxo.fill(context, cursorX, y - 1, cursorX + 1, y + 1 + this.textRenderer.fontHeight, 0xffd0d0d0);
                 } else {
                     x = Voepfxo.drawTextWithShadow(
@@ -105,7 +105,7 @@ public abstract class EditBoxWidgetMixin extends ScrollableWidget {
                     float selY = y;
                     CaxtonText caxtonLine = CaxtonText.fromForwards(
                             text.substring(line.beginIndex(), line.endIndex()),
-                            ctr.getFontStorageAccessor(),
+                            ctr::getFontStorage,
                             Style.EMPTY,
                             false, false,
                             cth.getCache());

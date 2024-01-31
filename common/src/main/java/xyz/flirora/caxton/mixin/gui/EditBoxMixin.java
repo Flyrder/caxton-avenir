@@ -33,7 +33,7 @@ public abstract class EditBoxMixin {
     private int redirectGetWidth(TextRenderer textRenderer, String text) {
         // text contains the contents of the whole line rather than up to the cursor
         CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
-        CaxtonText caxtonText = CaxtonText.fromForwards(text, ctr.getFontStorageAccessor(), Style.EMPTY, false, false, ctr.getHandler().getCache());
+        CaxtonText caxtonText = CaxtonText.fromForwards(text, ctr::getFontStorage, Style.EMPTY, false, false, ctr.getHandler().getCache());
         return Math.round(ctr.getHandler().getOffsetAtIndex(caxtonText, this.cursor - this.getCurrentLine().beginIndex(), DirectionSetting.AUTO));
     }
 
