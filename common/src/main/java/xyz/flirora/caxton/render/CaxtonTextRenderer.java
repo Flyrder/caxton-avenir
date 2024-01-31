@@ -29,6 +29,7 @@ import xyz.flirora.caxton.font.ConfiguredCaxtonFont;
 import xyz.flirora.caxton.layout.*;
 import xyz.flirora.caxton.mixin.TextRendererDrawerAccessor;
 
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -49,7 +50,7 @@ public class CaxtonTextRenderer {
     public boolean rtl;
 
     public CaxtonTextRenderer(Function<Identifier, FontStorage> fontStorageAccessor, TextRenderer vanillaTextRenderer, TextHandler vanillaTextHandler, Supplier<CaxtonGlyphCache> cacheSupplier) {
-        this.fontStorageAccessor = fontStorageAccessor;
+        this.fontStorageAccessor = Objects.requireNonNull(fontStorageAccessor, "fontStorageAccessor must not be null");
         this.handler = new CaxtonTextHandler(fontStorageAccessor, vanillaTextHandler);
         this.vanillaTextRenderer = vanillaTextRenderer;
         this.cacheSupplier = cacheSupplier;
