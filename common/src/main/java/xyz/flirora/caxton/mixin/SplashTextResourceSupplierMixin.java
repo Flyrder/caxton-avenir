@@ -2,6 +2,7 @@ package xyz.flirora.caxton.mixin;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.gui.screen.SplashTextRenderer;
 import net.minecraft.client.resource.SplashTextResourceSupplier;
 import net.minecraft.resource.SinglePreparationResourceReloader;
 import net.minecraft.util.math.random.Random;
@@ -39,19 +40,19 @@ public abstract class SplashTextResourceSupplierMixin extends SinglePreparationR
     private static Random RANDOM;
 
     @Inject(method = "get", at = @At("HEAD"), cancellable = true)
-    private void onGet(CallbackInfoReturnable<String> cir) {
+    private void onGet(CallbackInfoReturnable<SplashTextRenderer> cir) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
         if (calendar.get(Calendar.MONTH) == Calendar.FEBRUARY && calendar.get(Calendar.DATE) == 4) {
             String text = TEXTS[RANDOM.nextInt(TEXTS.length)];
-            cir.setReturnValue(text);
+            cir.setReturnValue(new SplashTextRenderer(text));
         }
     }
 
     @Inject(method = "get", at = @At("RETURN"), cancellable = true)
-    private void tweakOnAprilFools(CallbackInfoReturnable<String> cir) {
+    private void tweakOnAprilFools(CallbackInfoReturnable<SplashTextRenderer> cir) {
         if (CaxtonModClient.APRIL_FOOLS && cir.getReturnValue() != null) {
-            cir.setReturnValue(Voepfxo.shingetsuGaShirokuMarukuKagayaiteIruYoruNi(cir.getReturnValue()));
+            cir.setReturnValue(new SplashTextRenderer(Voepfxo.shingetsuGaShirokuMarukuKagayaiteIruYoruNi(((SplashTextRendererAccessor) cir.getReturnValue()).getText())));
         }
     }
 }

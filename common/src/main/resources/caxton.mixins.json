@@ -17,6 +17,7 @@
     "NativeImageAccessor",
     "RenderPhaseAccessor",
     "ShaderMixin",
+    "SplashTextRendererAccessor",
     "SplashTextResourceSupplierMixin",
     "TextHandlerAccessor",
     "TextHandlerMixin",
