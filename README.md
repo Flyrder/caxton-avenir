@@ -27,7 +27,8 @@ Available on [Modrinth](https://modrinth.com/mod/caxton)!
 
 #### Mod and resource pack compatibility
 
-Caxton has been confirmed to work with [Sodium].
+Caxton has been confirmed to work with [Sodium], but [outlined text is misrendered with Sodium 0.5.5]. For Minecraft
+1.20.3 or later, update Sodium. Unfortunately, there’s no fix for this in the 1.20.2 versions.
 
 For [ImmediatelyFast], make sure that:
 
@@ -59,6 +60,8 @@ methods.
 Resource packs that modify core shaders related to text, such as the “Dark UI” and “Transparent UI” packs from [Vanilla Tweaks], will require modification to work with Caxton fonts.
 
 [Sodium]: https://modrinth.com/mod/sodium
+
+[outlined text is misrendered with Sodium 0.5.5]: https://github.com/CaffeineMC/sodium-fabric/issues/2218
 
 [ImmediatelyFast]: https://modrinth.com/mod/immediatelyfast
 
