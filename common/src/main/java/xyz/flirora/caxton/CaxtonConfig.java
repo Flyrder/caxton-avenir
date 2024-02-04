@@ -27,6 +27,7 @@ public class CaxtonConfig {
     public boolean reuseTextRendererDrawer = true;
     public boolean fatalOnBrokenMethodCall = false;
     public boolean debugRefcountChanges = false;
+    public boolean disableEasterEggs = false;
 
     public CaxtonConfig() {
         // Set options to bypass mod conflicts

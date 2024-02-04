@@ -41,6 +41,7 @@ public abstract class SplashTextResourceSupplierMixin extends SinglePreparationR
 
     @Inject(method = "get", at = @At("HEAD"), cancellable = true)
     private void onGet(CallbackInfoReturnable<SplashTextRenderer> cir) {
+        if (CaxtonModClient.CONFIG.disableEasterEggs) return;
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
         if (calendar.get(Calendar.MONTH) == Calendar.FEBRUARY && calendar.get(Calendar.DATE) == 4) {
@@ -51,6 +52,7 @@ public abstract class SplashTextResourceSupplierMixin extends SinglePreparationR
 
     @Inject(method = "get", at = @At("RETURN"), cancellable = true)
     private void tweakOnAprilFools(CallbackInfoReturnable<SplashTextRenderer> cir) {
+        if (CaxtonModClient.CONFIG.disableEasterEggs) return;
         if (CaxtonModClient.APRIL_FOOLS && cir.getReturnValue() != null) {
             cir.setReturnValue(new SplashTextRenderer(Voepfxo.shingetsuGaShirokuMarukuKagayaiteIruYoruNi(((SplashTextRendererAccessor) cir.getReturnValue()).getText())));
         }

@@ -35,7 +35,7 @@ For [ImmediatelyFast], make sure that:
 * either Caxton’s `tweakExpText` option or IF’s `hud_batching` option is disabled, and
 * either Caxton’s `reuseTextRendererDrawer` option or IF’s `fast_text_lookup` option is disabled, and
 * Caxton’s `sortTextRenderLayers` option is disabled.
-
+’
 Caxton is not fully compatible with [Iris Shaders]. Text outside the world (e.g. in GUIs or HUDs) is rendered normally,
 but the default MSDF-based font rendering technology uses [custom core shaders, which Iris does not support].
 As a result, text rendered in world using such fonts will not render at all when a shader is active.
@@ -246,7 +246,9 @@ The following options are available in `config/caxton.json`:
   // removed for debugging purposes.
   // If in doubt, set this to false.
   // Added in Caxton 0.3.0.
-  "debugRefcountChanges": false
+  "debugRefcountChanges": false,
+  // Disable splash text easter eggs on certain dates.
+  "disableEasterEggs": false
 }
 ```
 
