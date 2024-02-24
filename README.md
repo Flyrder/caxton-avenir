@@ -124,6 +124,13 @@ key `file` specifies the path:
   // The amount to shift the rendered text by in the X and Y axes, in memefont pixels.
   // Added in Caxton 0.4.4.
   "shift": [0.0, 0.0],
+  // A 32-bit integer whose bits are interpreted as a 32-bit floating-point number
+  // describing the slant to apply to the characters.
+  // This can be used to emulate italics in fonts that do not have an italic variant,
+  // but it is always preferable to use a dedicated italic variant if one is
+  // available.
+  // Added in Caxton 0.5.6.
+  "the_font_designer_couldnt_be_assed_to_make_an_italic_variant_so_slant_the_text": 0,
   // A list of OpenType feature tags. See below for the syntax:
   // https://docs.rs/rustybuzz/0.6.0/rustybuzz/struct.Feature.html#method.from_str
   "features": [],
@@ -248,6 +255,7 @@ The following options are available in `config/caxton.json`:
   // Added in Caxton 0.3.0.
   "debugRefcountChanges": false,
   // Disable splash text easter eggs on certain dates.
+  // Added in Caxton 0.5.6.
   "disableEasterEggs": false
 }
 ```

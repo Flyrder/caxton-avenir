@@ -28,13 +28,14 @@ import java.util.function.Function;
  * @param blur                true if the glyph textures should be antialiased
  * @param shiftX              the horizontal shift to apply, in scaled GUI units
  * @param shiftY              the vertical shift to apply, in scaled GUI units
+ * @param slant               the slant amount
  * @see CaxtonFont
  * @see ConfiguredCaxtonFont
  */
 @Environment(EnvType.CLIENT)
 public record ConfiguredCaxtonFont(CaxtonFont font, long ptr, float shadowOffset,
                                    float computedScaleFactor, boolean blur, float shiftX,
-                                   float shiftY) implements AutoCloseable {
+                                   float shiftY, float slant) implements AutoCloseable {
     /**
      * Loads a {@link ConfiguredCaxtonFont} from its settings.
      *
@@ -54,7 +55,7 @@ public record ConfiguredCaxtonFont(CaxtonFont font, long ptr, float shadowOffset
         float shadowOffset = 1.0f;
         double scaleFactor = 1.0f;
         boolean blur = false;
-        float shiftX = 0.0f, shiftY = 0.0f;
+        float shiftX = 0.0f, shiftY = 0.0f, slant = 0.0f;
         if (settings.settings != null) {
             shadowOffset = JsonHelper.getFloat(settings.settings, "shadow_offset", shadowOffset);
             scaleFactor = JsonHelper.getDouble(settings.settings, "scale_factor", scaleFactor);
@@ -69,9 +70,10 @@ public record ConfiguredCaxtonFont(CaxtonFont font, long ptr, float shadowOffset
             } else if (shiftE != null) {
                 throw new JsonSyntaxException("shift must be an array");
             }
+            slant = -Float.intBitsToFloat(JsonHelper.getInt(settings.settings, "the_font_designer_couldnt_be_assed_to_make_an_italic_variant_so_slant_the_text", 0));
         }
         float computedScaleFactor = (float) (7.0 * scaleFactor / font.getMetrics(CaxtonFont.Metrics.ASCENDER));
-        return new ConfiguredCaxtonFont(font, ptr, shadowOffset, computedScaleFactor, blur, shiftX, shiftY);
+        return new ConfiguredCaxtonFont(font, ptr, shadowOffset, computedScaleFactor, blur, shiftX, shiftY, slant);
     }
 
     /**

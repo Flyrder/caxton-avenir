@@ -372,13 +372,17 @@ public class CaxtonTextRenderer {
                 // Draw the quad
 
                 float x0 = (float) (x + (gx - shrink * margin) * scale);
-                float y1 = (float) (baselineY + (-offsetY + shrink * margin) * scale);
+                float y1 = (float) ((-offsetY + shrink * margin) * scale);
                 float u0 = atlasX / pageSize;
                 float v0 = atlasY / pageSize;
                 float x1 = (float) (x + (gx + shrink * (atlasWidth - margin)) * scale);
-                float y0 = (float) (baselineY + (-offsetY - shrink * (atlasHeight - margin)) * scale);
+                float y0 = (float) ((-offsetY - shrink * (atlasHeight - margin)) * scale);
                 float u1 = (atlasX + atlasWidth) / pageSize;
                 float v1 = (atlasY + atlasHeight) / pageSize;
+                float lowerOffset = configuredFont.slant() * y0;
+                float upperOffset = configuredFont.slant() * y1;
+                y0 += baselineY;
+                y1 += baselineY;
 
                 if (x1 >= maxX) break;
 
@@ -389,28 +393,28 @@ public class CaxtonTextRenderer {
                     y1 += shadowOffset;
                 }
 
-                vertexConsumer.vertex(matrix, x0, y0, 0.0f)
+                vertexConsumer.vertex(matrix, x0 + lowerOffset, y0, 0.0f)
                         .color(red, green, blue, alpha);
                 if (twoColored)
                     vertexConsumer.color(olRed, olGreen, olBlue, olAlpha);
                 vertexConsumer.texture(u0, v0)
                         .light(light)
                         .next();
-                vertexConsumer.vertex(matrix, x0, y1, 0.0f)
+                vertexConsumer.vertex(matrix, x0 + upperOffset, y1, 0.0f)
                         .color(red, green, blue, alpha);
                 if (twoColored)
                     vertexConsumer.color(olRed, olGreen, olBlue, olAlpha);
                 vertexConsumer.texture(u0, v1)
                         .light(light)
                         .next();
-                vertexConsumer.vertex(matrix, x1, y1, 0.0f)
+                vertexConsumer.vertex(matrix, x1 + upperOffset, y1, 0.0f)
                         .color(red, green, blue, alpha);
                 if (twoColored)
                     vertexConsumer.color(olRed, olGreen, olBlue, olAlpha);
                 vertexConsumer.texture(u1, v1)
                         .light(light)
                         .next();
-                vertexConsumer.vertex(matrix, x1, y0, 0.0f)
+                vertexConsumer.vertex(matrix, x1 + lowerOffset, y0, 0.0f)
                         .color(red, green, blue, alpha);
                 if (twoColored)
                     vertexConsumer.color(olRed, olGreen, olBlue, olAlpha);
