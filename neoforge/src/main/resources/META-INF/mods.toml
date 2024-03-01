@@ -16,7 +16,7 @@ logoFile = "assets/caxton/icon.png"
 [[dependencies.caxton]]
 modId = "neoforge"
 type = "required"
-versionRange = "[20.4-beta,)"
+versionRange = "[20.4,)"
 ordering = "NONE"
 side = "CLIENT"
 
