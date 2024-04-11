@@ -6,6 +6,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.BuiltinEmptyGlyph;
 import net.minecraft.client.font.Font;
+import net.minecraft.client.font.FontFilterType;
 import net.minecraft.client.font.FontStorage;
 import net.minecraft.client.font.Glyph;
 import net.minecraft.client.texture.TextureManager;
@@ -25,6 +26,7 @@ import xyz.flirora.caxton.font.CaxtonGlyphResult;
 import xyz.flirora.caxton.font.CaxtonTypeface;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -35,7 +37,7 @@ public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStora
     private Int2ObjectMap<CaxtonGlyphPair>[] caxtonGlyphCache = null;
     @Shadow
     @Final
-    private List<Font> fonts;
+    private List<Font> availableFonts;
     @Shadow
     @Final
     private TextureManager textureManager;
@@ -55,7 +57,7 @@ public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStora
     }
 
     @Inject(at = @At(value = "HEAD"), method = "setFonts(Ljava/util/List;)V")
-    private void onSetFonts(List<Font> fonts, CallbackInfo ci) {
+    private void onSetFonts(List<Font.FontFilterPair> allFonts, Set<FontFilterType> activeFilters, CallbackInfo ci) {
         for (Int2ObjectMap<CaxtonGlyphPair> cacheEntry : caxtonGlyphCache) {
             synchronized (cacheEntry) {
                 cacheEntry.clear();
@@ -71,7 +73,7 @@ public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStora
     // Always retain Caxton fonts in the set of used fonts.
     // Caxton fonts always claim to contain no glyphs, so they would otherwise
     // not end up in the FontStorage#fonts field.
-    @Redirect(method = "setFonts(Ljava/util/List;)V", at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;filter(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;"))
+    @Redirect(method = "applyFilters(Ljava/util/List;Ljava/util/Set;)V", at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;filter(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;"))
     private Stream<Font> filterProxy(Stream<Font> allFonts, Predicate<Font> predicate) {
         if (!LibraryLoading.isLibraryLoaded()) {
             return allFonts.filter(predicate);
@@ -88,16 +90,18 @@ public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStora
     @Unique
     private CaxtonGlyphPair findCaxtonGlyph(int codePoint, Style style) {
         Glyph glyph = null;
-        for (Font font : this.fonts) {
+        for (Font font : this.availableFonts) {
             if (font instanceof CaxtonTypeface caxtonFont && caxtonFont.supportsCodePoint(codePoint, style)) {
                 return new CaxtonGlyphPair.Caxton(caxtonFont.getFontByStyle(style));
             }
             Glyph glyph2 = font.getGlyph(codePoint);
-            if (glyph2 == null) continue;
+            if (glyph2 == null)
+                continue;
             if (glyph == null) {
                 glyph = glyph2;
             }
-            if (isAdvanceInvalid(glyph2)) continue;
+            if (isAdvanceInvalid(glyph2))
+                continue;
             return new CaxtonGlyphPair.Legacy(glyph, glyph2);
         }
         if (glyph != null) {

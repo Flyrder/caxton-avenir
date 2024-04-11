@@ -5,6 +5,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+
+import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.IdentifierArgumentType;
 import net.minecraft.command.argument.TextArgumentType;
 import net.minecraft.text.Text;
@@ -22,11 +24,11 @@ public class CaxtonCommands {
     // We have to define these methods because Java doesn’t allow lambdas for
     // generic methods.
 
-    private static <S> LiteralArgumentBuilder<S> caxtonDumpAtlas(Command<S> command) {
+    private static <S> LiteralArgumentBuilder<S> caxtonDumpAtlas(Command<S> command, CommandRegistryAccess registryAccess) {
         return LiteralArgumentBuilder.<S>literal("caxtondumpatlas").executes(command);
     }
 
-    private static <S> LiteralArgumentBuilder<S> caxtonShape(Command<S> command) {
+    private static <S> LiteralArgumentBuilder<S> caxtonShape(Command<S> command, CommandRegistryAccess registryAccess) {
         return LiteralArgumentBuilder.<S>literal("caxtonshape")
                 .then(RequiredArgumentBuilder.<S, Identifier>argument("font", IdentifierArgumentType.identifier())
                         .suggests((SuggestionProvider<S>) CaxtonSuggestionProviders.CAXTON_FONTS)
@@ -34,9 +36,9 @@ public class CaxtonCommands {
                                 .executes(command)));
     }
 
-    private static <S> LiteralArgumentBuilder<S> caxtonText(Command<S> command) {
+    private static <S> LiteralArgumentBuilder<S> caxtonText(Command<S> command, CommandRegistryAccess registryAccess) {
         return LiteralArgumentBuilder.<S>literal("caxtontext")
-                .then(RequiredArgumentBuilder.<S, Text>argument("text", TextArgumentType.text())
+                .then(RequiredArgumentBuilder.<S, Text>argument("text", TextArgumentType.text(registryAccess))
                         .executes(command));
     }
 }

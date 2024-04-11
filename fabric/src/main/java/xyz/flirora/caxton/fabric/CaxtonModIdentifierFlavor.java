@@ -22,7 +22,7 @@ public class CaxtonModIdentifierFlavor implements ClientModInitializer {
 
         ModContainer modContainer = FabricLoader.getInstance().getModContainer(CaxtonModClient.MOD_ID).get();
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            CaxtonCommands.register(new ClientCommandRegistrarIdentifierFlavor(dispatcher));
+            CaxtonCommands.register(new ClientCommandRegistrarIdentifierFlavor(dispatcher, registryAccess));
         });
         CaxtonModClient.LOGGER.info("Registering built-in resource packs");
         for (String id : CaxtonModClient.BUILTIN_PACKS) {

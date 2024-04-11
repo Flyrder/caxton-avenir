@@ -28,7 +28,7 @@ public abstract class FontProviderListMixin implements AutoCloseable {
     @Redirect(method = "<clinit>", at = @At(value = "FIELD", opcode = Opcodes.PUTSTATIC, target = "Lnet/minecraft/client/font/FontManager$Providers;CODEC:Lcom/mojang/serialization/Codec;"))
     private static void aaa(Codec<FontManager.Providers> value) {
         Codec<FontManager.Providers> caxtonCodec = RecordCodecBuilder.create(instance -> instance.group(
-                        FontLoader.CODEC.listOf().fieldOf("caxton_providers")
+                        FontLoader.Provider.CODEC.listOf().fieldOf("caxton_providers")
                                 .forGetter(FontManager.Providers::providers))
                 .apply(instance, FontManager.Providers::new));
         CODEC = Codec.either(caxtonCodec, value).xmap(e -> e.map(Function.identity(), Function.identity()), Either::right);

@@ -4,6 +4,8 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
+import net.minecraft.command.CommandRegistryAccess;
+
 /**
  * Functionally equivalent to {@code <S> Function<Command<S>, LiteralArgumentBuilder<S>>}.
  * <p>
@@ -11,5 +13,5 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
  */
 @FunctionalInterface
 public interface GenericArgumentBuilderFactory {
-    <S> LiteralArgumentBuilder<S> create(Command<S> command);
+    <S> LiteralArgumentBuilder<S> create(Command<S> command, CommandRegistryAccess registryAccess);
 }

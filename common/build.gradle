@@ -34,7 +34,7 @@ dependencies {
     implementation('com.github.ben-manes.caffeine:caffeine:3.1.2')
 
     // ImmediatelyFast API for compatibility – use only in ImmediatelyFastBatchingAccess class!
-    modCompileOnly("maven.modrinth:immediatelyfast:1.2.0+1.20.1")
+    modCompileOnly("maven.modrinth:immediatelyfast:1.2.11+1.20.4-fabric")
 
     backend(project('caxton-impl'))
 }
