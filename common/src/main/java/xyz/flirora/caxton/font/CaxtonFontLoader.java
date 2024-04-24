@@ -21,6 +21,7 @@ import net.minecraft.util.JsonHelper;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import xyz.flirora.caxton.CaxtonModClient;
+import xyz.flirora.caxton.dll.LibraryLoading;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -138,7 +139,10 @@ public class CaxtonFontLoader implements FontLoader {
      * @return a {@link CaxtonTypeface} described by this object
      */
     @Nullable
-    public Font load(ResourceManager manager) {
+    public Font load(ResourceManager manager) throws IOException {
+        if (!LibraryLoading.isLibraryLoaded()) {
+            throw new IOException("Refusing to load Caxton font when native library loading had failed");
+        }
         try {
             ConfiguredCaxtonFont regular = ConfiguredCaxtonFont.load(manager, this.regular);
             ConfiguredCaxtonFont bold = ConfiguredCaxtonFont.load(manager, this.bold);
@@ -147,8 +151,8 @@ public class CaxtonFontLoader implements FontLoader {
             return new CaxtonTypeface(regular, bold, italic, boldItalic);
         } catch (Exception exception) {
             LOGGER.error("Couldn't load truetype font", exception);
+            throw new IOException(exception);
         }
-        return null;
     }
 
     @Override
