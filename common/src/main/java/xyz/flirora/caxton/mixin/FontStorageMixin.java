@@ -56,7 +56,7 @@ public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStora
         }
     }
 
-    @Inject(at = @At(value = "HEAD"), method = "setFonts(Ljava/util/List;)V")
+    @Inject(at = @At(value = "HEAD"), method = "setFonts(Ljava/util/List;Ljava/util/Set;)V")
     private void onSetFonts(List<Font.FontFilterPair> allFonts, Set<FontFilterType> activeFilters, CallbackInfo ci) {
         for (Int2ObjectMap<CaxtonGlyphPair> cacheEntry : caxtonGlyphCache) {
             synchronized (cacheEntry) {
@@ -73,7 +73,7 @@ public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStora
     // Always retain Caxton fonts in the set of used fonts.
     // Caxton fonts always claim to contain no glyphs, so they would otherwise
     // not end up in the FontStorage#fonts field.
-    @Redirect(method = "applyFilters(Ljava/util/List;Ljava/util/Set;)V", at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;filter(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;"))
+    @Redirect(method = "applyFilters(Ljava/util/List;Ljava/util/Set;)Ljava/util/List;", at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;filter(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;"))
     private Stream<Font> filterProxy(Stream<Font> allFonts, Predicate<Font> predicate) {
         if (!LibraryLoading.isLibraryLoaded()) {
             return allFonts.filter(predicate);

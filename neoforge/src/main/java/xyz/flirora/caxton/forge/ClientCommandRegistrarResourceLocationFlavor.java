@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.datafixers.util.Either;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 import xyz.flirora.caxton.command.ClientCommand;
@@ -14,11 +15,14 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 
 public record ClientCommandRegistrarResourceLocationFlavor(
-        CommandDispatcher<ServerCommandSource> dispatcher) implements ClientCommandRegistrar {
+        CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess)
+        implements ClientCommandRegistrar {
     @Override
     public void registerClientCommand(GenericArgumentBuilderFactory builder, ClientCommand command) {
         Objects.requireNonNull(this.dispatcher, "Please call setDispatcher first!");
-        dispatcher.register(builder.create(context -> command.run(context, new ClientCommandSourceResourceLocationEdition(context.getSource()))));
+        dispatcher.register(builder.create(
+                context -> command.run(context, new ClientCommandSourceResourceLocationEdition(context.getSource())),
+                this.registryAccess));
     }
 
     private static int reportResult(Either<Text, Text> result, CommandContext<ServerCommandSource> context) {
@@ -30,7 +34,6 @@ public record ClientCommandRegistrarResourceLocationFlavor(
                 msg -> {
                     context.getSource().sendFeedback(() -> msg, false);
                     return 1;
-                }
-        );
+                });
     }
 }
