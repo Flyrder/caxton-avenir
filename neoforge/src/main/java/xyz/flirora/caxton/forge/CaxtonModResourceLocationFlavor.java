@@ -4,6 +4,7 @@ import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.resource.*;
 import net.minecraft.text.Text;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -23,9 +24,8 @@ import java.util.Optional;
 
 @Mod(CaxtonModClient.MOD_ID)
 public class CaxtonModResourceLocationFlavor {
-    public CaxtonModResourceLocationFlavor() {
+    public CaxtonModResourceLocationFlavor(IEventBus modBus) {
         NeoForge.EVENT_BUS.addListener(CaxtonModResourceLocationFlavor::registerCommands);
-        var modBus = FMLJavaModLoadingContext.get().getModEventBus();
         modBus.addListener(this::addPackFinders);
         modBus.addListener(this::addShaders);
         CaxtonModClient.init(new PlatformHooksResourceLocationFlavor());
