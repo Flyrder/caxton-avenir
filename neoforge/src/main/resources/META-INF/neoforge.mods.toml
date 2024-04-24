@@ -5,7 +5,7 @@ license = "MIT"
 
 [[mods]]
 modId = "caxton"
-version = "0.5.6+1.20.5-NEOFORGE"
+version = "${version}"
 displayName = "Caxton"
 authors = "+merlan #flirora"
 description = '''
