@@ -11,7 +11,7 @@ Available on [Modrinth](https://modrinth.com/mod/caxton)!
 * Complex text rendering
 * Does not use AWT
 
-### Current limitations
+## Current limitations
 
 * **Arabic shaping in legacy fonts is not currently supported.** Making this work in the presence of styling and proper
   bidirectional text handling is complicated as we cannot use ICU4J’s API for this. If you want Arabic text to render
@@ -21,59 +21,54 @@ Available on [Modrinth](https://modrinth.com/mod/caxton)!
 * Many UI elements, both in Minecraft and in mods, make incorrect assumptions about text rendering. Making them aware of
   bidirectional text – let alone matters such as ligatures – will be a major undertaking, and patches in this area
   are welcome.
-    * GUI elements have been patched to account for this, but the displayed text is aligned to the left regardless
-      of its base direction.
+  * GUI elements have been patched to account for this, but the displayed text is aligned to the left regardless
+    of its base direction.
 * Font hinting will probably never be supported.
 
-#### Mod and resource pack compatibility
+## Mod and resource pack compatibility
 
-Caxton has been confirmed to work with [Sodium], but [outlined text is misrendered with Sodium 0.5.5]. For Minecraft
-1.20.3 or later, update Sodium. Unfortunately, there’s no fix for this in the 1.20.2 versions.
+### Compatible with some caveats
 
-For [ImmediatelyFast], make sure that:
+| Mod | Version | Notes |
+|-----|---------|-------|
+| [Sodium] | Any except 0.5.5 | Outlined text is [misrendered with Sodium 0.5.5](https://github.com/CaffeineMC/sodium-fabric/issues/2218) |
+| [ImmediatelyFast] | ≥1.2.0 | Disable Caxton’s `reuseTextRendererDrawer` and `sortTextRenderLayers` options (done automatically) |
+| [Exordium] | Any | [Disable Exordium’s sign buffering](https://github.com/tr7zw/Exordium/issues/48) |
 
-* either Caxton’s `tweakExpText` option or IF’s `hud_batching` option is disabled, and
-* either Caxton’s `reuseTextRendererDrawer` option or IF’s `fast_text_lookup` option is disabled, and
-* Caxton’s `sortTextRenderLayers` option is disabled.
-’
-Caxton is not fully compatible with [Iris Shaders]. Text outside the world (e.g. in GUIs or HUDs) is rendered normally,
-but the default MSDF-based font rendering technology uses [custom core shaders, which Iris does not support].
-As a result, text rendered in world using such fonts will not render at all when a shader is active.
+### Incompatible
 
-Caxton is not compatible with [Emojiful], which replaces Minecraft’s default text renderer with its own implementation
-and does not delegate to the original text renderer’s methods.
+| Mod | Version | Notes |
+|-----|---------|-------|
+| [Iris Shaders] | Any | Custom core shaders [not supported by Iris](https://github.com/IrisShaders/Iris/blob/1.18.2/docs/development/compatibility/core-shaders.md); in-world text using MSDF fonts do not render |
+| [Emojiful] | Any | Outright replaces Minecraft’s default text renderer |
+| [MemoryLeakFix] | ≤1.1.1 | |
+| [VanillaIcecreamFix] | Any | [Conflicts with Caxton’s Fabric ASM dependency on startup](https://github.com/repletsin5/VanillaIcecreamFix/issues/27) |
+| [Porting Lib] | Any for 1.18.2 and likely 1.19.2 | [Conflicts with Fabric API’s core shader registration API](https://github.com/Fabricators-of-Create/Porting-Lib/issues/110) |
+| [Advent of Ascension] | 1.20.4-3.7.7 | No crash, but outlined text from AoA does not use MSDF fonts, and AoA’s scrollable pane component does not clip text in MSDF fonts (compatibility add-on planned) |
 
-Caxton 0.5.0 and later are incompatible with [MemoryLeakFix] version 1.1.1 and earlier; update the latter mod to 1.1.2 or later.
-
-If [Exordium]’s sign buffering feature is enabled, then [text on signs will look pixelated]. If this happens, then
-disable sign buffering for Exordium.
+### Handles layout incorrectly
 
 The following mods are known to handle text layout incorrectly. They should not crash the game, but GUI elements from
-these mods might have unexpected behavior and might cause warnings to be printed about unsupported text handling
-methods.
+these mods might have unexpected behavior and might cause warnings to be shown in the log about unsupported text handling methods.
 
-* [IBE Editor] uses a custom text field widget
-  that [clones most of vanilla Minecraft’s rendering code](https://github.com/Franckyi/IBE-Editor/issues/73).
-* [Roughly Enough Items]
-  uses [unsupported methods in some of its widgets](https://github.com/shedaniel/RoughlyEnoughItems/search?q=plainSubstrByWidth).
+| Mod | Version | Notes |
+|-----|---------|-------|
+| [IBE Editor] | Any | Uses a custom text field widget that [clones most of vanilla Minecraft’s rendering code](https://github.com/Franckyi/IBE-Editor/issues/73) |
+| [Roughly Enough Items] | Any | Uses [unsupported methods in some of its widgets](https://github.com/shedaniel/RoughlyEnoughItems/search?q=plainSubstrByWidth) |
+
+### Resource packs with custom text-related core shaders
 
 Resource packs that modify core shaders related to text, such as the “Dark UI” and “Transparent UI” packs from [Vanilla Tweaks], will require modification to work with Caxton fonts.
 
 [Sodium]: https://modrinth.com/mod/sodium
 
-[outlined text is misrendered with Sodium 0.5.5]: https://github.com/CaffeineMC/sodium-fabric/issues/2218
-
 [ImmediatelyFast]: https://modrinth.com/mod/immediatelyfast
 
 [Iris Shaders]: https://github.com/IrisShaders/Iris
 
-[custom core shaders, which Iris does not support]: https://github.com/IrisShaders/Iris/blob/1.18.2/docs/development/compatibility/core-shaders.md
-
 [MemoryLeakFix]: https://modrinth.com/mod/memoryleakfix
 
 [Exordium]: https://modrinth.com/mod/exordium
-
-[text on signs will look pixelated]: https://github.com/tr7zw/Exordium/issues/48
 
 [IBE Editor]: https://modrinth.com/mod/ibe-editor
 
@@ -82,6 +77,12 @@ Resource packs that modify core shaders related to text, such as the “Dark UI�
 [Emojiful]: https://github.com/InnovativeOnlineIndustries/Emojiful
 
 [Vanilla Tweaks]: https://vanillatweaks.net
+
+[VanillaIcecreamFix]: https://modrinth.com/mod/vanillaicecreamfix
+
+[Porting Lib]: https://github.com/Fabricators-of-Create/Porting-Lib/issues/110
+
+[Advent of Ascension]: https://modrinth.com/mod/adventofascension
 
 ## OS support
 
@@ -216,7 +217,7 @@ The following options are available in `config/caxton.json`:
   // in the fill color.
   // This option primarily serves to make the experience level text look better
   // in outline fonts. It used to act as a workaround for a misrendering issue
-  // with ImmediatelyFast but poses issues on newer versions of that mod.
+  // with ImmediatelyFast but posed issues on some later versions of that mod.
   // Starting from Caxton 0.5.0, Caxton will detect if ImmediatelyFast 1.2.0 or
   // later is present and use its API to mitigate issues with this setting
   // turned on.
@@ -240,6 +241,7 @@ The following options are available in `config/caxton.json`:
   // When drawing text in non-Caxton fonts, reuse a single `TextRenderer.Drawer`
   // instance. This avoids having to create a new object for each legacy run
   // group but can result in a crash with ImmediatelyFast.
+  // Automatically disabled if ImmediatelyFast is detected.
   // See: https://gitlab.com/Kyarei/caxton/-/issues/50
   // Added in Caxton 0.4.7.
   "reuseTextRendererDrawer": true,
@@ -359,8 +361,8 @@ Caxton would not have been possible without the following projects:
 * [RustyBuzz] (RazrFalcon, MIT)
 * [ttf-parser] (RazrFalcon, MIT/Apache-2.0)
 * [fdsm] (me, MIT)
-    * Versions before 0.5 used [msdfgen] (Chlumsky, MIT) and the [msdfgen-rs] bindings (Kayo Phoenix, MIT), both of which have subsequently been invaluable in the development of fdsm.
-    * Versions 0.2.3 and earlier used the [msdf-rs] bindings (Penple, MIT) instead.
+  * Versions before 0.5 used [msdfgen] (Chlumsky, MIT) and the [msdfgen-rs] bindings (Kayo Phoenix, MIT), both of which have subsequently been invaluable in the development of fdsm.
+  * Versions 0.2.3 and earlier used the [msdf-rs] bindings (Penple, MIT) instead.
 * [ab-glyph-rasterizer] (alexheretic, Apache-2.0)
 * [JNI bindings for Rust] (MIT/Apache-2.0)
 * [flate2] (MIT/Apache-2.0)
@@ -398,8 +400,6 @@ Caxton would not have been possible without the following projects:
 
 [Rayon]: https://github.com/rayon-rs/rayon
 
-[Cross]: https://github.com/cross-rs/cross/
-
 [Fabric-ASM]: https://github.com/Chocohead/Fabric-ASM
 
 [MixinExtras]: https://github.com/LlamaLad7/MixinExtras
@@ -410,4 +410,3 @@ The following people are also credited for translations:
 
 * IcedDog for the Chinese translation
 * JustFoxxo for the Polish translation
-
