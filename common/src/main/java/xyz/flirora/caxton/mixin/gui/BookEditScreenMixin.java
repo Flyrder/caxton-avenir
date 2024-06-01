@@ -5,6 +5,8 @@ package xyz.flirora.caxton.mixin.gui;
 import com.google.common.collect.Lists;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import java.util.ArrayList;
+import java.util.List;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.TextRenderer;
@@ -32,205 +34,287 @@ import xyz.flirora.caxton.render.CaxtonTextRenderer;
 import xyz.flirora.caxton.render.HasCaxtonTextRenderer;
 import xyz.flirora.caxton.render.Voepfxo;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Environment(EnvType.CLIENT)
 @Mixin(BookEditScreen.class)
 public abstract class BookEditScreenMixin extends Screen {
-    @Unique private static final float XSCALE = 16.0f;
-    @Shadow
-    @Final
-    private SelectionManager currentPageSelectionManager;
+  @Unique private static final float XSCALE = 16.0f;
+  @Shadow @Final private SelectionManager currentPageSelectionManager;
 
-    protected BookEditScreenMixin(Text title) {
-        super(title);
+  protected BookEditScreenMixin(Text title) {
+    super(title);
+  }
+
+  @Shadow
+  static int getLineFromOffset(int[] lineStarts, int position) {
+    return 0;
+  }
+
+  @Shadow
+  protected abstract String getCurrentPageContent();
+
+  @Shadow
+  protected abstract BookEditScreen.Position absolutePositionToScreenPosition(
+      BookEditScreen.Position position);
+
+  /**
+   * @author +merlan #flirora
+   * @reason This method requires major changes to relax the assumptions that it makes.
+   */
+  @Overwrite
+  private BookEditScreen.PageContent createPageContent() {
+    CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
+    CaxtonTextHandler cth = ctr.getHandler();
+
+    String content = this.getCurrentPageContent();
+    if (content.isEmpty()) {
+      return BookEditScreenPageContentAccessor.getEmpty();
     }
 
-    @Shadow
-    static int getLineFromOffset(int[] lineStarts, int position) {
-        return 0;
-    }
+    int selectionStart = this.currentPageSelectionManager.getSelectionStart();
+    int selectionEnd = this.currentPageSelectionManager.getSelectionEnd();
+    IntArrayList lineStartsList = new IntArrayList();
+    ArrayList<BookEditScreen.Line> lines = new ArrayList<>();
+    ArrayList<CaxtonText> caxtonTexts = new ArrayList<>(); // ← ADDED
+    MutableInt lineIndexBox = new MutableInt();
+    MutableBoolean newline = new MutableBoolean();
+    FcIndexConverter warts = new FcIndexConverter();
 
-    @Shadow
-    protected abstract String getCurrentPageContent();
-
-    @Shadow
-    protected abstract BookEditScreen.Position absolutePositionToScreenPosition(BookEditScreen.Position position);
-
-    /**
-     * @author +merlan #flirora
-     * @reason This method requires major changes to relax the assumptions that it makes.
-     */
-    @Overwrite
-    private BookEditScreen.PageContent createPageContent() {
-        CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
-        CaxtonTextHandler cth = ctr.getHandler();
-
-        String content = this.getCurrentPageContent();
-        if (content.isEmpty()) {
-            return BookEditScreenPageContentAccessor.getEmpty();
-        }
-
-        int selectionStart = this.currentPageSelectionManager.getSelectionStart();
-        int selectionEnd = this.currentPageSelectionManager.getSelectionEnd();
-        IntArrayList lineStartsList = new IntArrayList();
-        ArrayList<BookEditScreen.Line> lines = new ArrayList<>();
-        ArrayList<CaxtonText> caxtonTexts = new ArrayList<>(); // ← ADDED
-        MutableInt lineIndexBox = new MutableInt();
-        MutableBoolean newline = new MutableBoolean();
-        FcIndexConverter warts = new FcIndexConverter();
-
-        cth.wrapLines(content, 114, Style.EMPTY, true, warts, (style, start, end, rtl) -> {
-            int lineIndex = lineIndexBox.getAndIncrement();
-            String line = content.substring(start, end);
-            newline.setValue(line.endsWith("\n"));
-            String strippedLine = StringUtils.stripEnd(line, "\n");
-            int y = lineIndex * this.textRenderer.fontHeight;
-            BookEditScreen.Position screenPosition = this.absolutePositionToScreenPosition(BookEditScreenPositionAccessor.callInit(0, y));
-            lineStartsList.add(start);
-            BookEditScreen.Line bookLine = new BookEditScreen.Line(style, strippedLine, screenPosition.x, screenPosition.y);
-            lines.add(bookLine);
-            caxtonTexts.add(CaxtonText.fromFormatted(strippedLine, ctr::getFontStorage, style, Style.EMPTY, false, rtl, cth.getCache())); // ← ADDED
+    cth.wrapLines(
+        content,
+        114,
+        Style.EMPTY,
+        true,
+        warts,
+        (style, start, end, rtl) -> {
+          int lineIndex = lineIndexBox.getAndIncrement();
+          String line = content.substring(start, end);
+          newline.setValue(line.endsWith("\n"));
+          String strippedLine = StringUtils.stripEnd(line, "\n");
+          int y = lineIndex * this.textRenderer.fontHeight;
+          BookEditScreen.Position screenPosition =
+              this.absolutePositionToScreenPosition(BookEditScreenPositionAccessor.callInit(0, y));
+          lineStartsList.add(start);
+          BookEditScreen.Line bookLine =
+              new BookEditScreen.Line(style, strippedLine, screenPosition.x, screenPosition.y);
+          lines.add(bookLine);
+          caxtonTexts.add(
+              CaxtonText.fromFormatted(
+                  strippedLine,
+                  ctr::getFontStorage,
+                  style,
+                  Style.EMPTY,
+                  false,
+                  rtl,
+                  cth.getCache())); // ← ADDED
         });
-//        System.err.println(warts);
-//        System.err.println(caxtonTexts);
-        int[] lineStarts = lineStartsList.toIntArray();
-        boolean cursorAtEnd = selectionStart == content.length();
-        BookEditScreen.Position cursorPosition;
-        if (cursorAtEnd && newline.isTrue()) {
-            cursorPosition = BookEditScreenPositionAccessor.callInit(0, lines.size() * this.textRenderer.fontHeight);
-        } else {
-            int cursorLine = getLineFromOffset(lineStarts, selectionStart);
-            /*
-            int cursorX = this.textRenderer.getWidth(content.substring(lineStarts[cursorLine], selectionStart));
-             */
-            // Unfortunately, DrawableHelper.fill doesn’t have any overloads for float coordinates.
-            int a = warts.formatfulToFormatless(lineStarts[cursorLine], true);
-            int b = warts.formatfulToFormatless(selectionStart);
-            warts.reset();
-            int cursorX = Math.round(XSCALE * cth.getOffsetAtIndex(caxtonTexts.get(cursorLine), b - a, DirectionSetting.AUTO));
-            cursorPosition = BookEditScreenPositionAccessor.callInit(cursorX, cursorLine * this.textRenderer.fontHeight);
-        }
-        ArrayList<Rect2i> selectionRects = Lists.newArrayList();
-        if (selectionStart != selectionEnd) {
-            int selectionLower = Math.min(selectionStart, selectionEnd);
-            int selectionUpper = Math.max(selectionStart, selectionEnd);
-            int lowerLineIndex = getLineFromOffset(lineStarts, selectionLower);
-            int upperLineIndex = getLineFromOffset(lineStarts, selectionUpper);
-            if (lowerLineIndex == upperLineIndex) {
-                // Selection spans 1 line
-                int y = lowerLineIndex * this.textRenderer.fontHeight;
-                int lineStart = warts.formatfulToFormatless(lineStarts[lowerLineIndex], true);
-                /*
-                selectionRects.add(this.getLineSelectionRectangle(content, textHandler, selectionLower, selectionUpper, y, lineStart));
-                */
-                cth.getHighlightRanges(
-                        caxtonTexts.get(lowerLineIndex),
-                        warts.formatfulToFormatless(selectionLower) - lineStart,
-                        warts.formatfulToFormatless(selectionUpper) - lineStart,
-                        (left, right) -> selectionRects.add(
-                                this.cxGetLineSelectionRectangle(left, right, y)));
-            } else {
-                // Draw highlight for first line
-                int lineEnd = lowerLineIndex + 1 > lineStarts.length ? content.length() : lineStarts[lowerLineIndex + 1];
-                /*
-                selectionRects.add(this.getLineSelectionRectangle(content, textHandler, selectionLower, lineEnd, lowerLineIndex * this.textRenderer.fontHeight, lineStarts[lowerLineIndex]));
-                 */
-                int lineStart1 = warts.formatfulToFormatless(lineStarts[lowerLineIndex], true);
-                cth.getHighlightRanges(
-                        caxtonTexts.get(lowerLineIndex),
-                        warts.formatfulToFormatless(selectionLower) - lineStart1,
-                        warts.formatfulToFormatless(lineEnd) - lineStart1,
-                        (left, right) -> selectionRects.add(
-                                this.cxGetLineSelectionRectangle(left, right, lowerLineIndex * this.textRenderer.fontHeight)));
-
-                // Draw highlight for middle lines
-                for (int line = lowerLineIndex + 1; line < upperLineIndex; ++line) {
-                    int y = line * this.textRenderer.fontHeight;
-                    /*
-                    String lineContents = content.substring(lineStarts[line], lineStarts[line + 1]);
-                    int width = (int) textHandler.getWidth(lineContents);
-                    selectionRects.add(this.getRectFromCorners(BookEditScreenPositionAccessor.callInit(0, y), BookEditScreenPositionAccessor.callInit(width, y + this.textRenderer.fontHeight)));
-                    */
-                    float width = cth.getWidth(caxtonTexts.get(line));
-                    selectionRects.add(this.cxGetLineSelectionRectangle(0, width, y));
-                }
-
-                // Draw highlight for last line
-                /*
-                selectionRects.add(this.getLineSelectionRectangle(content, textHandler, lineStarts[upperLineIndex], selectionUpper, upperLineIndex * this.textRenderer.fontHeight, lineStarts[upperLineIndex]));
-                */
-                int a = warts.formatfulToFormatless(lineStarts[upperLineIndex], true);
-                int b = warts.formatfulToFormatless(selectionUpper);
-                cth.getHighlightRanges(
-                        caxtonTexts.get(upperLineIndex),
-                        0,
-                        b - a,
-                        (left, right) -> selectionRects.add(
-                                this.cxGetLineSelectionRectangle(left, right, upperLineIndex * this.textRenderer.fontHeight)));
-            }
-            warts.reset();
-        }
+    //        System.err.println(warts);
+    //        System.err.println(caxtonTexts);
+    int[] lineStarts = lineStartsList.toIntArray();
+    boolean cursorAtEnd = selectionStart == content.length();
+    BookEditScreen.Position cursorPosition;
+    if (cursorAtEnd && newline.isTrue()) {
+      cursorPosition =
+          BookEditScreenPositionAccessor.callInit(0, lines.size() * this.textRenderer.fontHeight);
+    } else {
+      int cursorLine = getLineFromOffset(lineStarts, selectionStart);
+      /*
+      int cursorX = this.textRenderer.getWidth(content.substring(lineStarts[cursorLine], selectionStart));
+       */
+      // Unfortunately, DrawableHelper.fill doesn’t have any overloads for float coordinates.
+      int a = warts.formatfulToFormatless(lineStarts[cursorLine], true);
+      int b = warts.formatfulToFormatless(selectionStart);
+      warts.reset();
+      int cursorX =
+          Math.round(
+              XSCALE
+                  * cth.getOffsetAtIndex(
+                      caxtonTexts.get(cursorLine), b - a, DirectionSetting.AUTO));
+      cursorPosition =
+          BookEditScreenPositionAccessor.callInit(
+              cursorX, cursorLine * this.textRenderer.fontHeight);
+    }
+    ArrayList<Rect2i> selectionRects = Lists.newArrayList();
+    if (selectionStart != selectionEnd) {
+      int selectionLower = Math.min(selectionStart, selectionEnd);
+      int selectionUpper = Math.max(selectionStart, selectionEnd);
+      int lowerLineIndex = getLineFromOffset(lineStarts, selectionLower);
+      int upperLineIndex = getLineFromOffset(lineStarts, selectionUpper);
+      if (lowerLineIndex == upperLineIndex) {
+        // Selection spans 1 line
+        int y = lowerLineIndex * this.textRenderer.fontHeight;
+        int lineStart = warts.formatfulToFormatless(lineStarts[lowerLineIndex], true);
         /*
-        return new BookEditScreen.PageContent(content, cursorPosition, cursorAtEnd, lineStarts, lines.toArray(new BookEditScreen.Line[0]), selectionRects.toArray(new Rect2i[0]));
+        selectionRects.add(this.getLineSelectionRectangle(content, textHandler, selectionLower, selectionUpper, y, lineStart));
+        */
+        cth.getHighlightRanges(
+            caxtonTexts.get(lowerLineIndex),
+            warts.formatfulToFormatless(selectionLower) - lineStart,
+            warts.formatfulToFormatless(selectionUpper) - lineStart,
+            (left, right) -> selectionRects.add(this.cxGetLineSelectionRectangle(left, right, y)));
+      } else {
+        // Draw highlight for first line
+        int lineEnd =
+            lowerLineIndex + 1 > lineStarts.length
+                ? content.length()
+                : lineStarts[lowerLineIndex + 1];
+        /*
+        selectionRects.add(this.getLineSelectionRectangle(content, textHandler, selectionLower, lineEnd, lowerLineIndex * this.textRenderer.fontHeight, lineStarts[lowerLineIndex]));
          */
-        BookEditScreen.PageContent pageContent = new BookEditScreen.PageContent(content, cursorPosition, cursorAtEnd, lineStarts, lines.toArray(new BookEditScreen.Line[0]), selectionRects.toArray(new Rect2i[0]));
-        ((BookEditScreenPageContentExt) pageContent).setCaxtonText(caxtonTexts);
-        ((BookEditScreenPageContentExt) pageContent).setWarts(warts);
-        return pageContent;
-    }
+        int lineStart1 = warts.formatfulToFormatless(lineStarts[lowerLineIndex], true);
+        cth.getHighlightRanges(
+            caxtonTexts.get(lowerLineIndex),
+            warts.formatfulToFormatless(selectionLower) - lineStart1,
+            warts.formatfulToFormatless(lineEnd) - lineStart1,
+            (left, right) ->
+                selectionRects.add(
+                    this.cxGetLineSelectionRectangle(
+                        left, right, lowerLineIndex * this.textRenderer.fontHeight)));
 
-    private Rect2i cxGetLineSelectionRectangle(float left, float right, int lineY) {
-        int x1 = Math.round(XSCALE * left), x2 = Math.round(XSCALE * right);
-        return new Rect2i(x1, lineY + 32, x2 - x1, this.textRenderer.fontHeight);
-    }
-
-    @Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;fill(Lnet/minecraft/client/render/RenderLayer;IIIII)V"), method = "drawSelection")
-    private void onVertex(DrawContext context, RenderLayer renderLayer, int x1, int y1, int x2, int y2, int color) {
-        float scx1 = x1 / XSCALE + (width - 192) / 2.0f + 36;
-        float scx2 = x2 / XSCALE + (width - 192) / 2.0f + 36;
-        Voepfxo.fill(context, renderLayer, scx1, y1, scx2, y2, color);
-    }
-
-    @ModifyExpressionValue(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ingame/BookEditScreen;getPageContent()Lnet/minecraft/client/gui/screen/ingame/BookEditScreen$PageContent;"), method = "render")
-    private BookEditScreen.PageContent drawPageContent(BookEditScreen.PageContent content, DrawContext context, int mouseX, int mouseY, float delta) {
-        List<CaxtonText> cts = ((BookEditScreenPageContentExt) content).getCaxtonText();
-        BookEditScreen.Line[] lines = ((BookEditScreenPageContentAccessor) content).getLines();
-        for (int i = 0; i < lines.length; ++i) {
-            BookEditScreen.Line line = lines[i];
-            Voepfxo.drawText(
-                    context,
-                    textRenderer,
-                    cts.get(i),
-                    ((BookEditScreenLineAccessor) line).getX(),
-                    ((BookEditScreenLineAccessor) line).getY(), 0xff000000,
-                    false);
+        // Draw highlight for middle lines
+        for (int line = lowerLineIndex + 1; line < upperLineIndex; ++line) {
+          int y = line * this.textRenderer.fontHeight;
+          /*
+          String lineContents = content.substring(lineStarts[line], lineStarts[line + 1]);
+          int width = (int) textHandler.getWidth(lineContents);
+          selectionRects.add(this.getRectFromCorners(BookEditScreenPositionAccessor.callInit(0, y), BookEditScreenPositionAccessor.callInit(width, y + this.textRenderer.fontHeight)));
+          */
+          float width = cth.getWidth(caxtonTexts.get(line));
+          selectionRects.add(this.cxGetLineSelectionRectangle(0, width, y));
         }
-        return content;
-    }
 
-    @Redirect(
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawText(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Text;IIIZ)I"),
-            slice = @Slice(
-                    from = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ingame/BookEditScreen;getPageContent()Lnet/minecraft/client/gui/screen/ingame/BookEditScreen$PageContent;")),
-            method = "render")
-    private int onDrawText(DrawContext instance, TextRenderer textRenderer, Text text, int x, int y, int color, boolean shadow) {
-        return 0;
+        // Draw highlight for last line
+        /*
+        selectionRects.add(this.getLineSelectionRectangle(content, textHandler, lineStarts[upperLineIndex], selectionUpper, upperLineIndex * this.textRenderer.fontHeight, lineStarts[upperLineIndex]));
+        */
+        int a = warts.formatfulToFormatless(lineStarts[upperLineIndex], true);
+        int b = warts.formatfulToFormatless(selectionUpper);
+        cth.getHighlightRanges(
+            caxtonTexts.get(upperLineIndex),
+            0,
+            b - a,
+            (left, right) ->
+                selectionRects.add(
+                    this.cxGetLineSelectionRectangle(
+                        left, right, upperLineIndex * this.textRenderer.fontHeight)));
+      }
+      warts.reset();
     }
+    /*
+    return new BookEditScreen.PageContent(content, cursorPosition, cursorAtEnd, lineStarts, lines.toArray(new BookEditScreen.Line[0]), selectionRects.toArray(new Rect2i[0]));
+     */
+    BookEditScreen.PageContent pageContent =
+        new BookEditScreen.PageContent(
+            content,
+            cursorPosition,
+            cursorAtEnd,
+            lineStarts,
+            lines.toArray(new BookEditScreen.Line[0]),
+            selectionRects.toArray(new Rect2i[0]));
+    ((BookEditScreenPageContentExt) pageContent).setCaxtonText(caxtonTexts);
+    ((BookEditScreenPageContentExt) pageContent).setWarts(warts);
+    return pageContent;
+  }
 
-    @Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;fill(IIIII)V"), method = "drawCursor")
-    private void fillProxyForCursor(DrawContext context, int x1, int y1, int x2, int y2, int color) {
-        x1 = x1 - (width - 192) / 2 - 36;
-        float scx1 = x1 / XSCALE + (width - 192) / 2.0f + 36;
-        float scx2 = scx1 + 1;
-        Voepfxo.fill(context, scx1, y1, scx2, y2, color);
-    }
+  private Rect2i cxGetLineSelectionRectangle(float left, float right, int lineY) {
+    int x1 = Math.round(XSCALE * left), x2 = Math.round(XSCALE * right);
+    return new Rect2i(x1, lineY + 32, x2 - x1, this.textRenderer.fontHeight);
+  }
 
-    @Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawText(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;IIIZ)I"), method = "drawCursor")
-    private int drawTextProxyForCursor(DrawContext context, TextRenderer textRenderer, String text, int x, int y, int color, boolean shadow) {
-        float x2 = x - (width - 192) / 2.0f - 36;
-        float scx = x2 / XSCALE + (width - 192) / 2.0f + 36;
-        return Voepfxo.drawText(context, textRenderer, "_", scx, y, color);
+  @Redirect(
+      at =
+          @At(
+              value = "INVOKE",
+              target =
+                  "Lnet/minecraft/client/gui/DrawContext;fill(Lnet/minecraft/client/render/RenderLayer;IIIII)V"),
+      method = "drawSelection")
+  private void onVertex(
+      DrawContext context, RenderLayer renderLayer, int x1, int y1, int x2, int y2, int color) {
+    float scx1 = x1 / XSCALE + (width - 192) / 2.0f + 36;
+    float scx2 = x2 / XSCALE + (width - 192) / 2.0f + 36;
+    Voepfxo.fill(context, renderLayer, scx1, y1, scx2, y2, color);
+  }
+
+  @ModifyExpressionValue(
+      at =
+          @At(
+              value = "INVOKE",
+              target =
+                  "Lnet/minecraft/client/gui/screen/ingame/BookEditScreen;getPageContent()Lnet/minecraft/client/gui/screen/ingame/BookEditScreen$PageContent;"),
+      method = "render")
+  private BookEditScreen.PageContent drawPageContent(
+      BookEditScreen.PageContent content,
+      DrawContext context,
+      int mouseX,
+      int mouseY,
+      float delta) {
+    List<CaxtonText> cts = ((BookEditScreenPageContentExt) content).getCaxtonText();
+    BookEditScreen.Line[] lines = ((BookEditScreenPageContentAccessor) content).getLines();
+    for (int i = 0; i < lines.length; ++i) {
+      BookEditScreen.Line line = lines[i];
+      Voepfxo.drawText(
+          context,
+          textRenderer,
+          cts.get(i),
+          ((BookEditScreenLineAccessor) line).getX(),
+          ((BookEditScreenLineAccessor) line).getY(),
+          0xff000000,
+          false);
     }
+    return content;
+  }
+
+  @Redirect(
+      at =
+          @At(
+              value = "INVOKE",
+              target =
+                  "Lnet/minecraft/client/gui/DrawContext;drawText(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Text;IIIZ)I"),
+      slice =
+          @Slice(
+              from =
+                  @At(
+                      value = "INVOKE",
+                      target =
+                          "Lnet/minecraft/client/gui/screen/ingame/BookEditScreen;getPageContent()Lnet/minecraft/client/gui/screen/ingame/BookEditScreen$PageContent;")),
+      method = "render")
+  private int onDrawText(
+      DrawContext instance,
+      TextRenderer textRenderer,
+      Text text,
+      int x,
+      int y,
+      int color,
+      boolean shadow) {
+    return 0;
+  }
+
+  @Redirect(
+      at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;fill(IIIII)V"),
+      method = "drawCursor")
+  private void fillProxyForCursor(DrawContext context, int x1, int y1, int x2, int y2, int color) {
+    x1 = x1 - (width - 192) / 2 - 36;
+    float scx1 = x1 / XSCALE + (width - 192) / 2.0f + 36;
+    float scx2 = scx1 + 1;
+    Voepfxo.fill(context, scx1, y1, scx2, y2, color);
+  }
+
+  @Redirect(
+      at =
+          @At(
+              value = "INVOKE",
+              target =
+                  "Lnet/minecraft/client/gui/DrawContext;drawText(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;IIIZ)I"),
+      method = "drawCursor")
+  private int drawTextProxyForCursor(
+      DrawContext context,
+      TextRenderer textRenderer,
+      String text,
+      int x,
+      int y,
+      int color,
+      boolean shadow) {
+    float x2 = x - (width - 192) / 2.0f - 36;
+    float scx = x2 / XSCALE + (width - 192) / 2.0f + 36;
+    return Voepfxo.drawText(context, textRenderer, "_", scx, y, color);
+  }
 }

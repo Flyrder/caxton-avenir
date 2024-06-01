@@ -11,6 +11,6 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Environment(EnvType.CLIENT)
 @Mixin(DrawContext.class)
 public interface DrawContextAccessor {
-    @Invoker("tryDraw")
-    void callDraw();
+  @Invoker("tryDraw")
+  void callDraw();
 }

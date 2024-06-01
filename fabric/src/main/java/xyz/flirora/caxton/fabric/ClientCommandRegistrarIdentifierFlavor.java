@@ -12,24 +12,28 @@ import xyz.flirora.caxton.command.ClientCommand;
 import xyz.flirora.caxton.command.ClientCommandRegistrar;
 import xyz.flirora.caxton.command.GenericArgumentBuilderFactory;
 
-
 public record ClientCommandRegistrarIdentifierFlavor(
-        CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess) implements ClientCommandRegistrar {
-    @Override
-    public void registerClientCommand(GenericArgumentBuilderFactory builder, ClientCommand command) {
-        dispatcher.register(builder.create(context -> command.run(context, new ClientCommandSourceIdentifierEdition(context.getSource())), this.registryAccess));
-    }
+    CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess)
+    implements ClientCommandRegistrar {
+  @Override
+  public void registerClientCommand(GenericArgumentBuilderFactory builder, ClientCommand command) {
+    dispatcher.register(
+        builder.create(
+            context ->
+                command.run(context, new ClientCommandSourceIdentifierEdition(context.getSource())),
+            this.registryAccess));
+  }
 
-    private static int reportResult(Either<Text, Text> result, CommandContext<FabricClientCommandSource> context) {
-        return result.map(
-                err -> {
-                    context.getSource().sendError(err);
-                    return 0;
-                },
-                msg -> {
-                    context.getSource().sendFeedback(msg);
-                    return 1;
-                }
-        );
-    }
+  private static int reportResult(
+      Either<Text, Text> result, CommandContext<FabricClientCommandSource> context) {
+    return result.map(
+        err -> {
+          context.getSource().sendError(err);
+          return 0;
+        },
+        msg -> {
+          context.getSource().sendFeedback(msg);
+          return 1;
+        });
+  }
 }

@@ -17,12 +17,10 @@ import xyz.flirora.caxton.layout.gui.TextFieldWidgetExt;
 @Environment(EnvType.CLIENT)
 @Mixin(ChatInputSuggestor.class)
 public class ChatInputSuggestorMixin {
-    @Shadow
-    @Final
-    TextFieldWidget textField;
+  @Shadow @Final TextFieldWidget textField;
 
-    @Inject(at = @At("RETURN"), method = "refresh")
-    private void afterRefresh(CallbackInfo ci) {
-        ((TextFieldWidgetExt) textField).updateCaxtonText(false);
-    }
+  @Inject(at = @At("RETURN"), method = "refresh")
+  private void afterRefresh(CallbackInfo ci) {
+    ((TextFieldWidgetExt) textField).updateCaxtonText(false);
+  }
 }

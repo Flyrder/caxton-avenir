@@ -9,6 +9,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(FontManager.class)
 public interface FontManagerAccessor {
-    @Accessor
-    FontStorage getMissingStorage();
+  @Accessor
+  FontStorage getMissingStorage();
 }

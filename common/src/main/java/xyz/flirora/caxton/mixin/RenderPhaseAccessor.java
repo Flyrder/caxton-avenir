@@ -11,6 +11,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Environment(EnvType.CLIENT)
 @Mixin(RenderPhase.class)
 public interface RenderPhaseAccessor {
-    @Accessor
-    String getName();
+  @Accessor
+  String getName();
 }

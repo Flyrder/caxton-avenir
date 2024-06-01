@@ -11,6 +11,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Environment(EnvType.CLIENT)
 @Mixin(TextHandler.class)
 public interface TextHandlerAccessor {
-    @Accessor
-    TextHandler.WidthRetriever getWidthRetriever();
+  @Accessor
+  TextHandler.WidthRetriever getWidthRetriever();
 }

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 @Environment(EnvType.CLIENT)
 public interface ShaderExt {
-    @Nullable GlUniform caxton$getUnitRange();
+  @Nullable GlUniform caxton$getUnitRange();
 
-    void caxton$initUniforms();
+  void caxton$initUniforms();
 }

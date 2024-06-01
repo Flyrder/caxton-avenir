@@ -4,6 +4,7 @@ package xyz.flirora.caxton.render;
 
 import com.google.common.collect.ImmutableSet;
 import com.mojang.blaze3d.systems.RenderSystem;
+import java.util.*;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.BufferBuilder;
@@ -12,91 +13,90 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import xyz.flirora.caxton.mixin.RenderPhaseAccessor;
 
-import java.util.*;
-
-/**
- * A version of {@link VertexConsumerProvider.Immediate} that retains all
- * Caxton text layers.
- */
+/** A version of {@link VertexConsumerProvider.Immediate} that retains all Caxton text layers. */
 @Environment(EnvType.CLIENT)
 public class WorldRendererVertexConsumerProvider extends VertexConsumerProvider.Immediate {
-    private static final Set<String> CAXTON_TEXT_RENDER_LAYER_NAMES = ImmutableSet.of("caxton_text", "caxton_text_see_through", "caxton_text_outline");
+  private static final Set<String> CAXTON_TEXT_RENDER_LAYER_NAMES =
+      ImmutableSet.of("caxton_text", "caxton_text_see_through", "caxton_text_outline");
 
-    private static final Map<RenderLayer, BufferBuilder> caxtonTextLayerBuilders = new HashMap<>();
+  private static final Map<RenderLayer, BufferBuilder> caxtonTextLayerBuilders = new HashMap<>();
 
-    public WorldRendererVertexConsumerProvider(BufferBuilder fallbackBuffer, Map<RenderLayer, BufferBuilder> layerBuffers) {
-        super(fallbackBuffer, layerBuffers);
+  public WorldRendererVertexConsumerProvider(
+      BufferBuilder fallbackBuffer, Map<RenderLayer, BufferBuilder> layerBuffers) {
+    super(fallbackBuffer, layerBuffers);
+  }
+
+  private static boolean isCaxtonTextLayer(RenderLayer layer) {
+    return CAXTON_TEXT_RENDER_LAYER_NAMES.contains(((RenderPhaseAccessor) layer).getName());
+  }
+
+  // The following methods are copied from VertexConsumerProvider.Immediate
+  // (with some renaming).
+  @Override
+  public VertexConsumer getBuffer(RenderLayer renderLayer) {
+    Optional<RenderLayer> optional = renderLayer.asOptional();
+    BufferBuilder bufferBuilder = this.getBufferInternal(renderLayer);
+    if (!Objects.equals(this.currentLayer, optional) || !renderLayer.areVerticesNotShared()) {
+      RenderLayer currentLayer;
+      if (this.currentLayer.isPresent()
+          && !isCaxtonTextLayer(currentLayer = this.currentLayer.get())
+          && !this.layerBuffers.containsKey(currentLayer)) {
+        this.draw(currentLayer);
+      }
+      if (this.activeConsumers.add(bufferBuilder)) {
+        bufferBuilder.begin(renderLayer.getDrawMode(), renderLayer.getVertexFormat());
+      }
+      this.currentLayer = optional;
     }
+    return bufferBuilder;
+  }
 
-    private static boolean isCaxtonTextLayer(RenderLayer layer) {
-        return CAXTON_TEXT_RENDER_LAYER_NAMES.contains(((RenderPhaseAccessor) layer).getName());
+  private BufferBuilder getBufferInternal(RenderLayer layer) {
+    if (isCaxtonTextLayer(layer)) {
+      return caxtonTextLayerBuilders.computeIfAbsent(layer, l -> new BufferBuilder(256));
     }
+    return this.layerBuffers.getOrDefault(layer, this.fallbackBuffer);
+  }
 
-    // The following methods are copied from VertexConsumerProvider.Immediate
-    // (with some renaming).
-    @Override
-    public VertexConsumer getBuffer(RenderLayer renderLayer) {
-        Optional<RenderLayer> optional = renderLayer.asOptional();
-        BufferBuilder bufferBuilder = this.getBufferInternal(renderLayer);
-        if (!Objects.equals(this.currentLayer, optional) || !renderLayer.areVerticesNotShared()) {
-            RenderLayer currentLayer;
-            if (this.currentLayer.isPresent() && !isCaxtonTextLayer(currentLayer = this.currentLayer.get()) && !this.layerBuffers.containsKey(currentLayer)) {
-                this.draw(currentLayer);
-            }
-            if (this.activeConsumers.add(bufferBuilder)) {
-                bufferBuilder.begin(renderLayer.getDrawMode(), renderLayer.getVertexFormat());
-            }
-            this.currentLayer = optional;
-        }
-        return bufferBuilder;
+  @Override
+  public void drawCurrentLayer() {
+    if (this.currentLayer.isPresent()) {
+      RenderLayer renderLayer = this.currentLayer.get();
+      if (!isCaxtonTextLayer(renderLayer) && !this.layerBuffers.containsKey(renderLayer)) {
+        this.draw(renderLayer);
+      }
+      this.currentLayer = Optional.empty();
     }
+  }
 
-    private BufferBuilder getBufferInternal(RenderLayer layer) {
-        if (isCaxtonTextLayer(layer)) {
-            return caxtonTextLayerBuilders.computeIfAbsent(layer, l -> new BufferBuilder(256));
-        }
-        return this.layerBuffers.getOrDefault(layer, this.fallbackBuffer);
-    }
+  @Override
+  public void draw() {
+    super.draw();
+    this.drawCaxtonTextLayers();
+  }
 
-    @Override
-    public void drawCurrentLayer() {
-        if (this.currentLayer.isPresent()) {
-            RenderLayer renderLayer = this.currentLayer.get();
-            if (!isCaxtonTextLayer(renderLayer) && !this.layerBuffers.containsKey(renderLayer)) {
-                this.draw(renderLayer);
-            }
-            this.currentLayer = Optional.empty();
-        }
+  public void drawCaxtonTextLayers() {
+    for (RenderLayer renderLayer : caxtonTextLayerBuilders.keySet()) {
+      this.draw(renderLayer);
     }
+  }
 
-    @Override
-    public void draw() {
-        super.draw();
-        this.drawCaxtonTextLayers();
+  // This must be overridden because the implementation in
+  // VertexConsumerProvider.Immediate calls its own getBufferInternal method,
+  // which is not overridden by this class’s implementation.
+  @Override
+  public void draw(RenderLayer layer) {
+    BufferBuilder bufferBuilder = this.getBufferInternal(layer);
+    boolean layerIsCurrent = Objects.equals(this.currentLayer, layer.asOptional());
+    if (!layerIsCurrent && bufferBuilder == this.fallbackBuffer) {
+      return;
     }
-
-    public void drawCaxtonTextLayers() {
-        for (RenderLayer renderLayer : caxtonTextLayerBuilders.keySet()) {
-            this.draw(renderLayer);
-        }
+    if (!this.activeConsumers.remove(bufferBuilder)) {
+      return;
     }
-
-    // This must be overridden because the implementation in
-    // VertexConsumerProvider.Immediate calls its own getBufferInternal method,
-    // which is not overridden by this class’s implementation.
-    @Override
-    public void draw(RenderLayer layer) {
-        BufferBuilder bufferBuilder = this.getBufferInternal(layer);
-        boolean layerIsCurrent = Objects.equals(this.currentLayer, layer.asOptional());
-        if (!layerIsCurrent && bufferBuilder == this.fallbackBuffer) {
-            return;
-        }
-        if (!this.activeConsumers.remove(bufferBuilder)) {
-            return;
-        }
-        layer.draw(bufferBuilder, RenderSystem.getVertexSorting());
-        if (layerIsCurrent) {
-            this.currentLayer = Optional.empty();
-        }
+    layer.draw(bufferBuilder, RenderSystem.getVertexSorting());
+    if (layerIsCurrent) {
+      this.currentLayer = Optional.empty();
     }
+  }
 }

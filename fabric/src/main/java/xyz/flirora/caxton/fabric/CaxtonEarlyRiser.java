@@ -9,16 +9,18 @@ import xyz.flirora.caxton.font.CaxtonFontLoader;
 
 /**
  * An early riser for the Caxton mod.
- * <p>
- * This has the primary purpose of adding a variant to the {@link net.minecraft.client.font.FontType} enum. It also initializes MixinExtras.
+ *
+ * <p>This has the primary purpose of adding a variant to the {@link
+ * net.minecraft.client.font.FontType} enum. It also initializes MixinExtras.
  */
 public class CaxtonEarlyRiser implements Runnable {
-    @Override
-    public void run() {
-        MappingResolver remapper = FabricLoader.getInstance().getMappingResolver();
+  @Override
+  public void run() {
+    MappingResolver remapper = FabricLoader.getInstance().getMappingResolver();
 
-        String fontType = remapper.mapClassName("intermediary", "net.minecraft.class_394");
-        ClassTinkerers.enumBuilder(fontType, String.class, "Lcom/mojang/serialization/MapCodec;")
-                .addEnum("CAXTON", () -> new Object[]{"caxton", CaxtonFontLoader.CODEC}).build();
-    }
+    String fontType = remapper.mapClassName("intermediary", "net.minecraft.class_394");
+    ClassTinkerers.enumBuilder(fontType, String.class, "Lcom/mojang/serialization/MapCodec;")
+        .addEnum("CAXTON", () -> new Object[] {"caxton", CaxtonFontLoader.CODEC})
+        .build();
+  }
 }

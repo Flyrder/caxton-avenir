@@ -7,126 +7,129 @@ import net.fabricmc.api.Environment;
 import xyz.flirora.caxton.font.CaxtonFont;
 
 /*
- 0 | glyph id, plus (1 << 16) if unsafe_to_break
- 1 | cluster index
- 2 | x advance
- 3 | y advance
- 4 | x offset
- 5 | y offset
+0 | glyph id, plus (1 << 16) if unsafe_to_break
+1 | cluster index
+2 | x advance
+3 | y advance
+4 | x offset
+5 | y offset
 
- note to self: glyphs are returned in visual order!
- This means that the codepoint indices will be returned in descending order for RTL text.
- */
+note to self: glyphs are returned in visual order!
+This means that the codepoint indices will be returned in descending order for RTL text.
+*/
 @Environment(EnvType.CLIENT)
 public record ShapingResult(int[] data, int totalWidth, int totalLength) {
-    public ShapingResult {
-        if (data.length % 6 != 0) {
-            throw new IllegalArgumentException("length of data must be divisible by 6");
-        }
+  public ShapingResult {
+    if (data.length % 6 != 0) {
+      throw new IllegalArgumentException("length of data must be divisible by 6");
     }
+  }
 
-    public int numGlyphs() {
-        return data.length / 6;
-    }
+  public int numGlyphs() {
+    return data.length / 6;
+  }
 
-    public int glyphId(int i) {
-        return data[6 * i] & 0xFF_FFFF;
-    }
+  public int glyphId(int i) {
+    return data[6 * i] & 0xFF_FFFF;
+  }
 
-    public boolean isUnsafeToBreak(int i) {
-        return (data[6 * i] & 0x100_0000) != 0;
-    }
+  public boolean isUnsafeToBreak(int i) {
+    return (data[6 * i] & 0x100_0000) != 0;
+  }
 
-    public int clusterIndex(int i) {
-        return data[6 * i + 1];
-    }
+  public int clusterIndex(int i) {
+    return data[6 * i + 1];
+  }
 
-    private int leftboundLimit(int i) {
-        int curr = clusterIndex(i);
-        for (int j = i - 1; j >= 0; --j) {
-            int prev = clusterIndex(j);
-            if (prev != curr) return prev;
-        }
-        return -1;
+  private int leftboundLimit(int i) {
+    int curr = clusterIndex(i);
+    for (int j = i - 1; j >= 0; --j) {
+      int prev = clusterIndex(j);
+      if (prev != curr) return prev;
     }
+    return -1;
+  }
 
-    private int rightboundLimit(int i) {
-        int curr = clusterIndex(i);
-        for (int j = i + 1; j < this.numGlyphs(); ++j) {
-            int next = clusterIndex(j);
-            if (next != curr) return next;
-        }
-        return -1;
+  private int rightboundLimit(int i) {
+    int curr = clusterIndex(i);
+    for (int j = i + 1; j < this.numGlyphs(); ++j) {
+      int next = clusterIndex(j);
+      if (next != curr) return next;
     }
+    return -1;
+  }
 
-    public int clusterLimit(int i) {
-        int curr = clusterIndex(i);
-        int prev = this.leftboundLimit(i);
-        int next = this.rightboundLimit(i);
-        if (prev < 0 && next < curr) {
-            prev = this.totalLength;
-        }
-        if (next < 0 && prev < curr) {
-            next = this.totalLength;
-        }
-        return prev > next ? prev : next;
+  public int clusterLimit(int i) {
+    int curr = clusterIndex(i);
+    int prev = this.leftboundLimit(i);
+    int next = this.rightboundLimit(i);
+    if (prev < 0 && next < curr) {
+      prev = this.totalLength;
     }
+    if (next < 0 && prev < curr) {
+      next = this.totalLength;
+    }
+    return prev > next ? prev : next;
+  }
 
-    public int advanceX(int i) {
-        return data[6 * i + 2];
-    }
+  public int advanceX(int i) {
+    return data[6 * i + 2];
+  }
 
-    public int advanceY(int i) {
-        return data[6 * i + 3];
-    }
+  public int advanceY(int i) {
+    return data[6 * i + 3];
+  }
 
-    public int offsetX(int i) {
-        return data[6 * i + 4];
-    }
+  public int offsetX(int i) {
+    return data[6 * i + 4];
+  }
 
-    public int offsetY(int i) {
-        return data[6 * i + 5];
-    }
+  public int offsetY(int i) {
+    return data[6 * i + 5];
+  }
 
-    public String toString() {
-        StringBuilder builder = new StringBuilder("ShapingResult[glyphs=[");
-        this.serializeGlyphs(builder, null);
-        builder.append("], totalWidth=");
-        builder.append(totalWidth);
-        builder.append("]");
-        return builder.toString();
-    }
+  public String toString() {
+    StringBuilder builder = new StringBuilder("ShapingResult[glyphs=[");
+    this.serializeGlyphs(builder, null);
+    builder.append("], totalWidth=");
+    builder.append(totalWidth);
+    builder.append("]");
+    return builder.toString();
+  }
 
-    public void serializeGlyphs(StringBuilder builder, CaxtonFont font) {
-        // Emulate HB’s serialization format. *sigh*
-        // https://harfbuzz.github.io/harfbuzz-hb-buffer.html#hb-buffer-serialize-glyphs
-        for (int i = 0; i < numGlyphs(); ++i) {
-            if (i > 0) {
-                builder.append("|");
-            }
-            if (font != null) {
-                builder.append(font.getGlyphName(glyphId(i)));
-            } else {
-                builder.append(glyphId(i));
-            }
-            if (isUnsafeToBreak(i)) {
-                builder.append("!");
-            }
-            builder.append("=");
-            builder.append(clusterIndex(i));
-            int offsetX = offsetX(i), offsetY = offsetY(i), advanceX = advanceX(i), advanceY = advanceY(i);
-            if (offsetX != 0 || offsetY != 0) {
-                builder.append("@");
-                builder.append(offsetX);
-                builder.append(",");
-                builder.append(offsetY);
-            }
-            builder.append("+");
-            builder.append(advanceX);
-            if (advanceY != 0) {
-                builder.append(",");
-                builder.append(advanceY);
-            }
-        }
+  public void serializeGlyphs(StringBuilder builder, CaxtonFont font) {
+    // Emulate HB’s serialization format. *sigh*
+    // https://harfbuzz.github.io/harfbuzz-hb-buffer.html#hb-buffer-serialize-glyphs
+    for (int i = 0; i < numGlyphs(); ++i) {
+      if (i > 0) {
+        builder.append("|");
+      }
+      if (font != null) {
+        builder.append(font.getGlyphName(glyphId(i)));
+      } else {
+        builder.append(glyphId(i));
+      }
+      if (isUnsafeToBreak(i)) {
+        builder.append("!");
+      }
+      builder.append("=");
+      builder.append(clusterIndex(i));
+      int offsetX = offsetX(i),
+          offsetY = offsetY(i),
+          advanceX = advanceX(i),
+          advanceY = advanceY(i);
+      if (offsetX != 0 || offsetY != 0) {
+        builder.append("@");
+        builder.append(offsetX);
+        builder.append(",");
+        builder.append(offsetY);
+      }
+      builder.append("+");
+      builder.append(advanceX);
+      if (advanceY != 0) {
+        builder.append(",");
+        builder.append(advanceY);
+      }
     }
+  }
 }

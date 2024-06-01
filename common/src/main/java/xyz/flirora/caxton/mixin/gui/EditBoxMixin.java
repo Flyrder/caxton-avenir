@@ -18,47 +18,82 @@ import xyz.flirora.caxton.render.HasCaxtonTextRenderer;
 
 @Mixin(EditBox.class)
 public abstract class EditBoxMixin {
-    @Shadow
-    private int cursor;
-    @Unique private int ttwLength;
+  @Shadow private int cursor;
+  @Unique private int ttwLength;
 
-    @Shadow
-    protected abstract EditBox.Substring getCurrentLine();
+  @Shadow
+  protected abstract EditBox.Substring getCurrentLine();
 
-    @ModifyArg(method = "moveCursorLine", at = @At(value = "INVOKE", target = "Ljava/lang/String;substring(II)Ljava/lang/String;", ordinal = 0), index = 1)
-    private int forceEntireLine(int cursor) {
-        return this.getCurrentLine().endIndex();
-    }
+  @ModifyArg(
+      method = "moveCursorLine",
+      at =
+          @At(
+              value = "INVOKE",
+              target = "Ljava/lang/String;substring(II)Ljava/lang/String;",
+              ordinal = 0),
+      index = 1)
+  private int forceEntireLine(int cursor) {
+    return this.getCurrentLine().endIndex();
+  }
 
-    @Redirect(method = "moveCursorLine", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/font/TextRenderer;getWidth(Ljava/lang/String;)I", ordinal = 0))
-    private int redirectGetWidth(TextRenderer textRenderer, String text) {
-        // text contains the contents of the whole line rather than up to the cursor
-        CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
-        CaxtonText caxtonText = CaxtonText.fromForwards(text, ctr::getFontStorage, Style.EMPTY, false, false, ctr.getHandler().getCache());
-        return Math.round(ctr.getHandler().getOffsetAtIndex(caxtonText, this.cursor - this.getCurrentLine().beginIndex(), DirectionSetting.AUTO));
-    }
+  @Redirect(
+      method = "moveCursorLine",
+      at =
+          @At(
+              value = "INVOKE",
+              target = "Lnet/minecraft/client/font/TextRenderer;getWidth(Ljava/lang/String;)I",
+              ordinal = 0))
+  private int redirectGetWidth(TextRenderer textRenderer, String text) {
+    // text contains the contents of the whole line rather than up to the cursor
+    CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
+    CaxtonText caxtonText =
+        CaxtonText.fromForwards(
+            text, ctr::getFontStorage, Style.EMPTY, false, false, ctr.getHandler().getCache());
+    return Math.round(
+        ctr.getHandler()
+            .getOffsetAtIndex(
+                caxtonText,
+                this.cursor - this.getCurrentLine().beginIndex(),
+                DirectionSetting.AUTO));
+  }
 
-    @Redirect(method = "moveCursorLine", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/font/TextRenderer;trimToWidth(Ljava/lang/String;I)Ljava/lang/String;"))
-    private String redirectTrimToWidthL(TextRenderer textRenderer, String text, int maxWidth) {
-        // reinterpreted to be getCharIndexAtX
-        this.ttwLength = textRenderer.getTextHandler().getTrimmedLength(text, maxWidth, Style.EMPTY);
-        return null;
-    }
+  @Redirect(
+      method = "moveCursorLine",
+      at =
+          @At(
+              value = "INVOKE",
+              target =
+                  "Lnet/minecraft/client/font/TextRenderer;trimToWidth(Ljava/lang/String;I)Ljava/lang/String;"))
+  private String redirectTrimToWidthL(TextRenderer textRenderer, String text, int maxWidth) {
+    // reinterpreted to be getCharIndexAtX
+    this.ttwLength = textRenderer.getTextHandler().getTrimmedLength(text, maxWidth, Style.EMPTY);
+    return null;
+  }
 
-    @Redirect(method = "moveCursorLine", at = @At(value = "INVOKE", target = "Ljava/lang/String;length()I"))
-    private int redirectTrimmedStringLengthL(String s) {
-        return ttwLength;
-    }
+  @Redirect(
+      method = "moveCursorLine",
+      at = @At(value = "INVOKE", target = "Ljava/lang/String;length()I"))
+  private int redirectTrimmedStringLengthL(String s) {
+    return ttwLength;
+  }
 
-    @Redirect(method = "moveCursor(DD)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/font/TextRenderer;trimToWidth(Ljava/lang/String;I)Ljava/lang/String;"))
-    private String redirectTrimToWidthXy(TextRenderer textRenderer, String text, int maxWidth) {
-        // reinterpreted to be getCharIndexAtX
-        this.ttwLength = textRenderer.getTextHandler().getTrimmedLength(text, maxWidth, Style.EMPTY);
-        return null;
-    }
+  @Redirect(
+      method = "moveCursor(DD)V",
+      at =
+          @At(
+              value = "INVOKE",
+              target =
+                  "Lnet/minecraft/client/font/TextRenderer;trimToWidth(Ljava/lang/String;I)Ljava/lang/String;"))
+  private String redirectTrimToWidthXy(TextRenderer textRenderer, String text, int maxWidth) {
+    // reinterpreted to be getCharIndexAtX
+    this.ttwLength = textRenderer.getTextHandler().getTrimmedLength(text, maxWidth, Style.EMPTY);
+    return null;
+  }
 
-    @Redirect(method = "moveCursor(DD)V", at = @At(value = "INVOKE", target = "Ljava/lang/String;length()I"))
-    private int redirectTrimmedStringLengthXy(String s) {
-        return ttwLength;
-    }
+  @Redirect(
+      method = "moveCursor(DD)V",
+      at = @At(value = "INVOKE", target = "Ljava/lang/String;length()I"))
+  private int redirectTrimmedStringLengthXy(String s) {
+    return ttwLength;
+  }
 }

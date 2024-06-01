@@ -18,24 +18,24 @@ import xyz.flirora.caxton.render.ShaderExt;
 @Environment(EnvType.CLIENT)
 @Mixin(ShaderProgram.class)
 public abstract class ShaderMixin implements ShaderExt {
-    @Unique @Nullable private GlUniform unitRange;
+  @Unique @Nullable private GlUniform unitRange;
 
-    @Override
-    public @Nullable GlUniform caxton$getUnitRange() {
-        return unitRange;
-    }
+  @Override
+  public @Nullable GlUniform caxton$getUnitRange() {
+    return unitRange;
+  }
 
-    @Override
-    public void caxton$initUniforms() {
-        this.unitRange = this.getUniform("UnitRange");
-    }
+  @Override
+  public void caxton$initUniforms() {
+    this.unitRange = this.getUniform("UnitRange");
+  }
 
-    @Shadow
-    public abstract @Nullable GlUniform getUniform(String name);
+  @Shadow
+  public abstract @Nullable GlUniform getUniform(String name);
 
-    // We have to match a pattern
-    @Inject(at = @At("RETURN"), method = "/^<init>$/")
-    private void onInit(CallbackInfo ci) {
-        this.caxton$initUniforms();
-    }
+  // We have to match a pattern
+  @Inject(at = @At("RETURN"), method = "/^<init>$/")
+  private void onInit(CallbackInfo ci) {
+    this.caxton$initUniforms();
+  }
 }

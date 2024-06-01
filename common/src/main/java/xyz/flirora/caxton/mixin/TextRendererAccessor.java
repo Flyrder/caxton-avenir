@@ -10,10 +10,9 @@ import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
-
 @Environment(EnvType.CLIENT)
 @Mixin(TextRenderer.class)
 public interface TextRendererAccessor {
-    @Invoker
-    FontStorage callGetFontStorage(Identifier id);
+  @Invoker
+  FontStorage callGetFontStorage(Identifier id);
 }

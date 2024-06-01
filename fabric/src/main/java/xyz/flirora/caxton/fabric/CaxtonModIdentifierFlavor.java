@@ -18,38 +18,46 @@ import xyz.flirora.caxton.render.CaxtonShaders;
 import xyz.flirora.caxton.render.CaxtonVertexFormats;
 
 public class CaxtonModIdentifierFlavor implements ClientModInitializer {
-    @Override
-    public void onInitializeClient() {
-        CaxtonModClient.init(new PlatformHooksIdentifierFlavor());
+  @Override
+  public void onInitializeClient() {
+    CaxtonModClient.init(new PlatformHooksIdentifierFlavor());
 
-        ModContainer modContainer = FabricLoader.getInstance().getModContainer(CaxtonModClient.MOD_ID).get();
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            CaxtonCommands.register(new ClientCommandRegistrarIdentifierFlavor(dispatcher, registryAccess));
+    ModContainer modContainer =
+        FabricLoader.getInstance().getModContainer(CaxtonModClient.MOD_ID).get();
+    ClientCommandRegistrationCallback.EVENT.register(
+        (dispatcher, registryAccess) -> {
+          CaxtonCommands.register(
+              new ClientCommandRegistrarIdentifierFlavor(dispatcher, registryAccess));
         });
-        CaxtonModClient.LOGGER.info("Registering built-in resource packs");
-        for (String id : CaxtonModClient.BUILTIN_PACKS) {
-            ResourceManagerHelper.registerBuiltinResourcePack(new Identifier(CaxtonModClient.MOD_ID, id), modContainer, Text.translatable("caxton.resourcePack." + id), ResourcePackActivationType.NORMAL);
-        }
-        CaxtonModClient.LOGGER.info("Registering core shaders");
-        CoreShaderRegistrationCallback.EVENT.register(context -> {
-            context.register(
-                    CaxtonShaders.TEXT_ID,
-                    VertexFormats.POSITION_COLOR_TEXTURE_LIGHT,
-                    shader -> {
-                        CaxtonShaders.caxtonTextShader = shader;
-                    });
-            context.register(
-                    CaxtonShaders.TEXT_SEE_THROUGH_ID,
-                    VertexFormats.POSITION_COLOR_TEXTURE_LIGHT,
-                    shader -> {
-                        CaxtonShaders.caxtonTextSeeThroughShader = shader;
-                    });
-            context.register(
-                    CaxtonShaders.TEXT_OUTLINE_ID,
-                    CaxtonVertexFormats.POSITION_COLOR_COLOR_TEXTURE_LIGHT,
-                    shader -> {
-                        CaxtonShaders.caxtonTextOutlineShader = shader;
-                    });
-        });
+    CaxtonModClient.LOGGER.info("Registering built-in resource packs");
+    for (String id : CaxtonModClient.BUILTIN_PACKS) {
+      ResourceManagerHelper.registerBuiltinResourcePack(
+          new Identifier(CaxtonModClient.MOD_ID, id),
+          modContainer,
+          Text.translatable("caxton.resourcePack." + id),
+          ResourcePackActivationType.NORMAL);
     }
+    CaxtonModClient.LOGGER.info("Registering core shaders");
+    CoreShaderRegistrationCallback.EVENT.register(
+        context -> {
+          context.register(
+              CaxtonShaders.TEXT_ID,
+              VertexFormats.POSITION_COLOR_TEXTURE_LIGHT,
+              shader -> {
+                CaxtonShaders.caxtonTextShader = shader;
+              });
+          context.register(
+              CaxtonShaders.TEXT_SEE_THROUGH_ID,
+              VertexFormats.POSITION_COLOR_TEXTURE_LIGHT,
+              shader -> {
+                CaxtonShaders.caxtonTextSeeThroughShader = shader;
+              });
+          context.register(
+              CaxtonShaders.TEXT_OUTLINE_ID,
+              CaxtonVertexFormats.POSITION_COLOR_COLOR_TEXTURE_LIGHT,
+              shader -> {
+                CaxtonShaders.caxtonTextOutlineShader = shader;
+              });
+        });
+  }
 }

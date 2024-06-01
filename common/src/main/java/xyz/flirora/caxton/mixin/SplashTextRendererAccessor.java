@@ -11,6 +11,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Environment(EnvType.CLIENT)
 @Mixin(SplashTextRenderer.class)
 public interface SplashTextRendererAccessor {
-    @Accessor
-    String getText();
+  @Accessor
+  String getText();
 }

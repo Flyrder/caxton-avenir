@@ -11,8 +11,8 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Environment(EnvType.CLIENT)
 @Mixin(BookEditScreen.Position.class)
 public interface BookEditScreenPositionAccessor {
-    @Invoker("<init>")
-    static BookEditScreen.Position callInit(int x, int y) {
-        return null;
-    }
+  @Invoker("<init>")
+  static BookEditScreen.Position callInit(int x, int y) {
+    return null;
+  }
 }

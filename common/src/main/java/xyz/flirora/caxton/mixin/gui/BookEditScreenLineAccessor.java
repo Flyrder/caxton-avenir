@@ -12,12 +12,12 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Environment(EnvType.CLIENT)
 @Mixin(BookEditScreen.Line.class)
 public interface BookEditScreenLineAccessor {
-    @Accessor("x")
-    int getX();
+  @Accessor("x")
+  int getX();
 
-    @Accessor("y")
-    int getY();
+  @Accessor("y")
+  int getY();
 
-    @Accessor("text")
-    Text getText();
+  @Accessor("text")
+  Text getText();
 }

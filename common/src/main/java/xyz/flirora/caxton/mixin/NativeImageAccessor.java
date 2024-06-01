@@ -11,8 +11,9 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Environment(EnvType.CLIENT)
 @Mixin(NativeImage.class)
 public interface NativeImageAccessor {
-    @Invoker("<init>")
-    static NativeImage callInit(NativeImage.Format format, int width, int height, boolean useStb, long pointer) {
-        throw new UnsupportedOperationException("this is a mixin");
-    }
+  @Invoker("<init>")
+  static NativeImage callInit(
+      NativeImage.Format format, int width, int height, boolean useStb, long pointer) {
+    throw new UnsupportedOperationException("this is a mixin");
+  }
 }

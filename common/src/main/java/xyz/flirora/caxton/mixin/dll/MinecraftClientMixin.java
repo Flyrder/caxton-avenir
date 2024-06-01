@@ -15,11 +15,11 @@ import xyz.flirora.caxton.dll.LibraryLoading;
 @Environment(EnvType.CLIENT)
 @Mixin(MinecraftClient.class)
 public class MinecraftClientMixin {
-    @Inject(at = @At("RETURN"), method = "<init>")
-    private void onInit(RunArgs args, CallbackInfo ci) {
-        Exception e = LibraryLoading.getLoadingException();
-        if (e != null) {
-            LibraryLoading.showNativeLibraryLoadFailedScreen((MinecraftClient) (Object) this, e);
-        }
+  @Inject(at = @At("RETURN"), method = "<init>")
+  private void onInit(RunArgs args, CallbackInfo ci) {
+    Exception e = LibraryLoading.getLoadingException();
+    if (e != null) {
+      LibraryLoading.showNativeLibraryLoadFailedScreen((MinecraftClient) (Object) this, e);
     }
+  }
 }

@@ -6,23 +6,25 @@ import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.PlatformHooks;
 
 /**
- * An interface wrapping ImmediatelyFast’s API so that it can be used without a hard dependency on that mod.
+ * An interface wrapping ImmediatelyFast’s API so that it can be used without a hard dependency on
+ * that mod.
  */
 public interface BatchingApi {
-    void beginHudBatching();
+  void beginHudBatching();
 
-    void endHudBatching();
+  void endHudBatching();
 
-    boolean isBatching();
+  boolean isBatching();
 
-    boolean isEnabled();
+  boolean isEnabled();
 
-    static BatchingApi createImpl(PlatformHooks hooks) {
-        if (hooks.isModAtLeastVersion("immediatelyfast", "1.2.0")) {
-            CaxtonModClient.LOGGER.info("ImmediatelyFast ≥1.2.0 detected; enabling integration");
-            return new ImmediatelyFastBatchingAccess();
-        }
-        CaxtonModClient.LOGGER.info("Using dummy batching access because ImmediatelyFast is not present or is too old");
-        return new DummyBatchingAccess();
+  static BatchingApi createImpl(PlatformHooks hooks) {
+    if (hooks.isModAtLeastVersion("immediatelyfast", "1.2.0")) {
+      CaxtonModClient.LOGGER.info("ImmediatelyFast ≥1.2.0 detected; enabling integration");
+      return new ImmediatelyFastBatchingAccess();
     }
+    CaxtonModClient.LOGGER.info(
+        "Using dummy batching access because ImmediatelyFast is not present or is too old");
+    return new DummyBatchingAccess();
+  }
 }

@@ -11,11 +11,11 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Environment(EnvType.CLIENT)
 @Mixin(BookEditScreen.PageContent.class)
 public interface BookEditScreenPageContentAccessor {
-    @Accessor("EMPTY")
-    static BookEditScreen.PageContent getEmpty() {
-        return null;
-    }
+  @Accessor("EMPTY")
+  static BookEditScreen.PageContent getEmpty() {
+    return null;
+  }
 
-    @Accessor
-    BookEditScreen.Line[] getLines();
+  @Accessor
+  BookEditScreen.Line[] getLines();
 }

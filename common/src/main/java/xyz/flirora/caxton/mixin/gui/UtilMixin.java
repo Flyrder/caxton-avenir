@@ -14,8 +14,9 @@ import xyz.flirora.caxton.layout.gui.CaxtonUtil;
 @Environment(EnvType.CLIENT)
 @Mixin(Util.class)
 public class UtilMixin {
-    @Inject(at = @At("HEAD"), method = "moveCursor", cancellable = true)
-    private static void onMoveCursor(String string, int cursor, int delta, CallbackInfoReturnable<Integer> cir) {
-        cir.setReturnValue(CaxtonUtil.moveCursor(string, cursor, delta));
-    }
+  @Inject(at = @At("HEAD"), method = "moveCursor", cancellable = true)
+  private static void onMoveCursor(
+      String string, int cursor, int delta, CallbackInfoReturnable<Integer> cir) {
+    cir.setReturnValue(CaxtonUtil.moveCursor(string, cursor, delta));
+  }
 }
