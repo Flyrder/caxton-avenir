@@ -87,6 +87,7 @@ spotless {
   }
   java {
     target '*/src/**/*.java'
+    googleJavaFormat()
     removeUnusedImports()
     formatAnnotations()
     licenseHeader '// (C) $YEAR +merlan #flirora.\n// SPDX-License-Identifier: MIT'
