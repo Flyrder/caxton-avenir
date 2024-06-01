@@ -24,7 +24,8 @@ public class CaxtonCommands {
     // We have to define these methods because Java doesn’t allow lambdas for
     // generic methods.
 
-    private static <S> LiteralArgumentBuilder<S> caxtonDumpAtlas(Command<S> command, CommandRegistryAccess registryAccess) {
+    private static <S> LiteralArgumentBuilder<S> caxtonDumpAtlas(Command<S> command,
+            CommandRegistryAccess registryAccess) {
         return LiteralArgumentBuilder.<S>literal("caxtondumpatlas").executes(command);
     }
 

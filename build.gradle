@@ -86,15 +86,13 @@ spotless {
     endWithNewline()
   }
   java {
-    // don't need to set target, it is inferred from java
-
-    // apply a specific flavor of google-java-format
-    googleJavaFormat().aosp().reflowLongStrings().skipJavadocFormatting()
-    // fix formatting of type annotations
+    target '*/src/**/*.java'
+    removeUnusedImports()
     formatAnnotations()
-    // make sure every file has the following copyright header.
-    // optionally, Spotless can set copyright years by digging
-    // through git history (see "license" section below)
     licenseHeader '// (C) $YEAR +merlan #flirora.\n// SPDX-License-Identifier: MIT'
+  }
+  json {
+    target '*/src/**/*.json'
+    simple()
   }
 }
