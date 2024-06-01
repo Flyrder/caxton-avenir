@@ -53,10 +53,10 @@ public class Voepfxo {
 
     VertexConsumer vertexConsumer = context.getVertexConsumers().getBuffer(renderLayer);
     Matrix4f matrix = context.getMatrices().peek().getPositionMatrix();
-    vertexConsumer.vertex(matrix, x1, y2, 0.0f).color(r, g, b, a).next();
-    vertexConsumer.vertex(matrix, x2, y2, 0.0f).color(r, g, b, a).next();
-    vertexConsumer.vertex(matrix, x2, y1, 0.0f).color(r, g, b, a).next();
-    vertexConsumer.vertex(matrix, x1, y1, 0.0f).color(r, g, b, a).next();
+    vertexConsumer.vertex(matrix, x1, y2, 0.0f).color(r, g, b, a);
+    vertexConsumer.vertex(matrix, x2, y2, 0.0f).color(r, g, b, a);
+    vertexConsumer.vertex(matrix, x2, y1, 0.0f).color(r, g, b, a);
+    vertexConsumer.vertex(matrix, x1, y1, 0.0f).color(r, g, b, a);
     ((DrawContextAccessor) context).callDraw();
   }
 

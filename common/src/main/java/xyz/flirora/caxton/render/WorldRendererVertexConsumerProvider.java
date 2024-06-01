@@ -8,9 +8,11 @@ import java.util.*;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.BuiltBuffer;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.util.BufferAllocator;
 import xyz.flirora.caxton.mixin.RenderPhaseAccessor;
 
 /** A version of {@link VertexConsumerProvider.Immediate} that retains all Caxton text layers. */
@@ -19,10 +21,11 @@ public class WorldRendererVertexConsumerProvider extends VertexConsumerProvider.
   private static final Set<String> CAXTON_TEXT_RENDER_LAYER_NAMES =
       ImmutableSet.of("caxton_text", "caxton_text_see_through", "caxton_text_outline");
 
-  private static final Map<RenderLayer, BufferBuilder> caxtonTextLayerBuilders = new HashMap<>();
+  private final Map<RenderLayer, BufferAllocator> caxtonTextLayerAllocators = new HashMap<>();
+  private final Map<RenderLayer, BufferBuilder> caxtonTextLayerBuilders = new HashMap<>();
 
   public WorldRendererVertexConsumerProvider(
-      BufferBuilder fallbackBuffer, Map<RenderLayer, BufferBuilder> layerBuffers) {
+      BufferAllocator fallbackBuffer, SequencedMap<RenderLayer, BufferAllocator> layerBuffers) {
     super(fallbackBuffer, layerBuffers);
   }
 
@@ -30,42 +33,64 @@ public class WorldRendererVertexConsumerProvider extends VertexConsumerProvider.
     return CAXTON_TEXT_RENDER_LAYER_NAMES.contains(((RenderPhaseAccessor) layer).getName());
   }
 
+  // Well done, Mojang. You truly have yfucked Caxton over in 1.21.
+
   // The following methods are copied from VertexConsumerProvider.Immediate
   // (with some renaming).
   @Override
   public VertexConsumer getBuffer(RenderLayer renderLayer) {
-    Optional<RenderLayer> optional = renderLayer.asOptional();
-    BufferBuilder bufferBuilder = this.getBufferInternal(renderLayer);
-    if (!Objects.equals(this.currentLayer, optional) || !renderLayer.areVerticesNotShared()) {
-      RenderLayer currentLayer;
-      if (this.currentLayer.isPresent()
-          && !isCaxtonTextLayer(currentLayer = this.currentLayer.get())
-          && !this.layerBuffers.containsKey(currentLayer)) {
-        this.draw(currentLayer);
+    BufferBuilder bufferBuilder = this.pending.get(renderLayer);
+    if (bufferBuilder != null
+        && !renderLayer.areVerticesNotShared()
+        && !isCaxtonTextLayer(renderLayer)) {
+      this.draw(renderLayer, bufferBuilder);
+      bufferBuilder = null;
+    }
+    if (bufferBuilder != null) {
+      return bufferBuilder;
+    }
+    BufferAllocator bufferAllocator;
+    if (isCaxtonTextLayer(renderLayer)) {
+      bufferAllocator =
+          this.caxtonTextLayerAllocators.computeIfAbsent(
+              renderLayer, l -> new BufferAllocator(256));
+      return this.caxtonTextLayerBuilders.computeIfAbsent(
+          renderLayer,
+          l ->
+              new BufferBuilder(
+                  bufferAllocator, renderLayer.getDrawMode(), renderLayer.getVertexFormat()));
+    } else {
+      bufferAllocator = this.layerBuffers.get(renderLayer);
+    }
+    if (bufferAllocator != null) {
+      bufferBuilder =
+          new BufferBuilder(
+              bufferAllocator, renderLayer.getDrawMode(), renderLayer.getVertexFormat());
+    } else {
+      if (this.currentLayer != null && !isCaxtonTextLayer(this.currentLayer)) {
+        this.draw(this.currentLayer);
       }
-      if (this.activeConsumers.add(bufferBuilder)) {
-        bufferBuilder.begin(renderLayer.getDrawMode(), renderLayer.getVertexFormat());
-      }
-      this.currentLayer = optional;
+      bufferBuilder =
+          new BufferBuilder(
+              this.allocator, renderLayer.getDrawMode(), renderLayer.getVertexFormat());
+      this.currentLayer = renderLayer;
+    }
+    if (isCaxtonTextLayer(renderLayer)) {
+      this.caxtonTextLayerBuilders.put(renderLayer, bufferBuilder);
+    } else {
+      this.pending.put(renderLayer, bufferBuilder);
     }
     return bufferBuilder;
   }
 
-  private BufferBuilder getBufferInternal(RenderLayer layer) {
-    if (isCaxtonTextLayer(layer)) {
-      return caxtonTextLayerBuilders.computeIfAbsent(layer, l -> new BufferBuilder(256));
-    }
-    return this.layerBuffers.getOrDefault(layer, this.fallbackBuffer);
-  }
-
   @Override
   public void drawCurrentLayer() {
-    if (this.currentLayer.isPresent()) {
-      RenderLayer renderLayer = this.currentLayer.get();
-      if (!isCaxtonTextLayer(renderLayer) && !this.layerBuffers.containsKey(renderLayer)) {
-        this.draw(renderLayer);
+    if (this.currentLayer != null) {
+      if (!isCaxtonTextLayer(this.currentLayer)
+          && !this.layerBuffers.containsKey(this.currentLayer)) {
+        this.draw(this.currentLayer);
       }
-      this.currentLayer = Optional.empty();
+      this.currentLayer = null;
     }
   }
 
@@ -76,27 +101,45 @@ public class WorldRendererVertexConsumerProvider extends VertexConsumerProvider.
   }
 
   public void drawCaxtonTextLayers() {
-    for (RenderLayer renderLayer : caxtonTextLayerBuilders.keySet()) {
-      this.draw(renderLayer);
+    for (var entry : caxtonTextLayerBuilders.entrySet()) {
+      RenderLayer layer = entry.getKey();
+      BufferBuilder builder = entry.getValue();
+      BuiltBuffer buffer = builder.endNullable();
+      if (buffer != null) {
+        layer.draw(buffer);
+      }
+      if (layer.equals(this.currentLayer)) {
+        this.currentLayer = null;
+      }
     }
+    this.caxtonTextLayerBuilders.clear();
   }
 
-  // This must be overridden because the implementation in
+  // The following two methods must be overridden because the implementation in
   // VertexConsumerProvider.Immediate calls its own getBufferInternal method,
   // which is not overridden by this class’s implementation.
   @Override
   public void draw(RenderLayer layer) {
-    BufferBuilder bufferBuilder = this.getBufferInternal(layer);
-    boolean layerIsCurrent = Objects.equals(this.currentLayer, layer.asOptional());
-    if (!layerIsCurrent && bufferBuilder == this.fallbackBuffer) {
+    if (isCaxtonTextLayer(layer)) {
       return;
     }
-    if (!this.activeConsumers.remove(bufferBuilder)) {
-      return;
+    BufferBuilder bufferBuilder = this.pending.remove(layer);
+    if (bufferBuilder != null) {
+      this.draw(layer, bufferBuilder);
     }
-    layer.draw(bufferBuilder, RenderSystem.getVertexSorting());
-    if (layerIsCurrent) {
-      this.currentLayer = Optional.empty();
+  }
+
+  private void draw(RenderLayer layer, BufferBuilder builder) {
+    BuiltBuffer builtBuffer = builder.endNullable();
+    if (builtBuffer != null) {
+      if (layer.isTranslucent()) {
+        BufferAllocator bufferAllocator = this.layerBuffers.getOrDefault(layer, this.allocator);
+        builtBuffer.sortQuads(bufferAllocator, RenderSystem.getVertexSorting());
+      }
+      layer.draw(builtBuffer);
+    }
+    if (layer.equals(this.currentLayer)) {
+      this.currentLayer = null;
     }
   }
 }

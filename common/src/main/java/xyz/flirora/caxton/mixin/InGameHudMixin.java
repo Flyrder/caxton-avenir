@@ -8,6 +8,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,7 +35,8 @@ public abstract class InGameHudMixin {
               value = "INVOKE",
               target = "Lnet/minecraft/client/font/TextRenderer;getWidth(Ljava/lang/String;)I"),
       cancellable = true)
-  private void onRenderExpText(DrawContext context, float _x, CallbackInfo ci) {
+  private void onRenderExpText(
+      DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
     if (!CaxtonModClient.CONFIG.tweakExpText) return;
     String levelStr = "" + this.client.player.experienceLevel;
     float x =

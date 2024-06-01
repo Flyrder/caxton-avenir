@@ -12,7 +12,7 @@ import xyz.flirora.caxton.font.CaxtonFontLoader;
 public class CaxtonSuggestionProviders {
   public static final SuggestionProvider<?> CAXTON_FONTS =
       SuggestionProviders.register(
-          new Identifier(CaxtonModClient.MOD_ID, "caxton_fonts"),
+          Identifier.of(CaxtonModClient.MOD_ID, "caxton_fonts"),
           (context, builder) ->
               CommandSource.suggestIdentifiers(CaxtonFontLoader.getAvailableFontIds(), builder));
 }

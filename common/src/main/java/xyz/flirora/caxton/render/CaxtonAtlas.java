@@ -247,7 +247,7 @@ public class CaxtonAtlas implements AutoCloseable {
       // point, which can pose a problem with the edges of any inserted
       // textures. Hopefully this doesn’t blow up on us at some point!
       // this.clearContents();
-      this.id = new Identifier("caxton", "atlas/" + pageNum);
+      this.id = Identifier.of("caxton", "atlas/" + pageNum);
       this.range = range;
       this.numMipmapLevels = numMipmapLevels;
       atlas.textureManager.registerTexture(id, this);

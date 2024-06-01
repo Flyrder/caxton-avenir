@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin;
 
-import java.util.Map;
+import java.util.SequencedMap;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferBuilderStorage;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.util.BufferAllocator;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -26,15 +26,15 @@ public class BufferBuilderStorageMixin {
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/render/VertexConsumerProvider;immediate(Ljava/util/Map;Lnet/minecraft/client/render/BufferBuilder;)Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;"),
+                  "Lnet/minecraft/client/render/VertexConsumerProvider;immediate(Ljava/util/SequencedMap;Lnet/minecraft/client/util/BufferAllocator;)Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;"),
       slice =
           @Slice(
               from =
                   @At(
                       value = "FIELD",
-                      opcode = Opcodes.GETFIELD,
+                      opcode = Opcodes.PUTFIELD,
                       target =
-                          "Lnet/minecraft/client/render/BufferBuilderStorage;entityBuilders:Ljava/util/SortedMap;"),
+                          "Lnet/minecraft/client/render/BufferBuilderStorage;effectVertexConsumers:Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;"),
               to =
                   @At(
                       value = "FIELD",
@@ -43,7 +43,7 @@ public class BufferBuilderStorageMixin {
                           "Lnet/minecraft/client/render/BufferBuilderStorage;entityVertexConsumers:Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;")),
       allow = 1)
   private VertexConsumerProvider.Immediate redirect(
-      Map<RenderLayer, BufferBuilder> layerBuffers, BufferBuilder fallbackBuffer) {
+      SequencedMap<RenderLayer, BufferAllocator> layerBuffers, BufferAllocator fallbackBuffer) {
     if (CaxtonModClient.FORCE_DISABLE_BATCHING_HACK)
       return VertexConsumerProvider.immediate(layerBuffers, fallbackBuffer);
     return new WorldRendererVertexConsumerProvider(fallbackBuffer, layerBuffers);

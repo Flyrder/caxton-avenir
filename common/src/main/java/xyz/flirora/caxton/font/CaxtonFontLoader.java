@@ -111,7 +111,7 @@ public class CaxtonFontLoader implements FontLoader {
                     optionsJson = JsonHelper.deserialize(metaInput);
                     String path = JsonHelper.getString(optionsJson, "path", null);
                     if (path != null) {
-                      fontId = new Identifier(path).withPrefixedPath(FONT_PREFIX);
+                      fontId = Identifier.of(path).withPrefixedPath(FONT_PREFIX);
                     }
                   }
                 }

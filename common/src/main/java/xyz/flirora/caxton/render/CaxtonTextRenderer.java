@@ -648,16 +648,16 @@ public class CaxtonTextRenderer {
 
         vertexConsumer.vertex(matrix, x0 + lowerOffset, y0, 0.0f).color(red, green, blue, alpha);
         if (twoColored) vertexConsumer.color(olRed, olGreen, olBlue, olAlpha);
-        vertexConsumer.texture(u0, v0).light(light).next();
+        vertexConsumer.texture(u0, v0).light(light);
         vertexConsumer.vertex(matrix, x0 + upperOffset, y1, 0.0f).color(red, green, blue, alpha);
         if (twoColored) vertexConsumer.color(olRed, olGreen, olBlue, olAlpha);
-        vertexConsumer.texture(u0, v1).light(light).next();
+        vertexConsumer.texture(u0, v1).light(light);
         vertexConsumer.vertex(matrix, x1 + upperOffset, y1, 0.0f).color(red, green, blue, alpha);
         if (twoColored) vertexConsumer.color(olRed, olGreen, olBlue, olAlpha);
-        vertexConsumer.texture(u1, v1).light(light).next();
+        vertexConsumer.texture(u1, v1).light(light);
         vertexConsumer.vertex(matrix, x1 + lowerOffset, y0, 0.0f).color(red, green, blue, alpha);
         if (twoColored) vertexConsumer.color(olRed, olGreen, olBlue, olAlpha);
-        vertexConsumer.texture(u1, v0).light(light).next();
+        vertexConsumer.texture(u1, v0).light(light);
       }
 
       float x0a = x + cumulAdvanceX * scale;

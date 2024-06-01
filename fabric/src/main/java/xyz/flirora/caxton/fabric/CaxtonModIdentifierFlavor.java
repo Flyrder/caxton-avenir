@@ -32,7 +32,7 @@ public class CaxtonModIdentifierFlavor implements ClientModInitializer {
     CaxtonModClient.LOGGER.info("Registering built-in resource packs");
     for (String id : CaxtonModClient.BUILTIN_PACKS) {
       ResourceManagerHelper.registerBuiltinResourcePack(
-          new Identifier(CaxtonModClient.MOD_ID, id),
+          Identifier.of(CaxtonModClient.MOD_ID, id),
           modContainer,
           Text.translatable("caxton.resourcePack." + id),
           ResourcePackActivationType.NORMAL);
