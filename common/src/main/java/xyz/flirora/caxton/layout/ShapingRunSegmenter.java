@@ -1,7 +1,8 @@
+// (C) 2023 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.layout;
 
 import com.ibm.icu.lang.UCharacter;
-import com.ibm.icu.lang.UCharacterCategory;
 import com.ibm.icu.lang.UScript;
 import com.ibm.icu.text.Bidi;
 import it.unimi.dsi.fastutil.ints.IntArrayList;

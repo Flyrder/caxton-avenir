@@ -1,17 +1,17 @@
+// (C) 2023-2024 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.fabric;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.datafixers.util.Either;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.text.Text;
 import xyz.flirora.caxton.command.ClientCommand;
 import xyz.flirora.caxton.command.ClientCommandRegistrar;
 import xyz.flirora.caxton.command.GenericArgumentBuilderFactory;
 
-import java.util.function.BiFunction;
 
 public record ClientCommandRegistrarIdentifierFlavor(
         CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess) implements ClientCommandRegistrar {

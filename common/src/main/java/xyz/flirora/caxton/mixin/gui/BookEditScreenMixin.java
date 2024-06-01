@@ -1,3 +1,5 @@
+// (C) 2022-2024 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin.gui;
 
 import com.google.common.collect.Lists;
@@ -5,16 +7,12 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.BookEditScreen;
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.SelectionManager;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.util.math.Rect2i;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -40,8 +38,7 @@ import java.util.List;
 @Environment(EnvType.CLIENT)
 @Mixin(BookEditScreen.class)
 public abstract class BookEditScreenMixin extends Screen {
-    @Unique
-    private static final float XSCALE = 16.0f;
+    @Unique private static final float XSCALE = 16.0f;
     @Shadow
     @Final
     private SelectionManager currentPageSelectionManager;

@@ -1,3 +1,5 @@
+// (C) 2023-2024 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin.gui;
 
 import net.minecraft.client.font.TextRenderer;
@@ -5,7 +7,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.EditBox;
 import net.minecraft.client.gui.widget.EditBoxWidget;
 import net.minecraft.client.gui.widget.ScrollableWidget;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Util;

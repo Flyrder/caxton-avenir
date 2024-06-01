@@ -1,10 +1,10 @@
+// (C) 2022-2024 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.font;
 
 import com.google.gson.*;
 import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.*;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.resource.ResourceManager;
@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import xyz.flirora.caxton.dll.CaxtonInternal;
 import xyz.flirora.caxton.layout.ShapingResult;
 
-import java.util.function.Function;
 
 /**
  * A font with additional settings.

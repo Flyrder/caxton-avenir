@@ -1,3 +1,5 @@
+// (C) 2023 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.render;
 
 import com.mojang.blaze3d.platform.GlConst;
@@ -12,7 +14,6 @@ import xyz.flirora.caxton.font.CaxtonFont;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Supplier;
 
 public class CaxtonGlyphCache {
     private final CaxtonAtlas atlas;

@@ -1,3 +1,5 @@
+// (C) 2022-2023 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.layout;
 
 import net.fabricmc.api.EnvType;
@@ -26,36 +28,31 @@ import java.util.stream.Collectors;
  */
 @Environment(EnvType.CLIENT)
 public record Run(String text, Style style, @Nullable ConfiguredCaxtonFont font) {
-    @NotNull
-    public static List<Run> splitIntoRuns(OrderedText text, Function<Identifier, FontStorage> fonts, boolean validateAdvance) {
+    @NotNull public static List<Run> splitIntoRuns(OrderedText text, Function<Identifier, FontStorage> fonts, boolean validateAdvance) {
         RunLister lister = new RunLister(fonts, validateAdvance);
         text.accept(lister);
         return lister.getRuns();
     }
 
-    @NotNull
-    public static List<Run> splitIntoRunsFormatted(StringVisitable text, Function<Identifier, FontStorage> fonts, Style style, boolean validateAdvance) {
+    @NotNull public static List<Run> splitIntoRunsFormatted(StringVisitable text, Function<Identifier, FontStorage> fonts, Style style, boolean validateAdvance) {
         RunLister lister = new RunLister(fonts, validateAdvance);
         TextVisitFactory.visitFormatted(text, style, lister);
         return lister.getRuns();
     }
 
-    @NotNull
-    public static List<Run> splitIntoRunsFormatted(String text, Function<Identifier, FontStorage> fonts, Style style, boolean validateAdvance) {
+    @NotNull public static List<Run> splitIntoRunsFormatted(String text, Function<Identifier, FontStorage> fonts, Style style, boolean validateAdvance) {
         RunLister lister = new RunLister(fonts, validateAdvance);
         TextVisitFactory.visitFormatted(text, style, lister);
         return lister.getRuns();
     }
 
-    @NotNull
-    public static List<Run> splitIntoRunsFormatted(String text, Function<Identifier, FontStorage> fonts, Style style, Style baseStyle, boolean validateAdvance) {
+    @NotNull public static List<Run> splitIntoRunsFormatted(String text, Function<Identifier, FontStorage> fonts, Style style, Style baseStyle, boolean validateAdvance) {
         RunLister lister = new RunLister(fonts, validateAdvance);
         TextVisitFactory.visitFormatted(text, 0, style, baseStyle, lister);
         return lister.getRuns();
     }
 
-    @NotNull
-    public static List<Run> splitIntoRunsForwards(StringVisitable text, Function<Identifier, FontStorage> fonts, Style style, boolean validateAdvance) {
+    @NotNull public static List<Run> splitIntoRunsForwards(StringVisitable text, Function<Identifier, FontStorage> fonts, Style style, boolean validateAdvance) {
         RunLister lister = new RunLister(fonts, validateAdvance);
         text.visit((style1, asString) -> {
             TextVisitFactory.visitForwards(asString, style1.withParent(style), lister);
@@ -64,15 +61,13 @@ public record Run(String text, Style style, @Nullable ConfiguredCaxtonFont font)
         return lister.getRuns();
     }
 
-    @NotNull
-    public static List<Run> splitIntoRunsForwards(String text, Function<Identifier, FontStorage> fonts, Style style, boolean validateAdvance) {
+    @NotNull public static List<Run> splitIntoRunsForwards(String text, Function<Identifier, FontStorage> fonts, Style style, boolean validateAdvance) {
         RunLister lister = new RunLister(fonts, validateAdvance);
         TextVisitFactory.visitForwards(text, style, lister);
         return lister.getRuns();
     }
 
-    @NotNull
-    public static List<Run> splitIntoRunsFormatted(String text, Function<Identifier, FontStorage> fonts, Style style, boolean validateAdvance, FcIndexConverter formattingCodeStarts) {
+    @NotNull public static List<Run> splitIntoRunsFormatted(String text, Function<Identifier, FontStorage> fonts, Style style, boolean validateAdvance, FcIndexConverter formattingCodeStarts) {
         formattingCodeStarts.put(Integer.MIN_VALUE, 0);
         RunLister lister = new RunLister(fonts, validateAdvance);
         MutableInt numFormattingCodes = new MutableInt();

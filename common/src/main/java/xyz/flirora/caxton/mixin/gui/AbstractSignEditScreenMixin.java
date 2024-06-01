@@ -1,3 +1,5 @@
+// (C) 2022-2024 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin.gui;
 
 import net.fabricmc.api.EnvType;
@@ -9,7 +11,6 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.AbstractSignEditScreen;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.util.SelectionManager;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Final;
@@ -40,10 +41,8 @@ public abstract class AbstractSignEditScreenMixin
     private SelectionManager selectionManager;
     @Shadow
     private int currentRow;
-    @Unique
-    private CaxtonText rowText;
-    @Unique
-    private CaxtonText currentRowText;
+    @Unique private CaxtonText rowText;
+    @Unique private CaxtonText currentRowText;
 
     protected AbstractSignEditScreenMixin(Text title) {
         super(title);

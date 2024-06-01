@@ -1,12 +1,10 @@
+// (C) 2022-2024 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.font;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
 import com.mojang.datafixers.util.Either;
 import com.mojang.logging.LogUtils;
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.api.EnvType;
@@ -26,7 +24,6 @@ import xyz.flirora.caxton.dll.LibraryLoading;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,8 +39,7 @@ public class CaxtonFontLoader implements FontLoader {
     private static final Map<Identifier, CaxtonFont> CACHE = new ConcurrentHashMap<>();
     private static final JsonObject EMPTY = new JsonObject();
     private final ConfiguredCaxtonFont.Loader regular;
-    @Nullable
-    private final ConfiguredCaxtonFont.Loader bold, italic, boldItalic;
+    @Nullable private final ConfiguredCaxtonFont.Loader bold, italic, boldItalic;
 
     public static final MapCodec<CaxtonFontLoader> CODEC = RecordCodecBuilder.mapCodec(
             instance -> instance.group(
@@ -80,8 +76,7 @@ public class CaxtonFontLoader implements FontLoader {
      * @param id      the {@link Identifier} to load the font by
      * @return a {@link CaxtonFont}, with its reference count appropriately updated
      */
-    @Nullable
-    public static CaxtonFont loadFontByIdentifier(ResourceManager manager, @Nullable Identifier id) {
+    @Nullable public static CaxtonFont loadFontByIdentifier(ResourceManager manager, @Nullable Identifier id) {
         if (id == null) return null;
         return CACHE.computeIfAbsent(id, id1 -> {
             LOGGER.info("Loading font {}", id);
@@ -138,8 +133,7 @@ public class CaxtonFontLoader implements FontLoader {
      * @param manager the {@link ResourceManager} holding the resources
      * @return a {@link CaxtonTypeface} described by this object
      */
-    @Nullable
-    public Font load(ResourceManager manager) throws IOException {
+    @Nullable public Font load(ResourceManager manager) throws IOException {
         if (!LibraryLoading.isLibraryLoaded()) {
             throw new IOException("Refusing to load Caxton font when native library loading had failed");
         }

@@ -1,3 +1,5 @@
+// (C) 2023 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.compat.immediatelyfast;
 
 import net.raphimc.immediatelyfastapi.ApiAccess;

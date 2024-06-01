@@ -1,12 +1,12 @@
+// (C) 2022-2023 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.font.Font;
 import net.minecraft.client.font.FontManager;
 import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.profiler.Profiler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,8 +16,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import xyz.flirora.caxton.font.CaxtonFontLoader;
 import xyz.flirora.caxton.render.CaxtonTextRenderer;
 
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 

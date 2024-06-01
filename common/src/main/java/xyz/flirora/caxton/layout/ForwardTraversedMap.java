@@ -1,3 +1,5 @@
+// (C) 2022-2023 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.layout;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;

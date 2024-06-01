@@ -1,3 +1,5 @@
+// (C) 2022-2023 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.font;
 
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -23,8 +25,7 @@ import java.util.stream.Stream;
 @Environment(EnvType.CLIENT)
 public class CaxtonTypeface implements Font {
     private ConfiguredCaxtonFont regular;
-    @Nullable
-    private ConfiguredCaxtonFont bold, italic, boldItalic;
+    @Nullable private ConfiguredCaxtonFont bold, italic, boldItalic;
 
     /**
      * Creates a new {@link CaxtonTypeface}.
@@ -63,8 +64,7 @@ public class CaxtonTypeface implements Font {
      * @param codePoint the code point of the {@link Glyph} to get
      * @return {@code null}
      */
-    @Nullable
-    @Override
+    @Nullable @Override
     public Glyph getGlyph(int codePoint) {
         return null;
     }

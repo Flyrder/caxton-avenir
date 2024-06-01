@@ -1,3 +1,5 @@
+// (C) 2022-2024 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin.gui;
 
 import com.llamalad7.mixinextras.injector.ModifyReceiver;
@@ -11,8 +13,6 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -31,7 +31,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xyz.flirora.caxton.layout.CaxtonText;
 import xyz.flirora.caxton.layout.DirectionSetting;
 import xyz.flirora.caxton.layout.gui.TextFieldWidgetExt;
-import xyz.flirora.caxton.mixin.TextRendererAccessor;
 import xyz.flirora.caxton.render.CaxtonTextRenderer;
 import xyz.flirora.caxton.render.HasCaxtonTextRenderer;
 import xyz.flirora.caxton.render.Voepfxo;
@@ -45,8 +44,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
         implements Drawable,
         Element, TextFieldWidgetExt {
     private static final Style SUGGESTION = Style.EMPTY.withColor(0xFF808080);
-    @Unique
-    private static final Matrix4f IDENTITY = new Matrix4f();
+    @Unique private static final Matrix4f IDENTITY = new Matrix4f();
     @Shadow
     @Final
     private static String HORIZONTAL_CURSOR;
@@ -65,8 +63,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     private boolean drawsBackground;
     @Shadow
     private int firstCharacterIndex;
-    @Unique
-    private CaxtonText caxtonText;
+    @Unique private CaxtonText caxtonText;
     @Shadow
     private int selectionStart;
     @Shadow
@@ -79,8 +76,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     private @Nullable Text placeholder;
     @Shadow
     private @Nullable Consumer<String> changedListener;
-    @Unique
-    private boolean updatingCaxtonText = false;
+    @Unique private boolean updatingCaxtonText = false;
 
     public TextFieldWidgetMixin(int x, int y, int width, int height, Text message) {
         super(x, y, width, height, message);

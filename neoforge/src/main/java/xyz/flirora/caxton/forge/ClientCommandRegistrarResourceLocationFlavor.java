@@ -1,9 +1,10 @@
+// (C) 2023-2024 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.forge;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.datafixers.util.Either;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
@@ -12,7 +13,6 @@ import xyz.flirora.caxton.command.ClientCommandRegistrar;
 import xyz.flirora.caxton.command.GenericArgumentBuilderFactory;
 
 import java.util.Objects;
-import java.util.function.BiFunction;
 
 public record ClientCommandRegistrarResourceLocationFlavor(
         CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess)

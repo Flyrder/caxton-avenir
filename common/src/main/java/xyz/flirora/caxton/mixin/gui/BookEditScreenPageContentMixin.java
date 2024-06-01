@@ -1,3 +1,5 @@
+// (C) 2022-2023 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin.gui;
 
 import com.google.common.collect.ImmutableList;
@@ -37,10 +39,8 @@ public class BookEditScreenPageContentMixin implements BookEditScreenPageContent
     @Shadow
     @Final
     private String pageContent;
-    @Unique
-    private List<CaxtonText> caxtonTexts;
-    @Unique
-    private FcIndexConverter warts;
+    @Unique private List<CaxtonText> caxtonTexts;
+    @Unique private FcIndexConverter warts;
 
     @Inject(at = @At("RETURN"), method = "<clinit>")
     private static void onStaticInit(CallbackInfo ci) {

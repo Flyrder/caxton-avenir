@@ -1,3 +1,5 @@
+// (C) 2023 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.font;
 
 import com.google.gson.JsonSyntaxException;

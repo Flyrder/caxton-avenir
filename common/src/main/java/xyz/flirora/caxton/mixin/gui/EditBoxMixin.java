@@ -1,3 +1,5 @@
+// (C) 2023-2024 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin.gui;
 
 import net.minecraft.client.font.TextRenderer;
@@ -18,8 +20,7 @@ import xyz.flirora.caxton.render.HasCaxtonTextRenderer;
 public abstract class EditBoxMixin {
     @Shadow
     private int cursor;
-    @Unique
-    private int ttwLength;
+    @Unique private int ttwLength;
 
     @Shadow
     protected abstract EditBox.Substring getCurrentLine();

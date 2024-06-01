@@ -1,3 +1,5 @@
+// (C) 2023 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.compat.immediatelyfast;
 
 public class DummyBatchingAccess implements BatchingApi {

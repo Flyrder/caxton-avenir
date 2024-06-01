@@ -1,35 +1,33 @@
-{
-  "providers": [
+{"providers": [
     {
-      "type": "caxton",
-      "regular": {
-        "file": "caxton:inter_regular.otf",
-        "shadow_offset": 0.5
-      },
-      "bold": {
-        "file": "caxton:inter_bold.otf",
-        "shadow_offset": 0.5
-      },
-      "italic": {
-        "file": "caxton:inter_italic.otf",
-        "shadow_offset": 0.5
-      },
-      "bold_italic": {
-        "file": "caxton:inter_bold_italic.otf",
-        "shadow_offset": 0.5
-      }
+        "bold": {
+            "file": "caxton:inter_bold.otf",
+            "shadow_offset": 0.5
+        },
+        "type": "caxton",
+        "bold_italic": {
+            "file": "caxton:inter_bold_italic.otf",
+            "shadow_offset": 0.5
+        },
+        "italic": {
+            "file": "caxton:inter_italic.otf",
+            "shadow_offset": 0.5
+        },
+        "regular": {
+            "file": "caxton:inter_regular.otf",
+            "shadow_offset": 0.5
+        }
     },
     {
-      "type": "reference",
-      "id": "minecraft:include/space"
+        "id": "minecraft:include/space",
+        "type": "reference"
     },
     {
-      "type": "reference",
-      "id": "minecraft:include/default"
+        "id": "minecraft:include/default",
+        "type": "reference"
     },
     {
-      "type": "reference",
-      "id": "minecraft:include/unifont"
+        "id": "minecraft:include/unifont",
+        "type": "reference"
     }
-  ]
-}
+]}

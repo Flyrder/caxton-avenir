@@ -1,3 +1,5 @@
+// (C) 2023 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.render;
 
 import com.mojang.blaze3d.platform.TextureUtil;

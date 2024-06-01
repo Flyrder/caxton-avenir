@@ -1,3 +1,5 @@
+// (C) 2022-2024 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin;
 
 import net.fabricmc.api.EnvType;

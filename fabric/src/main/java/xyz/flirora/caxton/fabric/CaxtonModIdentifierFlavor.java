@@ -1,3 +1,5 @@
+// (C) 2023-2024 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.fabric;
 
 import net.fabricmc.api.ClientModInitializer;

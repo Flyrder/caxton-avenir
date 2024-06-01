@@ -1,3 +1,5 @@
+// (C) 2022-2024 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -33,8 +35,7 @@ import java.util.stream.Stream;
 @Environment(EnvType.CLIENT)
 @Mixin(FontStorage.class)
 public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStorage {
-    @Unique
-    private Int2ObjectMap<CaxtonGlyphPair>[] caxtonGlyphCache = null;
+    @Unique private Int2ObjectMap<CaxtonGlyphPair>[] caxtonGlyphCache = null;
     @Shadow
     @Final
     private List<Font> availableFonts;
@@ -65,8 +66,7 @@ public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStora
         }
     }
 
-    @Unique
-    private Int2ObjectMap<CaxtonGlyphPair> getCacheForStyle(Style style) {
+    @Unique private Int2ObjectMap<CaxtonGlyphPair> getCacheForStyle(Style style) {
         return caxtonGlyphCache[(style.isBold() ? 2 : 0) | (style.isItalic() ? 1 : 0)];
     }
 
@@ -87,8 +87,7 @@ public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStora
     }
 
     // Based on the findGlyph method.
-    @Unique
-    private CaxtonGlyphPair findCaxtonGlyph(int codePoint, Style style) {
+    @Unique private CaxtonGlyphPair findCaxtonGlyph(int codePoint, Style style) {
         Glyph glyph = null;
         for (Font font : this.availableFonts) {
             if (font instanceof CaxtonTypeface caxtonFont && caxtonFont.supportsCodePoint(codePoint, style)) {

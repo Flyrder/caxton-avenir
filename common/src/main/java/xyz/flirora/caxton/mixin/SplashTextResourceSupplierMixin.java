@@ -1,3 +1,5 @@
+// (C) 2023-2024 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin;
 
 import net.fabricmc.api.EnvType;
@@ -23,8 +25,7 @@ import java.util.List;
 @Environment(EnvType.CLIENT)
 @Mixin(SplashTextResourceSupplier.class)
 public abstract class SplashTextResourceSupplierMixin extends SinglePreparationResourceReloader<List<String>> {
-    @Unique
-    private static final String[] TEXTS = {
+    @Unique private static final String[] TEXTS = {
             "lena aaxa leev axel lana en laap axel var tuus salt sein, non ladia tu.",
             "non ter vil le fai le miyut velt a faar.",
             "drołecþe ašir eslasos anasos vonat ħara; cere fose.",

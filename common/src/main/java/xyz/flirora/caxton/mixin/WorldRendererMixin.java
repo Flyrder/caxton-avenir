@@ -1,3 +1,5 @@
+// (C) 2022-2023 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin;
 
 import net.fabricmc.api.EnvType;
@@ -22,8 +24,7 @@ import xyz.flirora.caxton.render.WorldRendererVertexConsumerProvider;
 @Environment(EnvType.CLIENT)
 @Mixin(WorldRenderer.class)
 public class WorldRendererMixin {
-    @Unique
-    private boolean warnOnNonWrvcp;
+    @Unique private boolean warnOnNonWrvcp;
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void initFields(MinecraftClient client, EntityRenderDispatcher entityRenderDispatcher, BlockEntityRenderDispatcher blockEntityRenderDispatcher, BufferBuilderStorage bufferBuilders, CallbackInfo ci) {

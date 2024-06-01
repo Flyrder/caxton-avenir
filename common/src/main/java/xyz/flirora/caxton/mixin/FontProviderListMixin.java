@@ -1,3 +1,5 @@
+// (C) 2023-2024 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin;
 
 import com.mojang.datafixers.util.Either;
@@ -8,7 +10,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.FontLoader;
 import net.minecraft.client.font.FontManager;
-import net.minecraft.client.font.FontManager.Providers;
 import xyz.flirora.caxton.dll.LibraryLoading;
 
 import org.objectweb.asm.Opcodes;

@@ -1,3 +1,5 @@
+// (C) 2022-2024 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin;
 
 import com.google.common.base.Suppliers;
@@ -33,10 +35,8 @@ public class TextRendererMixin implements HasCaxtonTextRenderer {
     @Final
     private TextHandler handler;
     // Would like to put this in a FontManager mixin, but it doesn’t pass itself to TextRenderer’s constructor.
-    @Unique
-    private static final Supplier<CaxtonGlyphCache> CACHE = Suppliers.memoize(() -> new CaxtonGlyphCache(MinecraftClient.getInstance().getTextureManager()));
-    @Unique
-    private CaxtonTextRenderer caxtonRenderer;
+    @Unique private static final Supplier<CaxtonGlyphCache> CACHE = Suppliers.memoize(() -> new CaxtonGlyphCache(MinecraftClient.getInstance().getTextureManager()));
+    @Unique private CaxtonTextRenderer caxtonRenderer;
 
     @Inject(at = @At("TAIL"), method = "<init>(Ljava/util/function/Function;Z)V")
     private void onInit(Function<Identifier, FontStorage> fontStorageAccessor, boolean validateAdvance, CallbackInfo ci) {

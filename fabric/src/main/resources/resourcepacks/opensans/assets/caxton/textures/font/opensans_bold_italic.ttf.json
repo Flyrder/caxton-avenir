@@ -1,12 +1,10 @@
 {
-  "path": "caxton:opensans_italic.ttf",
-  "shrinkage": 32.0,
-  "margin": 8,
-  "invert": false,
-  "variations": [
-    {
-      "axis": "wght",
-      "value": 600
-    }
-  ]
+    "path": "caxton:opensans_italic.ttf",
+    "margin": 8,
+    "invert": false,
+    "variations": [{
+        "axis": "wght",
+        "value": 600
+    }],
+    "shrinkage": 32
 }

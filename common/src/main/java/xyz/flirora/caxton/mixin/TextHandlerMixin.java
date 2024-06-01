@@ -1,3 +1,5 @@
+// (C) 2022-2023 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin;
 
 import com.mojang.logging.LogUtils;
@@ -23,10 +25,8 @@ import java.util.function.BiConsumer;
 @Environment(EnvType.CLIENT)
 @Mixin(TextHandler.class)
 public class TextHandlerMixin implements TextHandlerExt {
-    @Unique
-    private static final Logger LOGGER = LogUtils.getLogger();
-    @Unique
-    private CaxtonTextHandler caxtonTextHandler;
+    @Unique private static final Logger LOGGER = LogUtils.getLogger();
+    @Unique private CaxtonTextHandler caxtonTextHandler;
 
     @Override
     public CaxtonTextHandler getCaxtonTextHandler() {
