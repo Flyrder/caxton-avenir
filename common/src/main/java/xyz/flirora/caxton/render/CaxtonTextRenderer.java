@@ -267,69 +267,50 @@ public class CaxtonTextRenderer {
       } else {
         ShapingResult[] shapingResults = runGroup.getShapingResults();
 
+        int outlinedGlyphOffset =
+            font.font().getOptions().fontTech().offsetOutlineGlyphsByGlyphCounts()
+                ? font.font().getGlyphCount()
+                : 0;
+
         // FIXME (hard): underlines and strikethroughs don’t render
         // properly with this strategy
         for (int i = 0; i < shapingResults.length; i++) {
           ShapingResult shapingResult = shapingResults[i];
-          if (font.font().getOptions().fontTech().hasTwoPhasedOutlineTextRendering()) {
-            drawShapedRun(
-                shapingResult,
-                runGroup,
-                i,
-                x,
-                y,
-                effectiveOutlineColor,
-                0,
-                false,
-                matrix,
-                vertexConsumers,
-                CaxtonTextLayerType.NORMAL,
-                light,
-                outlineDrawer,
-                NO_THRESHOLD,
-                Float.POSITIVE_INFINITY,
-                minThickness,
-                font.font().getGlyphCount());
-            x =
-                drawShapedRun(
-                    shapingResult,
-                    runGroup,
-                    i,
-                    x,
-                    y,
-                    effectiveColor,
-                    0,
-                    false,
-                    matrix,
-                    vertexConsumers,
-                    CaxtonTextLayerType.POLYGON_OFFSET,
-                    light,
-                    outlineDrawer,
-                    NO_THRESHOLD,
-                    Float.POSITIVE_INFINITY,
-                    minThickness,
-                    0);
-          } else {
-            x =
-                drawShapedRun(
-                    shapingResult,
-                    runGroup,
-                    i,
-                    x,
-                    y,
-                    effectiveColor,
-                    effectiveOutlineColor,
-                    false,
-                    matrix,
-                    vertexConsumers,
-                    CaxtonTextLayerType.OUTLINE,
-                    light,
-                    outlineDrawer,
-                    NO_THRESHOLD,
-                    Float.POSITIVE_INFINITY,
-                    minThickness,
-                    0);
-          }
+          drawShapedRun(
+              shapingResult,
+              runGroup,
+              i,
+              x,
+              y,
+              effectiveOutlineColor,
+              false,
+              matrix,
+              vertexConsumers,
+              CaxtonTextLayerType.OUTLINE,
+              light,
+              outlineDrawer,
+              NO_THRESHOLD,
+              Float.POSITIVE_INFINITY,
+              minThickness,
+              outlinedGlyphOffset);
+          x =
+              drawShapedRun(
+                  shapingResult,
+                  runGroup,
+                  i,
+                  x,
+                  y,
+                  effectiveColor,
+                  false,
+                  matrix,
+                  vertexConsumers,
+                  CaxtonTextLayerType.POLYGON_OFFSET,
+                  light,
+                  outlineDrawer,
+                  NO_THRESHOLD,
+                  Float.POSITIVE_INFINITY,
+                  minThickness,
+                  0);
         }
       }
     }
@@ -476,7 +457,6 @@ public class CaxtonTextRenderer {
                   x,
                   y,
                   color,
-                  0,
                   shadow,
                   matrix,
                   vertexConsumerProvider,
@@ -502,7 +482,6 @@ public class CaxtonTextRenderer {
       float x,
       float y,
       int color,
-      int outlineColor,
       boolean shadow,
       Matrix4f matrix,
       VertexConsumerProvider vertexConsumers,
@@ -559,15 +538,6 @@ public class CaxtonTextRenderer {
     float baseGreen = ((color >> 8) & 0xFF) / 255.0f * brightnessMultiplier;
     float baseRed = ((color >> 16) & 0xFF) / 255.0f * brightnessMultiplier;
     float alpha = ((color >> 24) & 0xFF) / 255.0f;
-
-    // Will the render layers accept two colors per vertex instead of one?
-    boolean twoColored =
-        layerType == CaxtonTextLayerType.OUTLINE
-            && !options.fontTech().hasTwoPhasedOutlineTextRendering();
-    float olBlue = (outlineColor & 0xFF) / 255.0f * brightnessMultiplier;
-    float olGreen = ((outlineColor >> 8) & 0xFF) / 255.0f * brightnessMultiplier;
-    float olRed = ((outlineColor >> 16) & 0xFF) / 255.0f * brightnessMultiplier;
-    float olAlpha = ((outlineColor >> 24) & 0xFF) / 255.0f;
 
     int numGlyphs = shapedRun.numGlyphs();
     int cumulAdvanceX = 0;
@@ -647,36 +617,18 @@ public class CaxtonTextRenderer {
         y1 += shadowOffset;
 
         vertexConsumer.vertex(matrix, x0 + lowerOffset, y0, 0.0f).color(red, green, blue, alpha);
-        if (twoColored) vertexConsumer.color(olRed, olGreen, olBlue, olAlpha);
         vertexConsumer.texture(u0, v0).light(light);
         vertexConsumer.vertex(matrix, x0 + upperOffset, y1, 0.0f).color(red, green, blue, alpha);
-        if (twoColored) vertexConsumer.color(olRed, olGreen, olBlue, olAlpha);
         vertexConsumer.texture(u0, v1).light(light);
         vertexConsumer.vertex(matrix, x1 + upperOffset, y1, 0.0f).color(red, green, blue, alpha);
-        if (twoColored) vertexConsumer.color(olRed, olGreen, olBlue, olAlpha);
         vertexConsumer.texture(u1, v1).light(light);
         vertexConsumer.vertex(matrix, x1 + lowerOffset, y0, 0.0f).color(red, green, blue, alpha);
-        if (twoColored) vertexConsumer.color(olRed, olGreen, olBlue, olAlpha);
         vertexConsumer.texture(u1, v0).light(light);
       }
 
       float x0a = x + cumulAdvanceX * scale;
       float x1a = x + (cumulAdvanceX + advanceX) * scale;
       if (style.isUnderlined()) {
-        if (twoColored) {
-          ((TextRendererDrawerAccessor) drawer)
-              .callAddRectangle(
-                  new GlyphRenderer.Rectangle(
-                      x0a - ou + shadowOffset,
-                      y0u + ou + shadowOffset,
-                      x1a + ou + shadowOffset,
-                      y1u - ou + shadowOffset,
-                      0.005f,
-                      olRed,
-                      olGreen,
-                      olBlue,
-                      olAlpha));
-        }
         ((TextRendererDrawerAccessor) drawer)
             .callAddRectangle(
                 new GlyphRenderer.Rectangle(
@@ -691,20 +643,6 @@ public class CaxtonTextRenderer {
                     alpha));
       }
       if (style.isStrikethrough()) {
-        if (twoColored) {
-          ((TextRendererDrawerAccessor) drawer)
-              .callAddRectangle(
-                  new GlyphRenderer.Rectangle(
-                      x0a - os + shadowOffset,
-                      y0s + os + shadowOffset,
-                      x1a + os + shadowOffset,
-                      y1s - os + shadowOffset,
-                      0.005f,
-                      olRed,
-                      olGreen,
-                      olBlue,
-                      olAlpha));
-        }
         ((TextRendererDrawerAccessor) drawer)
             .callAddRectangle(
                 new GlyphRenderer.Rectangle(

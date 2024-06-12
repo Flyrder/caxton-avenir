@@ -15,7 +15,6 @@ import net.minecraft.util.Identifier;
 import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.command.CaxtonCommands;
 import xyz.flirora.caxton.render.CaxtonShaders;
-import xyz.flirora.caxton.render.CaxtonVertexFormats;
 
 public class CaxtonModIdentifierFlavor implements ClientModInitializer {
   @Override
@@ -54,7 +53,7 @@ public class CaxtonModIdentifierFlavor implements ClientModInitializer {
               });
           context.register(
               CaxtonShaders.TEXT_OUTLINE_ID,
-              CaxtonVertexFormats.POSITION_COLOR_COLOR_TEXTURE_LIGHT,
+              VertexFormats.POSITION_COLOR_TEXTURE_LIGHT,
               shader -> {
                 CaxtonShaders.caxtonTextOutlineShader = shader;
               });

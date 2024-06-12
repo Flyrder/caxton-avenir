@@ -26,13 +26,13 @@ public class CaxtonTextRenderLayers {
           RenderLayerFunctions::ofTextR,
           RenderLayerFunctions::ofTextSeeThroughR,
           RenderLayerFunctions::ofTextOffsetR,
-          null);
+          RenderLayerFunctions::ofTextR);
   private final Group rasterAa =
       new Group(
           RenderLayerFunctions::ofTextRA,
           RenderLayerFunctions::ofTextSeeThroughRA,
           RenderLayerFunctions::ofTextOffsetRA,
-          null);
+          RenderLayerFunctions::ofTextRA);
 
   public void clear() {
     msdf.clear();
@@ -115,15 +115,12 @@ public class CaxtonTextRenderLayers {
         Supplier<net.minecraft.client.gl.ShaderProgram> shader,
         CaxtonAtlas.Page page,
         boolean seeThrough,
-        boolean outline,
         boolean rasterized,
         boolean blur,
         boolean polygonOffset) {
       return RenderLayer.of(
           name,
-          outline
-              ? CaxtonVertexFormats.POSITION_COLOR_COLOR_TEXTURE_LIGHT
-              : VertexFormats.POSITION_COLOR_TEXTURE_LIGHT,
+          VertexFormats.POSITION_COLOR_TEXTURE_LIGHT,
           VertexFormat.DrawMode.QUADS,
           256,
           false,
@@ -141,14 +138,7 @@ public class CaxtonTextRenderLayers {
 
     private static RenderLayer ofText(CaxtonAtlas.Page page) {
       return make(
-          "caxton_text",
-          () -> CaxtonShaders.caxtonTextShader,
-          page,
-          false,
-          false,
-          false,
-          true,
-          false);
+          "caxton_text", () -> CaxtonShaders.caxtonTextShader, page, false, false, true, false);
     }
 
     private static RenderLayer ofTextSeeThrough(CaxtonAtlas.Page page) {
@@ -158,21 +148,13 @@ public class CaxtonTextRenderLayers {
           page,
           true,
           false,
-          false,
           true,
           false);
     }
 
     private static RenderLayer ofTextOffset(CaxtonAtlas.Page page) {
       return make(
-          "caxton_text_outline",
-          () -> CaxtonShaders.caxtonTextShader,
-          page,
-          false,
-          false,
-          false,
-          true,
-          true);
+          "caxton_text", () -> CaxtonShaders.caxtonTextShader, page, false, false, true, true);
     }
 
     private static RenderLayer ofTextOutline(CaxtonAtlas.Page page) {
@@ -181,7 +163,6 @@ public class CaxtonTextRenderLayers {
           () -> CaxtonShaders.caxtonTextOutlineShader,
           page,
           false,
-          true,
           false,
           true,
           false);
@@ -192,7 +173,6 @@ public class CaxtonTextRenderLayers {
           "caxton_text_raster",
           GameRenderer::getRenderTypeTextIntensityProgram,
           page,
-          false,
           false,
           true,
           false,
@@ -205,7 +185,6 @@ public class CaxtonTextRenderLayers {
           GameRenderer::getRenderTypeTextIntensitySeeThroughProgram,
           page,
           true,
-          false,
           true,
           false,
           false);
@@ -216,7 +195,6 @@ public class CaxtonTextRenderLayers {
           "caxton_text_outline_raster",
           GameRenderer::getRenderTypeTextIntensityProgram,
           page,
-          false,
           false,
           true,
           false,
@@ -229,7 +207,6 @@ public class CaxtonTextRenderLayers {
           GameRenderer::getRenderTypeTextIntensityProgram,
           page,
           false,
-          false,
           true,
           true,
           false);
@@ -241,7 +218,6 @@ public class CaxtonTextRenderLayers {
           GameRenderer::getRenderTypeTextIntensitySeeThroughProgram,
           page,
           true,
-          false,
           true,
           true,
           false);
@@ -252,7 +228,6 @@ public class CaxtonTextRenderLayers {
           "caxton_text_outline_raster",
           GameRenderer::getRenderTypeTextIntensityProgram,
           page,
-          false,
           false,
           true,
           true,

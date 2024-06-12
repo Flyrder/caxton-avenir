@@ -8,8 +8,7 @@
     },
     "attributes": [
         "Position",
-        "Color0",
-        "Color1",
+        "Color",
         "UV0",
         "UV2"
     ],

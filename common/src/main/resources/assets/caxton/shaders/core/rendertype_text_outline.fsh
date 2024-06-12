@@ -12,8 +12,7 @@ uniform vec4 FogColor;
 uniform float UnitRange;
 
 in float vertexDistance;
-in vec4 vertexColor0;
-in vec4 vertexColor1;
+in vec4 vertexColor;
 in vec2 texCoord0;
 
 out vec4 fragColor;
@@ -26,13 +25,9 @@ float screenPxRange() {
 }
 
 void main() {
-    float range = screenPxRange();
-    float innerOpacity = msdf(Sampler0, texCoord0, range);
-    float outerOpacity = sdf0(Sampler0, texCoord0, range);
-    vec4 outerColor = vertexColor1 * ColorModulator;
-    outerColor.a *= outerOpacity;
-    vec4 color = mix(outerColor, vertexColor0, innerOpacity);
+    float opacity = sdf0(Sampler0, texCoord0, screenPxRange());
+    vec4 color = vertexColor * ColorModulator;
+    color.a *= opacity;
     if (color.a < 0.1) discard;
     fragColor = linear_fog(color, vertexDistance, FogStart, FogEnd, FogColor);
-//     fragColor = vec4(fragColor.rgb * fragColor.a, 1.0);
 }

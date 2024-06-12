@@ -9,11 +9,11 @@ public enum FontTech {
   RASTER("raster", true),
   ;
   private final String name;
-  private final boolean twoPhasedOutlineText;
+  private final boolean offsetOutlineGlyphsByGlyphCounts;
 
-  FontTech(String name, boolean twoPhasedOutlineText) {
+  FontTech(String name, boolean offsetOutlineGlyphsByGlyphCounts) {
     this.name = name;
-    this.twoPhasedOutlineText = twoPhasedOutlineText;
+    this.offsetOutlineGlyphsByGlyphCounts = offsetOutlineGlyphsByGlyphCounts;
   }
 
   public static FontTech fromName(String name) {
@@ -28,15 +28,7 @@ public enum FontTech {
     return name;
   }
 
-  /**
-   * Returns whether this font draws outlined glyphs in two draw calls (one for the text itself and
-   * another for the outline), as opposed to a single call that draws both.
-   *
-   * <p>For compatibility with Iris Shaders, the {@link FontTech#RASTER} variant has this property.
-   *
-   * @return true if this font tech uses two-phased outlined text rendering
-   */
-  public boolean hasTwoPhasedOutlineTextRendering() {
-    return twoPhasedOutlineText;
+  public boolean offsetOutlineGlyphsByGlyphCounts() {
+    return this.offsetOutlineGlyphsByGlyphCounts;
   }
 }
