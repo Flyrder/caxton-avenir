@@ -82,9 +82,7 @@ public class CaxtonModResourceLocationFlavor {
           });
       event.registerShader(
           new ShaderProgram(
-              factory,
-              CaxtonShaders.TEXT_OUTLINE_ID,
-              VertexFormats.POSITION_COLOR_TEXTURE_LIGHT),
+              factory, CaxtonShaders.TEXT_OUTLINE_ID, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT),
           shader -> {
             CaxtonShaders.caxtonTextOutlineShader = shader;
           });

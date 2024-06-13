@@ -5,7 +5,6 @@ package xyz.flirora.caxton.forge;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
-
 import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.resource.*;
@@ -84,9 +83,7 @@ public class CaxtonModResourceLocationFlavor {
           });
       event.registerShader(
           new ShaderProgram(
-              factory,
-              CaxtonShaders.TEXT_OUTLINE_ID,
-              VertexFormats.POSITION_COLOR_TEXTURE_LIGHT),
+              factory, CaxtonShaders.TEXT_OUTLINE_ID, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT),
           shader -> {
             CaxtonShaders.caxtonTextOutlineShader = shader;
           });
@@ -97,6 +94,7 @@ public class CaxtonModResourceLocationFlavor {
 
   private static void registerCommands(RegisterClientCommandsEvent event) {
     CaxtonCommands.register(
-        new ClientCommandRegistrarResourceLocationFlavor(event.getDispatcher(), event.getBuildContext()));
+        new ClientCommandRegistrarResourceLocationFlavor(
+            event.getDispatcher(), event.getBuildContext()));
   }
 }
