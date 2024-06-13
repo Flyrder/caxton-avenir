@@ -4,6 +4,8 @@ package xyz.flirora.caxton.forge;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
+
 import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.resource.*;
@@ -19,7 +21,6 @@ import net.minecraftforge.forgespi.locating.IModFile;
 import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.command.CaxtonCommands;
 import xyz.flirora.caxton.render.CaxtonShaders;
-import xyz.flirora.caxton.render.CaxtonVertexFormats;
 
 @Mod(CaxtonModClient.MOD_ID)
 public class CaxtonModResourceLocationFlavor {
@@ -39,24 +40,25 @@ public class CaxtonModResourceLocationFlavor {
         Path sourcePath = file.findResource("resourcepacks/" + id);
         var pack =
             ResourcePackProfile.create(
-                CaxtonModClient.MOD_ID + ":" + id,
-                Text.translatable("caxton.resourcePack." + id),
-                false,
+                new ResourcePackInfo(
+                    CaxtonModClient.MOD_ID + ":" + id,
+                    Text.translatable("caxton.resourcePack." + id),
+                    ResourcePackSource.BUILTIN,
+                    Optional.empty()),
                 new ResourcePackProfile.PackFactory() {
                   @Override
-                  public ResourcePack open(String name) {
-                    return new DirectoryResourcePack(name, sourcePath, false);
+                  public ResourcePack open(ResourcePackInfo info) {
+                    return new DirectoryResourcePack(info, sourcePath);
                   }
 
                   @Override
                   public ResourcePack openWithOverlays(
-                      String name, ResourcePackProfile.Metadata metadata) {
-                    return new DirectoryResourcePack(name, sourcePath, false);
+                      ResourcePackInfo info, ResourcePackProfile.Metadata metadata) {
+                    return new DirectoryResourcePack(info, sourcePath);
                   }
                 },
                 ResourceType.CLIENT_RESOURCES,
-                ResourcePackProfile.InsertionPosition.TOP,
-                ResourcePackSource.BUILTIN);
+                new ResourcePackPosition(false, ResourcePackProfile.InsertionPosition.TOP, false));
         event.addRepositorySource(profileAdder -> profileAdder.accept(pack));
       }
     }
@@ -84,7 +86,7 @@ public class CaxtonModResourceLocationFlavor {
           new ShaderProgram(
               factory,
               CaxtonShaders.TEXT_OUTLINE_ID,
-              CaxtonVertexFormats.POSITION_COLOR_COLOR_TEXTURE_LIGHT),
+              VertexFormats.POSITION_COLOR_TEXTURE_LIGHT),
           shader -> {
             CaxtonShaders.caxtonTextOutlineShader = shader;
           });
@@ -95,6 +97,6 @@ public class CaxtonModResourceLocationFlavor {
 
   private static void registerCommands(RegisterClientCommandsEvent event) {
     CaxtonCommands.register(
-        new ClientCommandRegistrarResourceLocationFlavor(event.getDispatcher()));
+        new ClientCommandRegistrarResourceLocationFlavor(event.getDispatcher(), event.getBuildContext()));
   }
 }

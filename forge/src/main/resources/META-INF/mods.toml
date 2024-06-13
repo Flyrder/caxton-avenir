@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "[49,)"
+loaderVersion = "[54,)"
 issueTrackerURL = "https://gitlab.com/Kyarei/caxton/-/issues"
 license = "MIT"
 
@@ -16,14 +16,14 @@ logoFile = "assets/caxton/icon.png"
 [[dependencies.caxton]]
 modId = "forge"
 mandatory = true
-versionRange = "[50,)"
+versionRange = "[54,)"
 ordering = "NONE"
 side = "CLIENT"
 
 [[dependencies.caxton]]
 modId = "minecraft"
 mandatory = true
-versionRange = "[1.20.5,)"
+versionRange = "[1.21,)"
 ordering = "NONE"
 side = "CLIENT"
 

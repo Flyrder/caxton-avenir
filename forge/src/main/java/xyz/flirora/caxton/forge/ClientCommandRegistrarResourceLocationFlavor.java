@@ -6,6 +6,8 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.datafixers.util.Either;
 import java.util.Objects;
+
+import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 import xyz.flirora.caxton.command.ClientCommand;
@@ -13,7 +15,7 @@ import xyz.flirora.caxton.command.ClientCommandRegistrar;
 import xyz.flirora.caxton.command.GenericArgumentBuilderFactory;
 
 public record ClientCommandRegistrarResourceLocationFlavor(
-    CommandDispatcher<ServerCommandSource> dispatcher) implements ClientCommandRegistrar {
+    CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess) implements ClientCommandRegistrar {
   @Override
   public void registerClientCommand(GenericArgumentBuilderFactory builder, ClientCommand command) {
     Objects.requireNonNull(this.dispatcher, "Please call setDispatcher first!");
@@ -21,7 +23,8 @@ public record ClientCommandRegistrarResourceLocationFlavor(
         builder.create(
             context ->
                 command.run(
-                    context, new ClientCommandSourceResourceLocationEdition(context.getSource()))));
+                    context, new ClientCommandSourceResourceLocationEdition(context.getSource())),
+            this.registryAccess));
   }
 
   private static int reportResult(

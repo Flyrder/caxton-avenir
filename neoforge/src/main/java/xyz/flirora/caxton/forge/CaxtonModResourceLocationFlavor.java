@@ -20,7 +20,6 @@ import net.neoforged.neoforgespi.locating.IModFile;
 import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.command.CaxtonCommands;
 import xyz.flirora.caxton.render.CaxtonShaders;
-import xyz.flirora.caxton.render.CaxtonVertexFormats;
 
 @Mod(CaxtonModClient.MOD_ID)
 public class CaxtonModResourceLocationFlavor {
@@ -85,7 +84,7 @@ public class CaxtonModResourceLocationFlavor {
           new ShaderProgram(
               factory,
               CaxtonShaders.TEXT_OUTLINE_ID,
-              CaxtonVertexFormats.POSITION_COLOR_COLOR_TEXTURE_LIGHT),
+              VertexFormats.POSITION_COLOR_TEXTURE_LIGHT),
           shader -> {
             CaxtonShaders.caxtonTextOutlineShader = shader;
           });
