@@ -1,3 +1,4 @@
+use std::convert::AsRef;
 use std::str::Chars;
 use std::{
     fs::{self, OpenOptions},
@@ -21,9 +22,9 @@ use nanoserde::{DeJson, DeJsonErr, DeJsonState};
 use rayon::iter::{
     IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
 };
-use rustybuzz::{Face, Tag};
+use rustybuzz::Face;
 use sha2::{Digest, Sha256};
-use ttf_parser::{GlyphId, OutlineBuilder, Rect, Variation};
+use ttf_parser::{GlyphId, OutlineBuilder, Rect, Tag, Variation};
 
 use crate::extrude::Kernel;
 use crate::tlist::{TList, TListPendingEntry};
@@ -368,7 +369,7 @@ fn create_mtsdf(
     let width = adjust_dims(width, mipmap);
     let height = adjust_dims(height, mipmap);
 
-    let mut shape = Shape::load_from_face(face, glyph_id);
+    let mut shape = Shape::load_from_face(face.as_ref(), glyph_id);
     let framing: Affine2<f64> = framing(options, &bounding_box, mipmap);
     shape.transform(&framing);
     let shape = Shape::edge_coloring_simple(shape, 0.03, 69);

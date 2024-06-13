@@ -10,21 +10,21 @@ repository = "https://gitlab.com/Kyarei/caxton"
 
 [dependencies]
 anyhow = "1.0.68"
-base64 = "0.21.4"
-fdsm = { version = "0.3.0", features = ["ttf-parser"] }
-image = { version = "0.24.6", default-features = false }
+base64 = "0.22.1"
+fdsm = { version = "0.5.0", features = ["ttf-parser"] }
+image = { version = "0.25.1", default-features = false }
 jni = "0.21.1"
-rustybuzz = "0.13.0"
+rustybuzz = "0.14.1"
 nanoserde = "0.1.35"
 sha2 = "0.10.8"
-ttf-parser = "0.20.0"
+ttf-parser = "0.21.1"
 flate2 = "1.0.28"
 rayon = "1.8.0"
 ab_glyph_rasterizer = "0.1.8"
 nalgebra = "0.32.3"
 
 [lib]
-crate_type = ["cdylib"]
+crate-type = ["cdylib"]
 
 [profile.release]
 panic = 'abort'
