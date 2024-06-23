@@ -199,6 +199,8 @@ rasterizing the font:
 }
 ```
 
+**Make sure to include the extension of the font file.** So if your font is located at `assets/example/textures/font/example.otf`, then your JSON file should be located at `assets/example/textures/font/example.otf.json` (not `example.json`).
+
 ### Global configuration
 
 The following options are available in `config/caxton.json`:
