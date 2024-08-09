@@ -31,7 +31,7 @@ Available on [Modrinth](https://modrinth.com/mod/caxton)!
 
 | Mod | Version | Notes |
 |-----|---------|-------|
-| [Sodium] | Any except 0.5.5 | Outlined text is [misrendered with Sodium 0.5.5](https://github.com/CaffeineMC/sodium-fabric/issues/2218) |
+| [Sodium] | Any except Caxton <0.6.0 + Sodium 0.5.5 | Outlined text was [misrendered with Sodium 0.5.5 and pre-0.6.0 versions of Caxton](https://github.com/CaffeineMC/sodium-fabric/issues/2218) |
 | [ImmediatelyFast] | ≥1.2.0 | Disable Caxton’s `reuseTextRendererDrawer` and `sortTextRenderLayers` options (done automatically) |
 | [Exordium] | Any | [Disable Exordium’s sign buffering](https://github.com/tr7zw/Exordium/issues/48) |
 
