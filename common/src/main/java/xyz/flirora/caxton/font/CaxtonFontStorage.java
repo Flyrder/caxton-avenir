@@ -16,8 +16,6 @@ public interface CaxtonFontStorage {
   /**
    * Gets a {@link CaxtonGlyphResult} for the codepoint.
    *
-   * <p>This method is currently not thread-safe.
-   *
    * @param codePoint the code point to get the glyph for
    * @param validateAdvance whether to validate the advance of the codepoint. Currently, this is not
    *     done for Caxton font glyphs.
