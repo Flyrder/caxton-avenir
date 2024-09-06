@@ -135,7 +135,7 @@ public class RunGroup {
           int cp = c;
           if (Character.isLowSurrogate(c)) {
             if (j >= start + 1 && Character.isHighSurrogate(joined[j - 2])) {
-              cp = Character.toCodePoint(joined[j - 1], c);
+              cp = Character.toCodePoint(joined[j - 2], c);
               --j;
             } else {
               cp = '\uFFFD';
