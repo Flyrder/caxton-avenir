@@ -17,6 +17,7 @@ build-image:
   rules:
     - changes:
         - docker/Dockerfile
+    - when: manual
 
 build:
   image: $IMAGE_TAG
