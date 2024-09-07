@@ -96,8 +96,12 @@ public class WorldRendererVertexConsumerProvider extends VertexConsumerProvider.
 
   @Override
   public void draw() {
-    super.draw();
+    this.drawCurrentLayer();
+
     this.drawCaxtonTextLayers();
+    for (RenderLayer renderLayer : this.layerBuffers.keySet()) {
+      this.draw(renderLayer);
+    }
   }
 
   public void drawCaxtonTextLayers() {

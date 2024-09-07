@@ -63,7 +63,6 @@ public class Voepfxo {
   public static void drawSelection(
       DrawContext context, float left, float top, float right, float bottom) {
     fill(context, RenderLayer.getGuiTextHighlight(), left, top, right, bottom, 0xff0000ff);
-    context.draw();
   }
 
   public static int drawTextWithShadow(
@@ -115,7 +114,6 @@ public class Voepfxo {
             0,
             0xF000F0,
             textRenderer.isRightToLeft());
-    // ((DrawContextAccessor) context).callDraw();
     return i;
   }
 
@@ -159,7 +157,6 @@ public class Voepfxo {
                 0xF000F0,
                 firstCharacterIndex,
                 maxWidth);
-    context.draw();
     return i;
   }
 
@@ -183,7 +180,6 @@ public class Voepfxo {
             ((DrawContextAccessor) context).getVertexConsumers(),
             0xF000F0,
             false);
-    context.draw();
   }
 
   public static int sus(int codePoint) {
