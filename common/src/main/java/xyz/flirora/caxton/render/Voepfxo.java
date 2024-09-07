@@ -51,18 +51,19 @@ public class Voepfxo {
     float g = (float) (color >> 8 & 0xFF) / 255.0f;
     float b = (float) (color & 0xFF) / 255.0f;
 
-    VertexConsumer vertexConsumer = context.getVertexConsumers().getBuffer(renderLayer);
+    VertexConsumer vertexConsumer =
+        ((DrawContextAccessor) context).getVertexConsumers().getBuffer(renderLayer);
     Matrix4f matrix = context.getMatrices().peek().getPositionMatrix();
     vertexConsumer.vertex(matrix, x1, y2, 0.0f).color(r, g, b, a);
     vertexConsumer.vertex(matrix, x2, y2, 0.0f).color(r, g, b, a);
     vertexConsumer.vertex(matrix, x2, y1, 0.0f).color(r, g, b, a);
     vertexConsumer.vertex(matrix, x1, y1, 0.0f).color(r, g, b, a);
-    ((DrawContextAccessor) context).callDraw();
   }
 
   public static void drawSelection(
       DrawContext context, float left, float top, float right, float bottom) {
     fill(context, RenderLayer.getGuiTextHighlight(), left, top, right, bottom, 0xff0000ff);
+    context.draw();
   }
 
   public static int drawTextWithShadow(
@@ -74,7 +75,7 @@ public class Voepfxo {
         color,
         true,
         context.getMatrices().peek().getPositionMatrix(),
-        context.getVertexConsumers(),
+        ((DrawContextAccessor) context).getVertexConsumers(),
         TextRenderer.TextLayerType.NORMAL,
         0,
         0xF000F0);
@@ -109,12 +110,12 @@ public class Voepfxo {
             color,
             shadow,
             context.getMatrices().peek().getPositionMatrix(),
-            context.getVertexConsumers(),
+            ((DrawContextAccessor) context).getVertexConsumers(),
             TextRenderer.TextLayerType.NORMAL,
             0,
             0xF000F0,
             textRenderer.isRightToLeft());
-    ((DrawContextAccessor) context).callDraw();
+    // ((DrawContextAccessor) context).callDraw();
     return i;
   }
 
@@ -152,13 +153,13 @@ public class Voepfxo {
                 color,
                 shadow,
                 context.getMatrices().peek().getPositionMatrix(),
-                context.getVertexConsumers(),
+                ((DrawContextAccessor) context).getVertexConsumers(),
                 false,
                 0,
                 0xF000F0,
                 firstCharacterIndex,
                 maxWidth);
-    ((DrawContextAccessor) context).callDraw();
+    context.draw();
     return i;
   }
 
@@ -179,10 +180,10 @@ public class Voepfxo {
             color,
             outlineColor,
             context.getMatrices().peek().getPositionMatrix(),
-            context.getVertexConsumers(),
+            ((DrawContextAccessor) context).getVertexConsumers(),
             0xF000F0,
             false);
-    ((DrawContextAccessor) context).callDraw();
+    context.draw();
   }
 
   public static int sus(int codePoint) {

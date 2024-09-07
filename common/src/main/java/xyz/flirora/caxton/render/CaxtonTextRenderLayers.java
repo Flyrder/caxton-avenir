@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.render;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gl.GlUniform;
+import net.minecraft.client.gl.ShaderProgramKey;
 import net.minecraft.client.render.*;
+import net.minecraft.util.TriState;
 import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.font.FontTech;
 
@@ -112,7 +113,7 @@ public class CaxtonTextRenderLayers {
 
     private static RenderLayer make(
         String name,
-        Supplier<net.minecraft.client.gl.ShaderProgram> shader,
+        ShaderProgram shader,
         CaxtonAtlas.Page page,
         boolean seeThrough,
         boolean rasterized,
@@ -126,8 +127,12 @@ public class CaxtonTextRenderLayers {
           false,
           CaxtonModClient.CONFIG.sortTextRenderLayers,
           RenderLayer.MultiPhaseParameters.builder()
-              .program(new Shayder(shader, handleTextShader(page, !rasterized)))
-              .texture(new RenderPhase.Texture(page.getId(), blur, page.getNumMipmapLevels() > 1))
+              .program(shader)
+              .texture(
+                  new RenderPhase.Texture(
+                      page.getId(),
+                      blur ? TriState.TRUE : TriState.FALSE,
+                      page.getNumMipmapLevels() > 1))
               .transparency(TRANSLUCENT_TRANSPARENCY)
               .lightmap(ENABLE_LIGHTMAP)
               .depthTest(seeThrough ? RenderPhase.ALWAYS_DEPTH_TEST : RenderPhase.LEQUAL_DEPTH_TEST)
@@ -138,13 +143,19 @@ public class CaxtonTextRenderLayers {
 
     private static RenderLayer ofText(CaxtonAtlas.Page page) {
       return make(
-          "caxton_text", () -> CaxtonShaders.caxtonTextShader, page, false, false, true, false);
+          "caxton_text",
+          new Shayder(CaxtonShaders.TEXT_KEY, page),
+          page,
+          false,
+          false,
+          true,
+          false);
     }
 
     private static RenderLayer ofTextSeeThrough(CaxtonAtlas.Page page) {
       return make(
           "caxton_text_see_through",
-          () -> CaxtonShaders.caxtonTextSeeThroughShader,
+          new Shayder(CaxtonShaders.TEXT_SEE_THROUGH_KEY, page),
           page,
           true,
           false,
@@ -154,13 +165,13 @@ public class CaxtonTextRenderLayers {
 
     private static RenderLayer ofTextOffset(CaxtonAtlas.Page page) {
       return make(
-          "caxton_text", () -> CaxtonShaders.caxtonTextShader, page, false, false, true, true);
+          "caxton_text", new Shayder(CaxtonShaders.TEXT_KEY, page), page, false, false, true, true);
     }
 
     private static RenderLayer ofTextOutline(CaxtonAtlas.Page page) {
       return make(
           "caxton_text_outline",
-          () -> CaxtonShaders.caxtonTextOutlineShader,
+          new Shayder(CaxtonShaders.TEXT_OUTLINE_KEY, page),
           page,
           false,
           false,
@@ -169,20 +180,13 @@ public class CaxtonTextRenderLayers {
     }
 
     private static RenderLayer ofTextR(CaxtonAtlas.Page page) {
-      return make(
-          "caxton_text_raster",
-          GameRenderer::getRenderTypeTextIntensityProgram,
-          page,
-          false,
-          true,
-          false,
-          false);
+      return make("caxton_text_raster", TEXT_INTENSITY_PROGRAM, page, false, true, false, false);
     }
 
     private static RenderLayer ofTextSeeThroughR(CaxtonAtlas.Page page) {
       return make(
           "caxton_text_see_through_raster",
-          GameRenderer::getRenderTypeTextIntensitySeeThroughProgram,
+          TRANSPARENT_TEXT_INTENSITY_PROGRAM,
           page,
           true,
           true,
@@ -193,7 +197,7 @@ public class CaxtonTextRenderLayers {
     private static RenderLayer ofTextOffsetR(CaxtonAtlas.Page page) {
       return make(
           "caxton_text_outline_raster",
-          GameRenderer::getRenderTypeTextIntensityProgram,
+          TRANSPARENT_TEXT_INTENSITY_PROGRAM,
           page,
           false,
           true,
@@ -202,20 +206,13 @@ public class CaxtonTextRenderLayers {
     }
 
     private static RenderLayer ofTextRA(CaxtonAtlas.Page page) {
-      return make(
-          "caxton_text_raster",
-          GameRenderer::getRenderTypeTextIntensityProgram,
-          page,
-          false,
-          true,
-          true,
-          false);
+      return make("caxton_text_raster", TEXT_INTENSITY_PROGRAM, page, false, true, true, false);
     }
 
     private static RenderLayer ofTextSeeThroughRA(CaxtonAtlas.Page page) {
       return make(
           "caxton_text_see_through_raster",
-          GameRenderer::getRenderTypeTextIntensitySeeThroughProgram,
+          TRANSPARENT_TEXT_INTENSITY_PROGRAM,
           page,
           true,
           true,
@@ -226,7 +223,7 @@ public class CaxtonTextRenderLayers {
     private static RenderLayer ofTextOffsetRA(CaxtonAtlas.Page page) {
       return make(
           "caxton_text_outline_raster",
-          GameRenderer::getRenderTypeTextIntensityProgram,
+          TRANSPARENT_TEXT_INTENSITY_PROGRAM,
           page,
           false,
           true,
@@ -234,28 +231,23 @@ public class CaxtonTextRenderLayers {
           true);
     }
 
-    private static Consumer<net.minecraft.client.gl.ShaderProgram> handleTextShader(
-        CaxtonAtlas.Page texId, boolean setUniforms) {
-      if (!setUniforms) return shader -> {};
-      return shader -> {
-        if (shader == null) return;
+    public static class Shayder extends RenderPhase.ShaderProgram {
+      private final ShaderProgramKey key;
+      private final CaxtonAtlas.Page page;
+
+      public Shayder(ShaderProgramKey key, CaxtonAtlas.Page page) {
+        super(key);
+        this.key = key;
+        this.page = page;
+      }
+
+      @Override
+      public void startDrawing() {
+        var shader = RenderSystem.setShader(this.key);
         GlUniform unitRange = ((ShaderExt) shader).caxton$getUnitRange();
         if (unitRange != null) {
-          unitRange.set(((float) texId.getRange()) / CaxtonAtlas.PAGE_SIZE);
+          unitRange.set(((float) page.getRange()) / CaxtonAtlas.PAGE_SIZE);
         }
-      };
-    }
-
-    public static class Shayder extends RenderPhase.ShaderProgram {
-      public Shayder(
-          Supplier<net.minecraft.client.gl.ShaderProgram> supplier,
-          Consumer<net.minecraft.client.gl.ShaderProgram> callback) {
-        super(
-            () -> {
-              net.minecraft.client.gl.ShaderProgram shader = supplier.get();
-              callback.accept(shader);
-              return shader;
-            });
       }
     }
   }

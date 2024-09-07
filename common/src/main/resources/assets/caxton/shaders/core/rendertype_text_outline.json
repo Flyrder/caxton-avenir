@@ -1,6 +1,6 @@
 {
-    "fragment": "caxton:rendertype_text_outline",
-    "vertex": "caxton:rendertype_text_outline",
+    "fragment": "caxton:core/rendertype_text_outline",
+    "vertex": "caxton:core/rendertype_text_outline",
     "blend": {
         "func": "add",
         "dstrgb": "1-srcalpha",

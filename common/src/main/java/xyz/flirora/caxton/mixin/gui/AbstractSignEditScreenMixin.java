@@ -80,13 +80,13 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
                 color,
                 false,
                 instance.getMatrices().peek().getPositionMatrix(),
-                instance.getVertexConsumers(),
+                ((DrawContextAccessor) instance).getVertexConsumers(),
                 false,
                 0,
                 0xF000F0,
                 0,
                 Float.POSITIVE_INFINITY);
-    ((DrawContextAccessor) instance).callDraw();
+    instance.draw();
     return x2;
   }
 

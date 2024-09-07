@@ -33,8 +33,7 @@ public abstract class ShaderMixin implements ShaderExt {
   @Shadow
   public abstract @Nullable GlUniform getUniform(String name);
 
-  // We have to match a pattern
-  @Inject(at = @At("RETURN"), method = "/^<init>$/")
+  @Inject(at = @At("RETURN"), method = "set")
   private void onInit(CallbackInfo ci) {
     this.caxton$initUniforms();
   }

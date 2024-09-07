@@ -1,6 +1,6 @@
 {
-    "fragment": "caxton:rendertype_text_see_through",
-    "vertex": "caxton:rendertype_text_see_through",
+    "fragment": "caxton:core/rendertype_text_see_through",
+    "vertex": "caxton:core/rendertype_text_see_through",
     "blend": {
         "func": "add",
         "dstrgb": "1-srcalpha",

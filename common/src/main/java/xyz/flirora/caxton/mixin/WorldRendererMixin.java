@@ -37,7 +37,7 @@ public class WorldRendererMixin {
   }
 
   @Redirect(
-      method = "render",
+      method = "method_62214", // Lambda in renderMain
       at =
           @At(
               value = "INVOKE",

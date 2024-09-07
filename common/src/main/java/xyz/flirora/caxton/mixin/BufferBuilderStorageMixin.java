@@ -34,7 +34,7 @@ public class BufferBuilderStorageMixin {
                       value = "FIELD",
                       opcode = Opcodes.PUTFIELD,
                       target =
-                          "Lnet/minecraft/client/render/BufferBuilderStorage;effectVertexConsumers:Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;"),
+                          "Lnet/minecraft/client/render/BufferBuilderStorage;blockBufferBuildersPool:Lnet/minecraft/client/render/chunk/BlockBufferBuilderPool;"),
               to =
                   @At(
                       value = "FIELD",

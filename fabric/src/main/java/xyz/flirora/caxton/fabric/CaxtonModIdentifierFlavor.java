@@ -4,12 +4,11 @@ package xyz.flirora.caxton.fabric;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
-import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.gl.ShaderProgramKeys;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import xyz.flirora.caxton.CaxtonModClient;
@@ -37,26 +36,8 @@ public class CaxtonModIdentifierFlavor implements ClientModInitializer {
           ResourcePackActivationType.NORMAL);
     }
     CaxtonModClient.LOGGER.info("Registering core shaders");
-    CoreShaderRegistrationCallback.EVENT.register(
-        context -> {
-          context.register(
-              CaxtonShaders.TEXT_ID,
-              VertexFormats.POSITION_COLOR_TEXTURE_LIGHT,
-              shader -> {
-                CaxtonShaders.caxtonTextShader = shader;
-              });
-          context.register(
-              CaxtonShaders.TEXT_SEE_THROUGH_ID,
-              VertexFormats.POSITION_COLOR_TEXTURE_LIGHT,
-              shader -> {
-                CaxtonShaders.caxtonTextSeeThroughShader = shader;
-              });
-          context.register(
-              CaxtonShaders.TEXT_OUTLINE_ID,
-              VertexFormats.POSITION_COLOR_TEXTURE_LIGHT,
-              shader -> {
-                CaxtonShaders.caxtonTextOutlineShader = shader;
-              });
-        });
+    ShaderProgramKeys.getAll().add(CaxtonShaders.TEXT_KEY);
+    ShaderProgramKeys.getAll().add(CaxtonShaders.TEXT_SEE_THROUGH_KEY);
+    ShaderProgramKeys.getAll().add(CaxtonShaders.TEXT_OUTLINE_KEY);
   }
 }
