@@ -164,7 +164,10 @@ public class LineWrapper {
       remainingLineWidth -= widths[index];
       if (remainingLineWidth < 0.0f) {
         // Drat, we’re out of room!
-        index = prevBreakPoint == -1 ? prevIndex : prevBreakPoint;
+        int candidateIndex = prevBreakPoint == -1 ? prevIndex : prevBreakPoint;
+        // Check that we’re not trying to break a line where it started,
+        // thereby creating an infinite loop in line wrapping
+        if (candidateIndex != currentLineStart) index = candidateIndex;
         break;
       }
       if (index >= targetBreakPoint) {

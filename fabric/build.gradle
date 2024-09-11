@@ -35,6 +35,13 @@ dependencies {
     modImplementation include("com.github.Chocohead:Fabric-ASM:v2.3") {
         exclude group: "net.fabricmc", module: "fabric-loader"
     }
+
+    testImplementation("net.fabricmc:fabric-loader-junit:${project.fabric_loader_version}")
+    testImplementation(project(path: ":common", configuration: "namedElements"))
+}
+
+test {
+    useJUnitPlatform()
 }
 
 processResources {
