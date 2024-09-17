@@ -208,7 +208,7 @@ public class CaxtonTextHandler {
    * @param text The {@link CaxtonText} to get the information from.
    * @param x The <var>x</var>-position of the glyph requested.
    * @param from The character index of the leftmost glyph that should be counted, or <code>-1
-   *     </code> if all glyphs should be counted.
+   *             </code> if all glyphs should be counted.
    * @return The character index of the glyph at the <var>x</var>-position {@code maxWidth} relative
    *     to the glyph with character index {@code from}, or to the leftmost glyph if {@code from ==
    *     -1}.
@@ -224,7 +224,7 @@ public class CaxtonTextHandler {
    * @param text The {@link CaxtonText} to get the information from.
    * @param x The <var>x</var>-position of the glyph requested.
    * @param from The character index of the leftmost glyph that should be counted, or <code>-1
-   *     </code> if all glyphs should be counted.
+   *             </code> if all glyphs should be counted.
    * @return The character index of the glyph at the <var>x</var>-position {@code maxWidth} relative
    *     to the glyph with character index {@code from}, or to the leftmost glyph if {@code from ==
    *     -1}.
@@ -240,7 +240,7 @@ public class CaxtonTextHandler {
    * @param text The {@link CaxtonText} to get the information from.
    * @param x The <var>x</var>-position of the glyph requested.
    * @param from The character index of the leftmost glyph that should be counted, or <code>-1
-   *     </code> if all glyphs should be counted.
+   *              </code> if all glyphs should be counted.
    * @param after If true, then this gets the character index of the glyph to the right of the
    *     queried glyph.
    * @return The character index of the glyph at the <var>x</var>-position {@code maxWidth} relative
@@ -374,7 +374,7 @@ public class CaxtonTextHandler {
    * @param text The {@link CaxtonText} to get the information from.
    * @param x The <var>x</var>-offset to get the style from.
    * @param from The character index of the leftmost glyph that should be counted, or <code>-1
-   *     </code> if all glyphs should be counted.
+   *             </code> if all glyphs should be counted.
    * @return The style at the <var>x</var>-offset {@code x} relative to the glyph with character
    *     index {@code from}, or to the leftmost glyph if {@code from == -1}.
    */
@@ -700,8 +700,11 @@ public class CaxtonTextHandler {
       wrapper.goToNextLine();
       int end = wrapper.getCurrentLineStart();
       if (!retainTrailingWordSplit) {
-        while (end > start && UCharacter.isWhitespace(contents.charAt(end - 1))) {
-          --end;
+        if (end > start) {
+          char trailing = contents.charAt(end - 1);
+          if (wrapper.isFinished() ? trailing == '\n' : UCharacter.isWhitespace(trailing)) {
+            --end;
+          }
         }
       }
       RunGroup rg = wrapper.getRunGroupAt(start);

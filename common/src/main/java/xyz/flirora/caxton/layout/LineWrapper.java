@@ -161,6 +161,10 @@ public class LineWrapper {
         }
         break;
       }
+      if (index >= targetBreakPoint) {
+        prevBreakPoint = targetBreakPoint;
+        targetBreakPoint = nextEligibleBreakPoint();
+      }
       remainingLineWidth -= widths[index];
       if (remainingLineWidth < 0.0f) {
         // Drat, we’re out of room!
@@ -169,10 +173,6 @@ public class LineWrapper {
         // thereby creating an infinite loop in line wrapping
         if (candidateIndex != currentLineStart) index = candidateIndex;
         break;
-      }
-      if (index >= targetBreakPoint) {
-        prevBreakPoint = targetBreakPoint;
-        targetBreakPoint = nextEligibleBreakPoint();
       }
       prevIndex = index;
     }
