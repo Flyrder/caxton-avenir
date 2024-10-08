@@ -30,4 +30,7 @@ public interface TextRendererDrawerAccessor {
 
   @Invoker
   void callAddRectangle(GlyphRenderer.Rectangle rectangle);
+
+  @Invoker
+  float callDrawLayer(float f);
 }

@@ -19,6 +19,7 @@ import net.minecraft.client.util.Window;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.random.Random;
 import org.apache.commons.lang3.mutable.MutableFloat;
@@ -207,6 +208,8 @@ public class CaxtonTextRenderer {
       if (font == null) {
         if (!reuseDrawer) {
           if (usedDrawer) {
+            ((TextRendererDrawerAccessor) outlineDrawer).callDrawLayer(x);
+            ((TextRendererDrawerAccessor) centralDrawer).callDrawLayer(x);
             outlineDrawer =
                 vanillaTextRenderer
                 .new Drawer(
@@ -313,6 +316,8 @@ public class CaxtonTextRenderer {
                   0);
         }
       }
+      ((TextRendererDrawerAccessor) outlineDrawer).callDrawLayer(x);
+      ((TextRendererDrawerAccessor) centralDrawer).callDrawLayer(x);
     }
   }
 
@@ -408,7 +413,15 @@ public class CaxtonTextRenderer {
     TextRenderer.Drawer drawer =
         vanillaTextRenderer
         .new Drawer(
-            vertexConsumerProvider, x, y, color, shadow, matrix, layerType.asVanilla(), light);
+            vertexConsumerProvider,
+            x,
+            y,
+            color,
+            backgroundColor,
+            shadow,
+            matrix,
+            layerType.asVanilla(),
+            light);
     boolean usedDrawer = false;
     for (RunGroup runGroup : text.runGroups()) {
       if (threshold.shouldSkip(runGroup)) {
@@ -416,7 +429,8 @@ public class CaxtonTextRenderer {
       }
       if (x >= maxX) break;
       if (!reuseDrawer) {
-        if (usedDrawer)
+        if (usedDrawer) {
+          ((TextRendererDrawerAccessor) drawer).callDrawLayer(x);
           drawer =
               vanillaTextRenderer
               .new Drawer(
@@ -424,10 +438,12 @@ public class CaxtonTextRenderer {
                   x,
                   y,
                   color,
+                  backgroundColor,
                   shadow,
                   matrix,
                   layerType.asVanilla(),
                   light);
+        }
         usedDrawer = true;
       }
       if (runGroup.getFont() == null) {
@@ -443,7 +459,7 @@ public class CaxtonTextRenderer {
                   >= maxX + handler.getWidth(codePoint, style)) return false;
               return drawer2.accept(index2, style, codePoint);
             });
-        x = drawer.drawLayer(0, x);
+        x = ((TextRendererDrawerAccessor) drawer).getX();
       } else {
         ShapingResult[] shapingResults = runGroup.getShapingResults();
 
@@ -471,7 +487,7 @@ public class CaxtonTextRenderer {
       }
     }
     ((TextRendererDrawerAccessor) drawer).setX(x);
-    drawer.drawLayer(backgroundColor, origX);
+    ((TextRendererDrawerAccessor) drawer).callDrawLayer(origX);
     return x;
   }
 
@@ -565,6 +581,7 @@ public class CaxtonTextRenderer {
         green = ((styleColor >> 8) & 0xFF) / 255.0f * brightnessMultiplier;
         blue = (styleColor & 0xFF) / 255.0f * brightnessMultiplier;
       }
+      int effectiveColor = ColorHelper.fromFloats(alpha, red, green, blue);
 
       int advanceX = shapedRun.advanceX(i);
       int offsetX = shapedRun.offsetX(i);
@@ -637,10 +654,7 @@ public class CaxtonTextRenderer {
                     x1a + shadowOffset,
                     y1u + shadowOffset,
                     0.01f,
-                    red,
-                    green,
-                    blue,
-                    alpha));
+                    effectiveColor));
       }
       if (style.isStrikethrough()) {
         ((TextRendererDrawerAccessor) drawer)
@@ -651,10 +665,7 @@ public class CaxtonTextRenderer {
                     x1a + shadowOffset,
                     y1s + shadowOffset,
                     0.01f,
-                    red,
-                    green,
-                    blue,
-                    alpha));
+                    effectiveColor));
       }
 
       cumulAdvanceX += advanceX;
