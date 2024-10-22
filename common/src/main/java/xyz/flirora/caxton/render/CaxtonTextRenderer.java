@@ -603,7 +603,7 @@ public class CaxtonTextRenderer {
                 y0u + shadowOffset,
                 x1a + shadowOffset,
                 y1u + shadowOffset,
-                0.01f,
+                drawer.getForegroundZIndex(),
                 effectiveColor));
       }
       if (style.isStrikethrough()) {
@@ -613,7 +613,7 @@ public class CaxtonTextRenderer {
                 y0s + shadowOffset,
                 x1a + shadowOffset,
                 y1s + shadowOffset,
-                0.01f,
+                drawer.getForegroundZIndex(),
                 effectiveColor));
       }
 

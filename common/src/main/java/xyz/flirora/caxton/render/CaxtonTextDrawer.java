@@ -197,7 +197,7 @@ public class CaxtonTextDrawer implements CharacterVisitor {
     }
   }
 
-  private float getForegroundZIndex() {
+  public float getForegroundZIndex() {
     return this.swapZIndex ? 0.01F : -0.01F;
   }
 
