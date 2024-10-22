@@ -21,44 +21,46 @@ Available on [Modrinth](https://modrinth.com/mod/caxton)!
 * Many UI elements, both in Minecraft and in mods, make incorrect assumptions about text rendering. Making them aware of
   bidirectional text – let alone matters such as ligatures – will be a major undertaking, and patches in this area
   are welcome.
-  * GUI elements have been patched to account for this, but the displayed text is aligned to the left regardless
-    of its base direction.
+    * GUI elements have been patched to account for this, but the displayed text is aligned to the left regardless
+      of its base direction.
 * Font hinting will probably never be supported.
 
 ## Mod and resource pack compatibility
 
 ### Compatible with some caveats
 
-| Mod | Version | Notes |
-|-----|---------|-------|
-| [Sodium] | Any except Caxton <0.6.0 + Sodium 0.5.5 | Outlined text was [misrendered with Sodium 0.5.5 and pre-0.6.0 versions of Caxton](https://github.com/CaffeineMC/sodium-fabric/issues/2218) |
-| [ImmediatelyFast] | ≥1.2.0 | Disable Caxton’s `reuseTextRendererDrawer` and `sortTextRenderLayers` options (done automatically) |
-| [Exordium] | Any | [Disable Exordium’s sign buffering](https://github.com/tr7zw/Exordium/issues/48) |
+| Mod               | Version                                 | Notes                                                                                                                                       |
+|-------------------|-----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| [Sodium]          | Any except Caxton <0.6.0 + Sodium 0.5.5 | Outlined text was [misrendered with Sodium 0.5.5 and pre-0.6.0 versions of Caxton](https://github.com/CaffeineMC/sodium-fabric/issues/2218) |
+| [ImmediatelyFast] | ≥1.2.0                                  | Disable Caxton’s `reuseTextRendererDrawer` and `sortTextRenderLayers` options (done automatically)                                          |
+| [Exordium]        | Any                                     | [Disable Exordium’s sign buffering](https://github.com/tr7zw/Exordium/issues/48)                                                            |
 
 ### Incompatible
 
-| Mod | Version | Notes |
-|-----|---------|-------|
-| [Iris Shaders] | Any | Custom core shaders [not supported by Iris](https://github.com/IrisShaders/Iris/blob/1.18.2/docs/development/compatibility/core-shaders.md); in-world text using MSDF fonts do not render |
-| [Emojiful] | Any | Outright replaces Minecraft’s default text renderer |
-| [MemoryLeakFix] | ≤1.1.1 | |
-| [VanillaIcecreamFix] | ≤1.2.1-beta+1.20.4 | [Conflicts with Caxton’s Fabric ASM dependency on startup](https://github.com/repletsin5/VanillaIcecreamFix/issues/27) – reportedly fixed in 1.2.2-beta+1.21 |
-| [Porting Lib] | Any for 1.18.2 and likely 1.19.2 | [Conflicts with Fabric API’s core shader registration API](https://github.com/Fabricators-of-Create/Porting-Lib/issues/110) |
-| [Advent of Ascension] | 1.20.4-3.7.7 | No crash, but outlined text from AoA does not use MSDF fonts, and AoA’s scrollable pane component does not clip text in MSDF fonts (compatibility add-on planned) |
+| Mod                   | Version                          | Notes                                                                                                                                                                                     |
+|-----------------------|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [Iris Shaders]        | Any                              | Custom core shaders [not supported by Iris](https://github.com/IrisShaders/Iris/blob/1.18.2/docs/development/compatibility/core-shaders.md); in-world text using MSDF fonts do not render |
+| [Emojiful]            | Any                              | Outright replaces Minecraft’s default text renderer                                                                                                                                       |
+| [MemoryLeakFix]       | ≤1.1.1                           |                                                                                                                                                                                           |
+| [VanillaIcecreamFix]  | ≤1.2.1-beta+1.20.4               | [Conflicts with Caxton’s Fabric ASM dependency on startup](https://github.com/repletsin5/VanillaIcecreamFix/issues/27) – reportedly fixed in 1.2.2-beta+1.21                              |
+| [Porting Lib]         | Any for 1.18.2 and likely 1.19.2 | [Conflicts with Fabric API’s core shader registration API](https://github.com/Fabricators-of-Create/Porting-Lib/issues/110)                                                               |
+| [Advent of Ascension] | 1.20.4-3.7.7                     | No crash, but outlined text from AoA does not use MSDF fonts, and AoA’s scrollable pane component does not clip text in MSDF fonts (compatibility add-on planned)                         |
 
 ### Handles layout incorrectly
 
 The following mods are known to handle text layout incorrectly. They should not crash the game, but GUI elements from
-these mods might have unexpected behavior and might cause warnings to be shown in the log about unsupported text handling methods.
+these mods might have unexpected behavior and might cause warnings to be shown in the log about unsupported text
+handling methods.
 
-| Mod | Version | Notes |
-|-----|---------|-------|
-| [IBE Editor] | Any | Uses a custom text field widget that [clones most of vanilla Minecraft’s rendering code](https://github.com/Franckyi/IBE-Editor/issues/73) |
-| [Roughly Enough Items] | Any | Uses [unsupported methods in some of its widgets](https://github.com/shedaniel/RoughlyEnoughItems/search?q=plainSubstrByWidth) |
+| Mod                    | Version | Notes                                                                                                                                      |
+|------------------------|---------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| [IBE Editor]           | Any     | Uses a custom text field widget that [clones most of vanilla Minecraft’s rendering code](https://github.com/Franckyi/IBE-Editor/issues/73) |
+| [Roughly Enough Items] | Any     | Uses [unsupported methods in some of its widgets](https://github.com/shedaniel/RoughlyEnoughItems/search?q=plainSubstrByWidth)             |
 
 ### Resource packs with custom text-related core shaders
 
-Resource packs that modify core shaders related to text, such as the “Dark UI” and “Transparent UI” packs from [Vanilla Tweaks], will require modification to work with Caxton fonts.
+Resource packs that modify core shaders related to text, such as the “Dark UI” and “Transparent UI” packs
+from [Vanilla Tweaks], will require modification to work with Caxton fonts.
 
 [Sodium]: https://modrinth.com/mod/sodium
 
@@ -124,7 +126,10 @@ key `file` specifies the path:
   "shadow_offset": 1.0,
   // The amount to shift the rendered text by in the X and Y axes, in memefont pixels.
   // Added in Caxton 0.4.4.
-  "shift": [0.0, 0.0],
+  "shift": [
+    0.0,
+    0.0
+  ],
   // A 32-bit integer whose bits are interpreted as a 32-bit floating-point number
   // describing the slant to apply to the characters.
   // This can be used to emulate italics in fonts that do not have an italic variant,
@@ -199,7 +204,9 @@ rasterizing the font:
 }
 ```
 
-**Make sure to include the extension of the font file.** So if your font is located at `assets/example/textures/font/example.otf`, then your JSON file should be located at `assets/example/textures/font/example.otf.json` (not `example.json`).
+**Make sure to include the extension of the font file.** So if your font is located at
+`assets/example/textures/font/example.otf`, then your JSON file should be located at
+`assets/example/textures/font/example.otf.json` (not `example.json`).
 
 ### Global configuration
 
@@ -240,12 +247,16 @@ The following options are available in `config/caxton.json`:
   // See: https://github.com/RaphiMC/ImmediatelyFast/issues/49
   // Added in Caxton 0.4.0.
   "sortTextRenderLayers": false,
-  // When drawing text in non-Caxton fonts, reuse a single `TextRenderer.Drawer`
-  // instance. This avoids having to create a new object for each legacy run
-  // group but can result in a crash with ImmediatelyFast.
-  // Automatically disabled if ImmediatelyFast is detected.
+  // Before 0.6.0, Caxton reused the vanilla `TextRenderer.Drawer` class
+  // but forcibly set its `x` and `y` fields instead of creating a new
+  // instance for every operation.
+  // This caused an incompatibility with one of ImmediatelyFast’s mixins,
+  // so this option was introduced to work around this problem.
+  // As of 0.6.0-alpha.4, this is no longer needed as Caxton no longer
+  // uses `TextRenderer.Drawer`.
   // See: https://gitlab.com/Kyarei/caxton/-/issues/50
   // Added in Caxton 0.4.7.
+  // Removed in Caxton 0.6.0.
   "reuseTextRendererDrawer": true,
   // Some text handling methods are inherently broken and unsupported by Caxton.
   // Caxton will log a warning whenever these methods are called. If this option
@@ -274,9 +285,11 @@ The following options are available in `config/caxton.json`:
 
 ## Building from source
 
-If you want to build Caxton from source, then you’ll need to install the [Rust toolchain] and [Clang] in addition to Gradle.
+If you want to build Caxton from source, then you’ll need to install the [Rust toolchain] and [Clang] in addition to
+Gradle.
 
-By default, the native library will be built for the host platform only. To build it for additional platforms, specify the additional targets by their [target triples] (separated by commas) in the
+By default, the native library will be built for the host platform only. To build it for additional platforms, specify
+the additional targets by their [target triples] (separated by commas) in the
 `xyz.flirora.caxton.additionalTargets` property. For instance, if you want to build the library for x86_64 Windows, then
 you can invoke
 
@@ -284,11 +297,14 @@ you can invoke
 gradle build -Dxyz.flirora.caxton.additionalTargets=x86_64-pc-windows-gnu
 ```
 
-If you get an error about unknown targets, then modify the `cargoCrossBuildTasks` variable in `caxton-impl/build.gradle`.
+If you get an error about unknown targets, then modify the `cargoCrossBuildTasks` variable in`caxton-impl/build.gradle`.
 
 [Rust toolchain]: https://www.rust-lang.org/tools/install
+
 [Clang]: https://rust-lang.github.io/rust-bindgen/requirements.html
+
 [cross]: https://github.com/cross-rs/cross/
+
 [target triples]: https://doc.rust-lang.org/nightly/rustc/platform-support.html
 
 ## Comparison with other mods
@@ -363,8 +379,9 @@ Caxton would not have been possible without the following projects:
 * [RustyBuzz] (RazrFalcon, MIT)
 * [ttf-parser] (RazrFalcon, MIT/Apache-2.0)
 * [fdsm] (me, MIT)
-  * Versions before 0.5 used [msdfgen] (Chlumsky, MIT) and the [msdfgen-rs] bindings (Kayo Phoenix, MIT), both of which have subsequently been invaluable in the development of fdsm.
-  * Versions 0.2.3 and earlier used the [msdf-rs] bindings (Penple, MIT) instead.
+    * Versions before 0.5 used [msdfgen] (Chlumsky, MIT) and the [msdfgen-rs] bindings (Kayo Phoenix, MIT), both of
+      which have subsequently been invaluable in the development of fdsm.
+    * Versions 0.2.3 and earlier used the [msdf-rs] bindings (Penple, MIT) instead.
 * [ab-glyph-rasterizer] (alexheretic, Apache-2.0)
 * [JNI bindings for Rust] (MIT/Apache-2.0)
 * [flate2] (MIT/Apache-2.0)

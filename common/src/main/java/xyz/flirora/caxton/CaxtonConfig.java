@@ -26,7 +26,6 @@ public class CaxtonConfig {
   public @Nullable String rustTarget = null;
   public boolean tweakExpText = true;
   public boolean sortTextRenderLayers = false;
-  public boolean reuseTextRendererDrawer = true;
   public boolean fatalOnBrokenMethodCall = false;
   public boolean debugRefcountChanges = false;
   public boolean disableEasterEggs = false;
@@ -36,7 +35,6 @@ public class CaxtonConfig {
     boolean isImmediatelyFastLoaded =
         CaxtonModClient.getPlatformHooks().isModLoaded("immediatelyfast");
     if (isImmediatelyFastLoaded) {
-      this.reuseTextRendererDrawer = false;
       if (!CaxtonModClient.getBatchingApi().isEnabled()) {
         this.tweakExpText = false;
       }

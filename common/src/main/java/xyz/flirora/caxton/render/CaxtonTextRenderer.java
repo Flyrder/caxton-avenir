@@ -26,13 +26,11 @@ import org.apache.commons.lang3.mutable.MutableFloat;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
-import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.font.CaxtonFont;
 import xyz.flirora.caxton.font.CaxtonFontOptions;
 import xyz.flirora.caxton.font.ConfiguredCaxtonFont;
 import xyz.flirora.caxton.layout.*;
 import xyz.flirora.caxton.mixin.TextRendererAccessor;
-import xyz.flirora.caxton.mixin.TextRendererDrawerAccessor;
 
 @Environment(EnvType.CLIENT)
 public class CaxtonTextRenderer {
@@ -40,7 +38,7 @@ public class CaxtonTextRenderer {
   private static final Vector3f FORWARD_SHIFT = new Vector3f(0.0f, 0.0f, 0.03f);
   private static final Logger LOGGER = LogUtils.getLogger();
   private final CaxtonTextHandler handler;
-  private final TextRenderer vanillaTextRenderer;
+  final TextRenderer vanillaTextRenderer;
   private final Random RANDOM = Random.createLocal();
   private CaxtonGlyphCache cache;
   private final Supplier<CaxtonGlyphCache> cacheSupplier;
@@ -174,7 +172,6 @@ public class CaxtonTextRenderer {
       VertexConsumerProvider vertexConsumers,
       int light,
       boolean addCorners) {
-    boolean reuseDrawer = CaxtonModClient.CONFIG.reuseTextRendererDrawer;
     Threshold NO_THRESHOLD = new Threshold(-1);
     float minThickness = getMinThickness(matrix);
 
@@ -183,9 +180,9 @@ public class CaxtonTextRenderer {
     int effectiveOutlineColor = tweakTransparency(outlineColor);
     int effectiveColor = tweakTransparency(color);
 
-    TextRenderer.Drawer outlineDrawer =
-        vanillaTextRenderer
-        .new Drawer(
+    CaxtonTextDrawer outlineDrawer =
+        new CaxtonTextDrawer(
+            this,
             vertexConsumers,
             0.0f,
             0.0f,
@@ -194,9 +191,9 @@ public class CaxtonTextRenderer {
             matrix,
             TextRenderer.TextLayerType.NORMAL,
             light);
-    TextRenderer.Drawer centralDrawer =
-        vanillaTextRenderer
-        .new Drawer(
+    CaxtonTextDrawer centralDrawer =
+        new CaxtonTextDrawer(
+            this,
             vertexConsumers,
             x,
             y,
@@ -205,40 +202,10 @@ public class CaxtonTextRenderer {
             matrix,
             TextRenderer.TextLayerType.POLYGON_OFFSET,
             light);
-    boolean usedDrawer = false;
 
     for (RunGroup runGroup : runGroups.runGroups()) {
       ConfiguredCaxtonFont font = runGroup.getFont();
       if (font == null) {
-        if (!reuseDrawer) {
-          if (usedDrawer) {
-            ((TextRendererDrawerAccessor) outlineDrawer).callDrawLayer(x);
-            ((TextRendererDrawerAccessor) centralDrawer).callDrawLayer(x);
-            outlineDrawer =
-                vanillaTextRenderer
-                .new Drawer(
-                    vertexConsumers,
-                    0.0f,
-                    0.0f,
-                    effectiveOutlineColor,
-                    false,
-                    matrix,
-                    TextRenderer.TextLayerType.NORMAL,
-                    light);
-            centralDrawer =
-                vanillaTextRenderer
-                .new Drawer(
-                    vertexConsumers,
-                    x,
-                    y,
-                    effectiveColor,
-                    false,
-                    matrix,
-                    TextRenderer.TextLayerType.POLYGON_OFFSET,
-                    light);
-          }
-          usedDrawer = true;
-        }
         MutableFloat xBox = new MutableFloat();
         for (int dx = -1; dx <= 1; ++dx) {
           for (int dy = -1; dy <= 1; ++dy) {
@@ -246,7 +213,6 @@ public class CaxtonTextRenderer {
             if (!addCorners && dx != 0 && dy != 0) continue;
             xBox.setValue(x);
             int dxf = dx, dyf = dy;
-            TextRenderer.Drawer outlineDrawer2 = outlineDrawer;
             runGroup.acceptRender(
                 (index, style, codePoint) -> {
                   int index2 = runGroup.getCharOffset() + index;
@@ -255,22 +221,20 @@ public class CaxtonTextRenderer {
                   Glyph glyph = fontStorage.getGlyph(codePoint, false);
                   float shadowOffset = glyph.getShadowOffset();
 
-                  ((TextRendererDrawerAccessor) outlineDrawer2)
-                      .setX(xBox.floatValue() + dxf * shadowOffset);
-                  ((TextRendererDrawerAccessor) outlineDrawer2).setY(y + dyf * shadowOffset);
+                  outlineDrawer.setX(xBox.floatValue() + dxf * shadowOffset);
+                  outlineDrawer.setY(y + dyf * shadowOffset);
                   xBox.add(glyph.getAdvance(style.isBold()));
-                  return outlineDrawer2.accept(index2, style, codePoint);
+                  return outlineDrawer.accept(index2, style, codePoint);
                 });
           }
         }
-        ((TextRendererDrawerAccessor) centralDrawer).setX(x);
-        TextRenderer.Drawer centralDrawer2 = centralDrawer;
+        centralDrawer.setX(x);
         runGroup.acceptRender(
             (index, style, codePoint) -> {
               int index2 = runGroup.getCharOffset() + index;
-              return centralDrawer2.accept(index2, style, codePoint);
+              return centralDrawer.accept(index2, style, codePoint);
             });
-        x = ((TextRendererDrawerAccessor) centralDrawer).getX();
+        x = centralDrawer.getX();
       } else {
         ShapingResult[] shapingResults = runGroup.getShapingResults();
 
@@ -320,8 +284,8 @@ public class CaxtonTextRenderer {
                   0);
         }
       }
-      ((TextRendererDrawerAccessor) outlineDrawer).callDrawLayer(x);
-      ((TextRendererDrawerAccessor) centralDrawer).callDrawLayer(x);
+      outlineDrawer.drawLayer(x);
+      centralDrawer.drawLayer(x);
     }
   }
 
@@ -395,7 +359,6 @@ public class CaxtonTextRenderer {
       int leftmostCodePoint,
       float maxWidth,
       float minThickness) {
-    boolean reuseDrawer = CaxtonModClient.CONFIG.reuseTextRendererDrawer;
     // System.err.println(text);
     getCache();
     Threshold threshold = new Threshold(leftmostCodePoint);
@@ -417,9 +380,9 @@ public class CaxtonTextRenderer {
     // See
     // <https://github.com/RaphiMC/ImmediatelyFast/blob/1.20/src/main/java/net/raphimc/immediatelyfast/injection/mixins/fast_text_lookup/MixinTextRenderer_Drawer.java>,
     // <https://gitlab.com/Kyarei/caxton/-/issues/50>
-    TextRenderer.Drawer drawer =
-        vanillaTextRenderer
-        .new Drawer(
+    CaxtonTextDrawer drawer =
+        new CaxtonTextDrawer(
+            this,
             vertexConsumerProvider,
             x,
             y,
@@ -436,39 +399,18 @@ public class CaxtonTextRenderer {
         continue;
       }
       if (x >= maxX) break;
-      if (!reuseDrawer) {
-        if (usedDrawer) {
-          ((TextRendererDrawerAccessor) drawer).callDrawLayer(x);
-          drawer =
-              vanillaTextRenderer
-              .new Drawer(
-                  vertexConsumerProvider,
-                  x,
-                  y,
-                  color,
-                  backgroundColor,
-                  shadow,
-                  matrix,
-                  layerType.asVanilla(),
-                  light,
-                  mirror);
-        }
-        usedDrawer = true;
-      }
       if (runGroup.getFont() == null) {
-        ((TextRendererDrawerAccessor) drawer).setX(x);
-        var drawer2 = drawer;
+        drawer.setX(x);
         runGroup.acceptRender(
             (index, style, codePoint) -> {
               int index2 = runGroup.getCharOffset() + index;
               if (threshold.updateLegacy(index2)) {
                 return true;
               }
-              if (((TextRendererDrawerAccessor) drawer2).getX()
-                  >= maxX + handler.getWidth(codePoint, style)) return false;
-              return drawer2.accept(index2, style, codePoint);
+              if (drawer.getX() >= maxX + handler.getWidth(codePoint, style)) return false;
+              return drawer.accept(index2, style, codePoint);
             });
-        x = ((TextRendererDrawerAccessor) drawer).getX();
+        x = drawer.getX();
       } else {
         ShapingResult[] shapingResults = runGroup.getShapingResults();
 
@@ -495,8 +437,8 @@ public class CaxtonTextRenderer {
         }
       }
     }
-    ((TextRendererDrawerAccessor) drawer).setX(x);
-    ((TextRendererDrawerAccessor) drawer).callDrawLayer(origX);
+    drawer.setX(x);
+    drawer.drawLayer(origX);
     return x;
   }
 
@@ -512,7 +454,7 @@ public class CaxtonTextRenderer {
       VertexConsumerProvider vertexConsumers,
       CaxtonTextLayerType layerType,
       int light,
-      TextRenderer.Drawer drawer,
+      CaxtonTextDrawer drawer,
       Threshold threshold,
       float maxX,
       float minThickness,
@@ -655,26 +597,24 @@ public class CaxtonTextRenderer {
       float x0a = x + cumulAdvanceX * scale;
       float x1a = x + (cumulAdvanceX + advanceX) * scale;
       if (style.isUnderlined()) {
-        ((TextRendererDrawerAccessor) drawer)
-            .callAddRectangle(
-                new BakedGlyph.Rectangle(
-                    x0a + shadowOffset,
-                    y0u + shadowOffset,
-                    x1a + shadowOffset,
-                    y1u + shadowOffset,
-                    0.01f,
-                    effectiveColor));
+        drawer.addRectangle(
+            new BakedGlyph.Rectangle(
+                x0a + shadowOffset,
+                y0u + shadowOffset,
+                x1a + shadowOffset,
+                y1u + shadowOffset,
+                0.01f,
+                effectiveColor));
       }
       if (style.isStrikethrough()) {
-        ((TextRendererDrawerAccessor) drawer)
-            .callAddRectangle(
-                new BakedGlyph.Rectangle(
-                    x0a + shadowOffset,
-                    y0s + shadowOffset,
-                    x1a + shadowOffset,
-                    y1s + shadowOffset,
-                    0.01f,
-                    effectiveColor));
+        drawer.addRectangle(
+            new BakedGlyph.Rectangle(
+                x0a + shadowOffset,
+                y0s + shadowOffset,
+                x1a + shadowOffset,
+                y1s + shadowOffset,
+                0.01f,
+                effectiveColor));
       }
 
       cumulAdvanceX += advanceX;

@@ -8,6 +8,7 @@ import net.minecraft.client.font.FontStorage;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Environment(EnvType.CLIENT)
@@ -15,4 +16,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 public interface TextRendererAccessor {
   @Invoker
   FontStorage callGetFontStorage(Identifier id);
+
+  @Accessor
+  boolean isValidateAdvance();
 }

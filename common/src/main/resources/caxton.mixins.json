@@ -21,7 +21,6 @@
         "TextHandlerAccessor",
         "TextHandlerMixin",
         "TextRendererAccessor",
-        "TextRendererDrawerAccessor",
         "TextRendererMixin",
         "TranslationStorageMixin",
         "WorldRendererMixin",
