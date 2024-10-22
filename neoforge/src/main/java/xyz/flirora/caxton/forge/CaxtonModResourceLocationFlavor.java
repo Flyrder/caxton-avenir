@@ -2,11 +2,8 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.forge;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
-import net.minecraft.client.gl.ShaderProgram;
-import net.minecraft.client.render.VertexFormats;
 import net.minecraft.resource.*;
 import net.minecraft.text.Text;
 import net.neoforged.bus.api.IEventBus;
@@ -63,32 +60,10 @@ public class CaxtonModResourceLocationFlavor {
   }
 
   private void addShaders(RegisterShadersEvent event) {
-    try {
-      CaxtonModClient.LOGGER.info("Registering core shaders");
-      ResourceFactory factory = event.getResourceProvider();
-      event.registerShader(
-          new ShaderProgram(
-              factory, CaxtonShaders.TEXT_ID, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT),
-          shader -> {
-            CaxtonShaders.caxtonTextShader = shader;
-          });
-      event.registerShader(
-          new ShaderProgram(
-              factory,
-              CaxtonShaders.TEXT_SEE_THROUGH_ID,
-              VertexFormats.POSITION_COLOR_TEXTURE_LIGHT),
-          shader -> {
-            CaxtonShaders.caxtonTextSeeThroughShader = shader;
-          });
-      event.registerShader(
-          new ShaderProgram(
-              factory, CaxtonShaders.TEXT_OUTLINE_ID, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT),
-          shader -> {
-            CaxtonShaders.caxtonTextOutlineShader = shader;
-          });
-    } catch (IOException e) {
-      throw new RuntimeException("could not add shaders", e);
-    }
+    CaxtonModClient.LOGGER.info("Registering core shaders");
+    event.registerShader(CaxtonShaders.TEXT_KEY);
+    event.registerShader(CaxtonShaders.TEXT_SEE_THROUGH_KEY);
+    event.registerShader(CaxtonShaders.TEXT_OUTLINE_KEY);
   }
 
   private static void registerCommands(RegisterClientCommandsEvent event) {
