@@ -4,7 +4,7 @@ package xyz.flirora.caxton.mixin;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.font.GlyphRenderer;
+import net.minecraft.client.font.BakedGlyph;
 import net.minecraft.client.font.TextRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
@@ -29,7 +29,7 @@ public interface TextRendererDrawerAccessor {
   void setY(float y);
 
   @Invoker
-  void callAddRectangle(GlyphRenderer.Rectangle rectangle);
+  void callAddRectangle(BakedGlyph.Rectangle rectangle);
 
   @Invoker
   float callDrawLayer(float f);

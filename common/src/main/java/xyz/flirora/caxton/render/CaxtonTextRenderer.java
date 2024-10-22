@@ -105,6 +105,7 @@ public class CaxtonTextRenderer {
       TextRenderer.TextLayerType layerType,
       int backgroundColor,
       int light,
+      boolean mirror,
       int leftmostCodePoint,
       float maxWidth) {
     CaxtonText runGroups =
@@ -122,6 +123,7 @@ public class CaxtonTextRenderer {
             backgroundColor,
             light,
             runGroups,
+            true,
             leftmostCodePoint,
             maxWidth,
             getMinThickness(matrix));
@@ -140,6 +142,7 @@ public class CaxtonTextRenderer {
       TextRenderer.TextLayerType layerType,
       int backgroundColor,
       int light,
+      boolean mirror,
       int leftmostCodePoint,
       float maxWidth) {
     CaxtonText runGroups =
@@ -155,6 +158,7 @@ public class CaxtonTextRenderer {
         backgroundColor,
         light,
         runGroups,
+        true,
         leftmostCodePoint,
         maxWidth,
         getMinThickness(matrix));
@@ -351,6 +355,7 @@ public class CaxtonTextRenderer {
           backgroundColor,
           light,
           text,
+          true,
           leftmostCodePoint,
           maxWidth,
           minThickness);
@@ -368,6 +373,7 @@ public class CaxtonTextRenderer {
             backgroundColor,
             light,
             text,
+            true,
             leftmostCodePoint,
             maxWidth,
             minThickness);
@@ -385,6 +391,7 @@ public class CaxtonTextRenderer {
       int backgroundColor,
       int light,
       CaxtonText text,
+      boolean mirror,
       int leftmostCodePoint,
       float maxWidth,
       float minThickness) {
@@ -421,7 +428,8 @@ public class CaxtonTextRenderer {
             shadow,
             matrix,
             layerType.asVanilla(),
-            light);
+            light,
+            mirror);
     boolean usedDrawer = false;
     for (RunGroup runGroup : text.runGroups()) {
       if (threshold.shouldSkip(runGroup)) {
@@ -442,7 +450,8 @@ public class CaxtonTextRenderer {
                   shadow,
                   matrix,
                   layerType.asVanilla(),
-                  light);
+                  light,
+                  mirror);
         }
         usedDrawer = true;
       }
@@ -648,7 +657,7 @@ public class CaxtonTextRenderer {
       if (style.isUnderlined()) {
         ((TextRendererDrawerAccessor) drawer)
             .callAddRectangle(
-                new GlyphRenderer.Rectangle(
+                new BakedGlyph.Rectangle(
                     x0a + shadowOffset,
                     y0u + shadowOffset,
                     x1a + shadowOffset,
@@ -659,7 +668,7 @@ public class CaxtonTextRenderer {
       if (style.isStrikethrough()) {
         ((TextRendererDrawerAccessor) drawer)
             .callAddRectangle(
-                new GlyphRenderer.Rectangle(
+                new BakedGlyph.Rectangle(
                     x0a + shadowOffset,
                     y0s + shadowOffset,
                     x1a + shadowOffset,

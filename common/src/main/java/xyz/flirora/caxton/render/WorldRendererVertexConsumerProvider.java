@@ -138,7 +138,7 @@ public class WorldRendererVertexConsumerProvider extends VertexConsumerProvider.
     if (builtBuffer != null) {
       if (layer.isTranslucent()) {
         BufferAllocator bufferAllocator = this.layerBuffers.getOrDefault(layer, this.allocator);
-        builtBuffer.sortQuads(bufferAllocator, RenderSystem.getVertexSorting());
+        builtBuffer.sortQuads(bufferAllocator, RenderSystem.getProjectionType().getVertexSorter());
       }
       layer.draw(builtBuffer);
     }

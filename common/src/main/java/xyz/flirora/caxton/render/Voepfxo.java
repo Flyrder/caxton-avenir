@@ -112,8 +112,7 @@ public class Voepfxo {
             ((DrawContextAccessor) context).getVertexConsumers(),
             TextRenderer.TextLayerType.NORMAL,
             0,
-            0xF000F0,
-            textRenderer.isRightToLeft());
+            0xF000F0);
     return i;
   }
 
