@@ -32,7 +32,7 @@ Available on [Modrinth](https://modrinth.com/mod/caxton)!
 | Mod               | Version                                 | Notes                                                                                                                                       |
 |-------------------|-----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
 | [Sodium]          | Any except Caxton <0.6.0 + Sodium 0.5.5 | Outlined text was [misrendered with Sodium 0.5.5 and pre-0.6.0 versions of Caxton](https://github.com/CaffeineMC/sodium-fabric/issues/2218) |
-| [ImmediatelyFast] | ≥1.2.0                                  | Disable Caxton’s `reuseTextRendererDrawer` and `sortTextRenderLayers` options (done automatically)                                          |
+| [ImmediatelyFast] | ≥1.2.0                                  | Disable Caxton’s `sortTextRenderLayers` option (plus `reuseTextRendererDrawer` for Caxton <0.6.0) (done automatically)                      |
 | [Exordium]        | Any                                     | [Disable Exordium’s sign buffering](https://github.com/tr7zw/Exordium/issues/48)                                                            |
 
 ### Incompatible
@@ -42,7 +42,7 @@ Available on [Modrinth](https://modrinth.com/mod/caxton)!
 | [Iris Shaders]        | Any                              | Custom core shaders [not supported by Iris](https://github.com/IrisShaders/Iris/blob/1.18.2/docs/development/compatibility/core-shaders.md); in-world text using MSDF fonts do not render |
 | [Emojiful]            | Any                              | Outright replaces Minecraft’s default text renderer                                                                                                                                       |
 | [MemoryLeakFix]       | ≤1.1.1                           |                                                                                                                                                                                           |
-| [VanillaIcecreamFix]  | ≤1.2.1-beta+1.20.4               | [Conflicts with Caxton’s Fabric ASM dependency on startup](https://github.com/repletsin5/VanillaIcecreamFix/issues/27) – reportedly fixed in 1.2.2-beta+1.21                              |
+| [VanillaIcecreamFix]  | ≤1.2.1-beta+1.20.4               | [Conflicts with Caxton’s Fabric ASM dependency on startup](https://github.com/repletsin5/VanillaIcecreamFix/issues/27) – fixed in 1.2.2-beta+1.21                                         |
 | [Porting Lib]         | Any for 1.18.2 and likely 1.19.2 | [Conflicts with Fabric API’s core shader registration API](https://github.com/Fabricators-of-Create/Porting-Lib/issues/110)                                                               |
 | [Advent of Ascension] | 1.20.4-3.7.7                     | No crash, but outlined text from AoA does not use MSDF fonts, and AoA’s scrollable pane component does not clip text in MSDF fonts (compatibility add-on planned)                         |
 
@@ -297,7 +297,8 @@ you can invoke
 gradle build -Dxyz.flirora.caxton.additionalTargets=x86_64-pc-windows-gnu
 ```
 
-If you get an error about unknown targets, then modify the `cargoCrossBuildTasks` variable in`caxton-impl/build.gradle`.
+If you get an error about unknown targets, then modify the `cargoCrossBuildTasks` variable in
+`caxton-impl/build.gradle`.
 
 [Rust toolchain]: https://www.rust-lang.org/tools/install
 
