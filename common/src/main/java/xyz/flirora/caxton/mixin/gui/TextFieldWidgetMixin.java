@@ -106,6 +106,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
                 text, OrderedText.styledForwardsVisitedString(suggestion, SUGGESTION));
       }
 
+      if (textRenderer == null) return;
       CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
       this.caxtonText =
           CaxtonText.from(text, ctr::getFontStorage, true, false, ctr.getHandler().getCache());
