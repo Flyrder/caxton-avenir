@@ -5,7 +5,7 @@
         "emojiful": "*"
     },
     "depends": {
-        "minecraft": ">=1.21.2",
+        "minecraft": ">=1.21.4-alpha.24.44.a",
         "fabric-api": "*",
         "fabricloader": ">=0.16.3"
     },

@@ -19,7 +19,6 @@ import net.minecraft.client.util.Window;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.random.Random;
 import org.apache.commons.lang3.mutable.MutableFloat;
@@ -253,7 +252,6 @@ public class CaxtonTextRenderer {
               i,
               x,
               y,
-              effectiveOutlineColor,
               false,
               matrix,
               vertexConsumers,
@@ -271,13 +269,12 @@ public class CaxtonTextRenderer {
                   i,
                   x,
                   y,
-                  effectiveColor,
                   false,
                   matrix,
                   vertexConsumers,
                   CaxtonTextLayerType.POLYGON_OFFSET,
                   light,
-                  outlineDrawer,
+                  centralDrawer,
                   NO_THRESHOLD,
                   Float.POSITIVE_INFINITY,
                   minThickness,
@@ -423,7 +420,6 @@ public class CaxtonTextRenderer {
                   index,
                   x,
                   y,
-                  color,
                   shadow,
                   matrix,
                   vertexConsumerProvider,
@@ -448,7 +444,6 @@ public class CaxtonTextRenderer {
       int index,
       float x,
       float y,
-      int color,
       boolean shadow,
       Matrix4f matrix,
       VertexConsumerProvider vertexConsumers,
@@ -470,7 +465,8 @@ public class CaxtonTextRenderer {
 
     double shrink = options.shrinkage();
     int margin = options.margin();
-    float shadowOffset = shadow ? configuredFont.shadowOffset() : 0.0f;
+    float shadowOffset = configuredFont.shadowOffset();
+    float textZ = shadow ? 0.03f : 0.0f;
     float pageSize = CaxtonAtlas.PAGE_SIZE;
 
     int offset = runGroup.getBidiRuns()[SHAPING_RUN_STRIDE * index + SHAPING_RUN_OFF_START];
@@ -500,12 +496,6 @@ public class CaxtonTextRenderer {
     float y0s = ys + 0.5f * dys;
     float y1s = ys - 0.5f * dys;
 
-    float brightnessMultiplier = shadow ? 0.25f : 1.0f;
-    float baseBlue = (color & 0xFF) / 255.0f * brightnessMultiplier;
-    float baseGreen = ((color >> 8) & 0xFF) / 255.0f * brightnessMultiplier;
-    float baseRed = ((color >> 16) & 0xFF) / 255.0f * brightnessMultiplier;
-    float alpha = ((color >> 24) & 0xFF) / 255.0f;
-
     int numGlyphs = shapedRun.numGlyphs();
     int cumulAdvanceX = 0;
     for (int i = 0; i < numGlyphs; ++i) {
@@ -523,16 +513,8 @@ public class CaxtonTextRenderer {
         IntList others = font.getGlyphsByWidth().get(width);
         glyphId = others.getInt(RANDOM.nextInt(others.size()));
       }
-
-      var styleColorObj = style.getColor();
-      float red = baseRed, green = baseGreen, blue = baseBlue;
-      if (styleColorObj != null) {
-        int styleColor = styleColorObj.getRgb();
-        red = ((styleColor >> 16) & 0xFF) / 255.0f * brightnessMultiplier;
-        green = ((styleColor >> 8) & 0xFF) / 255.0f * brightnessMultiplier;
-        blue = (styleColor & 0xFF) / 255.0f * brightnessMultiplier;
-      }
-      int effectiveColor = ColorHelper.fromFloats(alpha, red, green, blue);
+      int textColor = drawer.getTextColor(style.getColor());
+      int shadowColor = drawer.getShadowColor(style, textColor);
 
       int advanceX = shapedRun.advanceX(i);
       int offsetX = shapedRun.offsetX(i);
@@ -579,19 +561,29 @@ public class CaxtonTextRenderer {
 
         if (x1 >= maxX) break;
 
-        x0 += shadowOffset;
-        x1 += shadowOffset;
-        y0 += shadowOffset;
-        y1 += shadowOffset;
-
-        vertexConsumer.vertex(matrix, x0 + lowerOffset, y0, 0.0f).color(red, green, blue, alpha);
+        vertexConsumer.vertex(matrix, x0 + lowerOffset, y0, textZ).color(textColor);
         vertexConsumer.texture(u0, v0).light(light);
-        vertexConsumer.vertex(matrix, x0 + upperOffset, y1, 0.0f).color(red, green, blue, alpha);
+        vertexConsumer.vertex(matrix, x0 + upperOffset, y1, textZ).color(textColor);
         vertexConsumer.texture(u0, v1).light(light);
-        vertexConsumer.vertex(matrix, x1 + upperOffset, y1, 0.0f).color(red, green, blue, alpha);
+        vertexConsumer.vertex(matrix, x1 + upperOffset, y1, textZ).color(textColor);
         vertexConsumer.texture(u1, v1).light(light);
-        vertexConsumer.vertex(matrix, x1 + lowerOffset, y0, 0.0f).color(red, green, blue, alpha);
+        vertexConsumer.vertex(matrix, x1 + lowerOffset, y0, textZ).color(textColor);
         vertexConsumer.texture(u1, v0).light(light);
+
+        if (shadow) {
+          x0 += shadowOffset;
+          x1 += shadowOffset;
+          y0 += shadowOffset;
+          y1 += shadowOffset;
+          vertexConsumer.vertex(matrix, x0 + lowerOffset, y0, 0.0f).color(shadowColor);
+          vertexConsumer.texture(u0, v0).light(light);
+          vertexConsumer.vertex(matrix, x0 + upperOffset, y1, 0.0f).color(shadowColor);
+          vertexConsumer.texture(u0, v1).light(light);
+          vertexConsumer.vertex(matrix, x1 + upperOffset, y1, 0.0f).color(shadowColor);
+          vertexConsumer.texture(u1, v1).light(light);
+          vertexConsumer.vertex(matrix, x1 + lowerOffset, y0, 0.0f).color(shadowColor);
+          vertexConsumer.texture(u1, v0).light(light);
+        }
       }
 
       float x0a = x + cumulAdvanceX * scale;
@@ -599,22 +591,32 @@ public class CaxtonTextRenderer {
       if (style.isUnderlined()) {
         drawer.addRectangle(
             new BakedGlyph.Rectangle(
-                x0a + shadowOffset,
-                y0u + shadowOffset,
-                x1a + shadowOffset,
-                y1u + shadowOffset,
-                drawer.getForegroundZIndex(),
-                effectiveColor));
+                x0a, y0s, x1a, y1s, drawer.getForegroundZIndex() + textZ, textColor));
+        if (shadow) {
+          drawer.addRectangle(
+              new BakedGlyph.Rectangle(
+                  x0a + shadowOffset,
+                  y0u + shadowOffset,
+                  x1a + shadowOffset,
+                  y1u + shadowOffset,
+                  drawer.getForegroundZIndex(),
+                  shadowColor));
+        }
       }
       if (style.isStrikethrough()) {
         drawer.addRectangle(
             new BakedGlyph.Rectangle(
-                x0a + shadowOffset,
-                y0s + shadowOffset,
-                x1a + shadowOffset,
-                y1s + shadowOffset,
-                drawer.getForegroundZIndex(),
-                effectiveColor));
+                x0a, y0s, x1a, y1s, drawer.getForegroundZIndex() + textZ, textColor));
+        if (shadow) {
+          drawer.addRectangle(
+              new BakedGlyph.Rectangle(
+                  x0a + shadowOffset,
+                  y0s + shadowOffset,
+                  x1a + shadowOffset,
+                  y1s + shadowOffset,
+                  drawer.getForegroundZIndex(),
+                  shadowColor));
+        }
       }
 
       cumulAdvanceX += advanceX;
