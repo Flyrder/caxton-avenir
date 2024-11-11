@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin.gui;
 
+import net.minecraft.class_10415;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.EditBox;
 import net.minecraft.client.gui.widget.EditBoxWidget;
-import net.minecraft.client.gui.widget.ScrollableWidget;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Util;
@@ -24,7 +24,7 @@ import xyz.flirora.caxton.render.HasCaxtonTextRenderer;
 import xyz.flirora.caxton.render.Voepfxo;
 
 @Mixin(EditBoxWidget.class)
-public abstract class EditBoxWidgetMixin extends ScrollableWidget {
+public abstract class EditBoxWidgetMixin extends class_10415 {
   @Shadow @Final private static String UNDERSCORE;
   @Shadow @Final private EditBox editBox;
   @Shadow @Final private TextRenderer textRenderer;
@@ -53,9 +53,9 @@ public abstract class EditBoxWidgetMixin extends ScrollableWidget {
 
     int x = 0;
     int endY = 0;
-    int y = this.getY() + this.getPadding();
+    int y = this.method_65514();
     for (EditBox.Substring line : this.editBox.getLines()) {
-      boolean lineVisible = this.isVisible(y, y + this.textRenderer.fontHeight);
+      boolean lineVisible = this.method_65510(y, y + this.textRenderer.fontHeight);
       String lineStr = text.substring(line.beginIndex(), line.endIndex());
       if (lineVisible) {
         if (drawCursor
@@ -68,13 +68,12 @@ public abstract class EditBoxWidgetMixin extends ScrollableWidget {
                       context,
                       this.textRenderer,
                       lineStr,
-                      (float) (this.getX() + this.getPadding()),
+                      (float) this.method_65513(),
                       (float) y,
                       0xffe0e0e0)
                   - 1;
           float cursorX =
-              this.getX()
-                  + this.getPadding()
+              this.method_65513()
                   + cth.getOffsetAtIndex(
                       CaxtonText.fromForwards(
                           lineStr, ctr::getFontStorage, Style.EMPTY, false, false, cth.getCache()),
@@ -93,7 +92,7 @@ public abstract class EditBoxWidgetMixin extends ScrollableWidget {
                       context,
                       this.textRenderer,
                       lineStr,
-                      (float) (this.getX() + this.getPadding()),
+                      (float) this.method_65513(),
                       (float) y,
                       0xffe0e0e0)
                   - 1;
@@ -104,15 +103,15 @@ public abstract class EditBoxWidgetMixin extends ScrollableWidget {
     }
     if (drawCursor
         && !cursorVertical
-        && this.isVisible(endY, endY + this.textRenderer.fontHeight)) {
+        && this.method_65510(endY, endY + this.textRenderer.fontHeight)) {
       Voepfxo.drawTextWithShadow(
           context, this.textRenderer, UNDERSCORE, (float) x, (float) endY, 0xffd0d0d0);
     }
 
     if (this.editBox.hasSelection()) {
       EditBox.Substring selection = this.editBox.getSelection();
-      int selX = this.getX() + this.getPadding();
-      y = this.getY() + this.getPadding();
+      int selX = this.method_65513();
+      y = this.method_65514();
       for (EditBox.Substring line : this.editBox.getLines()) {
         if (selection.beginIndex() > line.endIndex()) {
           // Selection not yet reached
@@ -122,7 +121,7 @@ public abstract class EditBoxWidgetMixin extends ScrollableWidget {
         // Passed end of selection?
         if (line.beginIndex() > selection.endIndex()) break;
 
-        if (this.isVisible(y, y + this.textRenderer.fontHeight)) {
+        if (this.method_65510(y, y + this.textRenderer.fontHeight)) {
           float selY = y;
           CaxtonText caxtonLine =
               CaxtonText.fromForwards(

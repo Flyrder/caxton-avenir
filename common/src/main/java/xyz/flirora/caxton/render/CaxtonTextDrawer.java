@@ -165,10 +165,10 @@ public class CaxtonTextDrawer implements CharacterVisitor {
   }
 
   public int getShadowColor(Style style, int textColor) {
-    Integer shadowColor = style.method_65301();
+    Integer shadowColor = style.getShadowColor();
     if (shadowColor != null) {
-      float textAlpha = ColorHelper.method_65100(textColor);
-      float shadowAlpha = ColorHelper.method_65100(shadowColor);
+      float textAlpha = ColorHelper.getAlphaFloat(textColor);
+      float shadowAlpha = ColorHelper.getAlphaFloat(shadowColor);
       return textAlpha != 1.0F
           ? ColorHelper.withAlpha(
               ColorHelper.channelFromFloat(textAlpha * shadowAlpha), shadowColor)
