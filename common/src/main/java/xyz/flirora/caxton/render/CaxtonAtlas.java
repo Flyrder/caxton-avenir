@@ -13,7 +13,6 @@ import java.util.List;
 import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.TextureManager;
-import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 
@@ -268,9 +267,6 @@ public class CaxtonAtlas implements AutoCloseable {
     public NativeImage.Format getFormat() {
       return format;
     }
-
-    @Override
-    public void load(ResourceManager manager) {}
 
     @Override
     public void close() {
