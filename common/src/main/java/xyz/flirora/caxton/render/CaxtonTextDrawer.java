@@ -115,17 +115,16 @@ public class CaxtonTextDrawer implements CharacterVisitor {
     float x = index == 0 ? this.x - 1.0f : this.x;
     if (!(bakedGlyph instanceof EmptyBakedGlyph)) {
       float boldOffset = bold ? glyph.getBoldOffset() : 0.0f;
-      float shadowOffset = this.shadow ? glyph.getShadowOffset() : 0.0f;
       this.glyphs.add(
           new BakedGlyph.DrawnGlyph(
-              this.x + shadowOffset,
-              this.y + shadowOffset,
+              this.x,
+              this.y,
               color,
               shadowColor,
               bakedGlyph,
               style,
               boldOffset,
-              shadowOffset));
+              glyph.getShadowOffset()));
     }
 
     float shadowOffset = glyph.getShadowOffset();

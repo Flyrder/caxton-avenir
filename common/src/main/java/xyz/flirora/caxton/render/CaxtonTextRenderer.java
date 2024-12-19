@@ -305,39 +305,40 @@ public class CaxtonTextRenderer {
     color = tweakTransparency(color);
     Matrix4f matrix4f = new Matrix4f(matrix);
     if (shadow) {
-      this.drawRunGroups(
-          x,
-          y,
-          color,
-          true,
-          matrix,
-          vertexConsumerProvider,
-          layerType,
-          backgroundColor,
-          light,
-          text,
-          true,
-          leftmostCodePoint,
-          maxWidth,
-          minThickness);
-      matrix4f.translate(FORWARD_SHIFT);
+      x =
+          this.drawRunGroups(
+              x,
+              y,
+              color,
+              true,
+              matrix,
+              vertexConsumerProvider,
+              layerType,
+              backgroundColor,
+              light,
+              text,
+              true,
+              leftmostCodePoint,
+              maxWidth,
+              minThickness);
+    } else {
+      x =
+          this.drawRunGroups(
+              x,
+              y,
+              color,
+              false,
+              matrix4f,
+              vertexConsumerProvider,
+              layerType,
+              backgroundColor,
+              light,
+              text,
+              true,
+              leftmostCodePoint,
+              maxWidth,
+              minThickness);
     }
-    x =
-        this.drawRunGroups(
-            x,
-            y,
-            color,
-            false,
-            matrix4f,
-            vertexConsumerProvider,
-            layerType,
-            backgroundColor,
-            light,
-            text,
-            true,
-            leftmostCodePoint,
-            maxWidth,
-            minThickness);
     return (int) x + (shadow ? 1 : 0);
   }
 
@@ -361,22 +362,6 @@ public class CaxtonTextRenderer {
     Threshold threshold = new Threshold(leftmostCodePoint);
     float origX = x;
     float maxX = x + maxWidth;
-    // We want to reuse the same TextRenderer.Drawer instance to improve
-    // performance; however, ImmediatelyFast adds some extra fields to
-    // the class in order to optimize text rendering. In particular, it saves
-    // the last render layer for which a vertex consumer was requested from
-    // the drawer’s vertex consumer provider and the corresponding vertex
-    // consumer, reducing the need to call VertexConsumerProvider#getBuffer.
-    // However, the return value of VertexConsumerProvider#getBuffer is only
-    // valid until the next call to that method. This means that if a Caxton text
-    // object has a Caxton run group between two legacy run groups, then the
-    // “last vertex consumer” field stored by IF can become invalidated. In
-    // practice, this conflict results in a crash.
-    // To avoid this, we add an option to create a fresh TextRenderer.Drawer for
-    // every legacy run group.
-    // See
-    // <https://github.com/RaphiMC/ImmediatelyFast/blob/1.20/src/main/java/net/raphimc/immediatelyfast/injection/mixins/fast_text_lookup/MixinTextRenderer_Drawer.java>,
-    // <https://gitlab.com/Kyarei/caxton/-/issues/50>
     CaxtonTextDrawer drawer =
         new CaxtonTextDrawer(
             this,
@@ -390,7 +375,6 @@ public class CaxtonTextRenderer {
             layerType.asVanilla(),
             light,
             mirror);
-    boolean usedDrawer = false;
     for (RunGroup runGroup : text.runGroups()) {
       if (threshold.shouldSkip(runGroup)) {
         continue;
