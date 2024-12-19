@@ -575,7 +575,7 @@ public class CaxtonTextRenderer {
       if (style.isUnderlined()) {
         drawer.addRectangle(
             new BakedGlyph.Rectangle(
-                x0a, y0s, x1a, y1s, drawer.getForegroundZIndex() + textZ, textColor));
+                x0a, y0u, x1a, y1u, drawer.getForegroundZIndex() + textZ, textColor));
         if (shadow) {
           drawer.addRectangle(
               new BakedGlyph.Rectangle(
