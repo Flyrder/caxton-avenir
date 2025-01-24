@@ -1,4 +1,4 @@
-FROM gradle:8.10.0-jdk21-jammy
+FROM gradle:8.12.0-jdk21-jammy
 
 RUN apt-get update && apt-get -y install gcc gcc-mingw-w64-x86-64-win32
 
