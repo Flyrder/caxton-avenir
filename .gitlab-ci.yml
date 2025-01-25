@@ -29,7 +29,7 @@ build:
     paths:
       - "**/build"
       - .gradle
-      - caxton-impl/target
+      - common/caxton-impl/target
   needs:
     - job: build-image
       optional: true
@@ -63,4 +63,4 @@ deploy-maven-snapshot:
     paths:
       - "**/build"
       - .gradle
-      - caxton-impl/target
+      - common/caxton-impl/target
