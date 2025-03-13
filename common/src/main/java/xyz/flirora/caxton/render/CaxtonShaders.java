@@ -2,17 +2,17 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.render;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.platform.DepthTestFunction;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gl.Defines;
-import net.minecraft.client.gl.ShaderProgramKey;
-import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.gl.ShaderPipelines;
+import net.minecraft.client.gl.UniformType;
 import net.minecraft.util.Identifier;
 import xyz.flirora.caxton.CaxtonModClient;
 
 @Environment(EnvType.CLIENT)
 public class CaxtonShaders {
-
   public static final Identifier TEXT_ID =
       Identifier.of(CaxtonModClient.MOD_ID, "core/rendertype_text");
   public static final Identifier TEXT_SEE_THROUGH_ID =
@@ -20,12 +20,46 @@ public class CaxtonShaders {
   public static final Identifier TEXT_OUTLINE_ID =
       Identifier.of(CaxtonModClient.MOD_ID, "core/rendertype_text_outline");
 
-  public static final ShaderProgramKey TEXT_KEY =
-      new ShaderProgramKey(TEXT_ID, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT, Defines.EMPTY);
-  public static final ShaderProgramKey TEXT_SEE_THROUGH_KEY =
-      new ShaderProgramKey(
-          TEXT_SEE_THROUGH_ID, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT, Defines.EMPTY);
-  public static final ShaderProgramKey TEXT_OUTLINE_KEY =
-      new ShaderProgramKey(
-          TEXT_OUTLINE_ID, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT, Defines.EMPTY);
+  public static final RenderPipeline TEXT =
+      RenderPipeline.builder(ShaderPipelines.TEXT_SNIPPET, ShaderPipelines.FOG_SNIPPET)
+          .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text"))
+          .withVertexShader(TEXT_ID)
+          .withFragmentShader(TEXT_ID)
+          .withSampler("Sampler0")
+          .withSampler("Sampler2")
+          .withUniform("UnitRange", UniformType.FLOAT)
+          .build();
+  public static final RenderPipeline TEXT_OFFSET =
+      RenderPipeline.builder(ShaderPipelines.TEXT_SNIPPET, ShaderPipelines.FOG_SNIPPET)
+          .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text"))
+          .withVertexShader(TEXT_ID)
+          .withFragmentShader(TEXT_ID)
+          .withSampler("Sampler0")
+          .withSampler("Sampler2")
+          .withDepthBias(-1.0f, -10.0f)
+          .withUniform("UnitRange", UniformType.FLOAT)
+          .build();
+  public static final RenderPipeline TEXT_SEE_THROUGH =
+      RenderPipeline.builder(ShaderPipelines.TEXT_SNIPPET)
+          .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text_see_through"))
+          .withVertexShader(TEXT_SEE_THROUGH_ID)
+          .withFragmentShader(TEXT_SEE_THROUGH_ID)
+          .withSampler("Sampler0")
+          .withSampler("Sampler2")
+          .withDepthWrite(false)
+          .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+          .withUniform("UnitRange", UniformType.FLOAT)
+          .build();
+  public static final RenderPipeline TEXT_OUTLINE =
+      RenderPipeline.builder(ShaderPipelines.TEXT_SNIPPET, ShaderPipelines.FOG_SNIPPET)
+          .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text_outline"))
+          .withVertexShader(TEXT_OUTLINE_ID)
+          .withFragmentShader(TEXT_OUTLINE_ID)
+          .withSampler("Sampler0")
+          .withSampler("Sampler2")
+          .withUniform("UnitRange", UniformType.FLOAT)
+          .build();
+
+  // Hacky shit to deal with Mojang fuckage
+  public static float unitRange;
 }

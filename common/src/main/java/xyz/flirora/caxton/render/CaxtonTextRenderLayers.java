@@ -2,16 +2,14 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.render;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gl.GlUniform;
-import net.minecraft.client.gl.ShaderProgramKey;
+import net.minecraft.client.gl.ShaderPipelines;
 import net.minecraft.client.render.*;
 import net.minecraft.util.TriState;
-import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.font.FontTech;
 
 @Environment(EnvType.CLIENT)
@@ -89,166 +87,133 @@ public class CaxtonTextRenderLayers {
     }
   }
 
-  private static class RenderLayerFunctions extends RenderLayer {
+  private abstract static class RenderLayerFunctions extends RenderLayer {
     // not used; only here because I’m lazy
     public RenderLayerFunctions(
         String name,
-        VertexFormat vertexFormat,
-        VertexFormat.DrawMode drawMode,
-        int expectedBufferSize,
+        int size,
         boolean hasCrumbling,
         boolean translucent,
-        Runnable startAction,
-        Runnable endAction) {
-      super(
-          name,
-          vertexFormat,
-          drawMode,
-          expectedBufferSize,
-          hasCrumbling,
-          translucent,
-          startAction,
-          endAction);
+        Runnable begin,
+        Runnable end) {
+      super(name, size, hasCrumbling, translucent, begin, end);
     }
 
     private static RenderLayer make(
         String name,
-        ShaderProgram shader,
+        RenderPipeline shader,
         CaxtonAtlas.Page page,
-        boolean seeThrough,
         boolean rasterized,
-        boolean blur,
-        boolean polygonOffset) {
+        boolean blur) {
       return RenderLayer.of(
           name,
-          VertexFormats.POSITION_COLOR_TEXTURE_LIGHT,
-          VertexFormat.DrawMode.QUADS,
-          256,
+          786432,
           false,
-          CaxtonModClient.CONFIG.sortTextRenderLayers,
+          false,
+          shader,
           RenderLayer.MultiPhaseParameters.builder()
-              .program(shader)
               .texture(
                   new RenderPhase.Texture(
                       page.getId(),
                       blur ? TriState.TRUE : TriState.FALSE,
                       page.getNumMipmapLevels() > 1))
-              .transparency(TRANSLUCENT_TRANSPARENCY)
+              .target(RenderPhase.TRANSLUCENT_TARGET)
               .lightmap(ENABLE_LIGHTMAP)
-              .depthTest(seeThrough ? RenderPhase.ALWAYS_DEPTH_TEST : RenderPhase.LEQUAL_DEPTH_TEST)
-              .layering(
-                  polygonOffset ? RenderPhase.POLYGON_OFFSET_LAYERING : RenderPhase.NO_LAYERING)
+              .texturing(
+                  rasterized
+                      ? RenderPhase.DEFAULT_TEXTURING
+                      : new Texturing(
+                          "set_unit_range",
+                          () -> {
+                            CaxtonShaders.unitRange =
+                                ((float) page.getRange()) / CaxtonAtlas.PAGE_SIZE;
+                          },
+                          () -> {
+                            CaxtonShaders.unitRange = 0.0f;
+                          }))
               .build(false));
     }
 
     private static RenderLayer ofText(CaxtonAtlas.Page page) {
-      return make(
-          "caxton_text",
-          new Shayder(CaxtonShaders.TEXT_KEY, page),
-          page,
-          false,
-          false,
-          true,
-          false);
+      return make("caxton_text", CaxtonShaders.TEXT_OFFSET, page, false, true);
     }
 
     private static RenderLayer ofTextSeeThrough(CaxtonAtlas.Page page) {
-      return make(
-          "caxton_text_see_through",
-          new Shayder(CaxtonShaders.TEXT_SEE_THROUGH_KEY, page),
-          page,
-          true,
-          false,
-          true,
-          false);
+      return make("caxton_text_see_through", CaxtonShaders.TEXT_SEE_THROUGH, page, false, true);
     }
 
     private static RenderLayer ofTextOffset(CaxtonAtlas.Page page) {
-      return make(
-          "caxton_text", new Shayder(CaxtonShaders.TEXT_KEY, page), page, false, false, true, true);
+      return make("caxton_text", CaxtonShaders.TEXT, page, false, true);
     }
 
     private static RenderLayer ofTextOutline(CaxtonAtlas.Page page) {
-      return make(
-          "caxton_text_outline",
-          new Shayder(CaxtonShaders.TEXT_OUTLINE_KEY, page),
-          page,
-          false,
-          false,
-          true,
-          false);
+      return make("caxton_text_outline", CaxtonShaders.TEXT_OUTLINE, page, false, true);
     }
 
     private static RenderLayer ofTextR(CaxtonAtlas.Page page) {
-      return make("caxton_text_raster", TEXT_INTENSITY_PROGRAM, page, false, true, false, false);
+      return make(
+          "caxton_text_raster", ShaderPipelines.RENDERTYPE_TEXT_INTENSITY, page, true, false);
     }
 
     private static RenderLayer ofTextSeeThroughR(CaxtonAtlas.Page page) {
       return make(
           "caxton_text_see_through_raster",
-          TRANSPARENT_TEXT_INTENSITY_PROGRAM,
+          ShaderPipelines.RENDERTYPE_TEXT_INTENSITY_SEETHROUGH,
           page,
           true,
-          true,
-          false,
           false);
     }
 
     private static RenderLayer ofTextOffsetR(CaxtonAtlas.Page page) {
       return make(
           "caxton_text_outline_raster",
-          TRANSPARENT_TEXT_INTENSITY_PROGRAM,
+          ShaderPipelines.RENDERTYPE_TEXT_INTENSITY,
           page,
-          false,
           true,
-          false,
-          true);
+          false);
     }
 
     private static RenderLayer ofTextRA(CaxtonAtlas.Page page) {
-      return make("caxton_text_raster", TEXT_INTENSITY_PROGRAM, page, false, true, true, false);
+      return make(
+          "caxton_text_raster", ShaderPipelines.RENDERTYPE_TEXT_INTENSITY, page, true, true);
     }
 
     private static RenderLayer ofTextSeeThroughRA(CaxtonAtlas.Page page) {
       return make(
           "caxton_text_see_through_raster",
-          TRANSPARENT_TEXT_INTENSITY_PROGRAM,
+          ShaderPipelines.RENDERTYPE_TEXT_INTENSITY_SEETHROUGH,
           page,
           true,
-          true,
-          true,
-          false);
+          true);
     }
 
     private static RenderLayer ofTextOffsetRA(CaxtonAtlas.Page page) {
       return make(
           "caxton_text_outline_raster",
-          TRANSPARENT_TEXT_INTENSITY_PROGRAM,
+          ShaderPipelines.RENDERTYPE_TEXT_INTENSITY,
           page,
-          false,
-          true,
           true,
           true);
     }
 
-    public static class Shayder extends RenderPhase.ShaderProgram {
-      private final ShaderProgramKey key;
-      private final CaxtonAtlas.Page page;
-
-      public Shayder(ShaderProgramKey key, CaxtonAtlas.Page page) {
-        super(key);
-        this.key = key;
-        this.page = page;
-      }
-
-      @Override
-      public void startDrawing() {
-        var shader = RenderSystem.setShader(this.key);
-        GlUniform unitRange = ((ShaderExt) shader).caxton$getUnitRange();
-        if (unitRange != null) {
-          unitRange.set(((float) page.getRange()) / CaxtonAtlas.PAGE_SIZE);
-        }
-      }
-    }
+    //        public static class Shayder extends RenderPhase.ShaderProgram {
+    //            private final ShaderProgramKey key;
+    //            private final CaxtonAtlas.Page page;
+    //
+    //            public Shayder(ShaderProgramKey key, CaxtonAtlas.Page page) {
+    //                super(key);
+    //                this.key = key;
+    //                this.page = page;
+    //            }
+    //
+    //            @Override
+    //            public void startDrawing() {
+    //                var shader = RenderSystem.setShader(this.key);
+    //                GlUniform unitRange = ((ShaderExt) shader).caxton$getUnitRange();
+    //                if (unitRange != null) {
+    //                    unitRange.set(((float) page.getRange()) / CaxtonAtlas.PAGE_SIZE);
+    //                }
+    //            }
+    //        }
   }
 }

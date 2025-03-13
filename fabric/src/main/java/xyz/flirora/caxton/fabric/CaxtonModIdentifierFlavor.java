@@ -8,12 +8,10 @@ import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
-import net.minecraft.client.gl.ShaderProgramKeys;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.command.CaxtonCommands;
-import xyz.flirora.caxton.render.CaxtonShaders;
 
 public class CaxtonModIdentifierFlavor implements ClientModInitializer {
   @Override
@@ -36,8 +34,5 @@ public class CaxtonModIdentifierFlavor implements ClientModInitializer {
           ResourcePackActivationType.NORMAL);
     }
     CaxtonModClient.LOGGER.info("Registering core shaders");
-    ShaderProgramKeys.getAll().add(CaxtonShaders.TEXT_KEY);
-    ShaderProgramKeys.getAll().add(CaxtonShaders.TEXT_SEE_THROUGH_KEY);
-    ShaderProgramKeys.getAll().add(CaxtonShaders.TEXT_OUTLINE_KEY);
   }
 }

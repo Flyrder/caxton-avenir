@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.render;
 
-import com.mojang.blaze3d.platform.TextureUtil;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.TextureFormat;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -233,15 +234,21 @@ public class CaxtonAtlas implements AutoCloseable {
         CaxtonAtlas atlas, int pageNum, int range, int numMipmapLevels, NativeImage.Format format) {
       super();
       this.format = format;
-      NativeImage.InternalFormat internalFormat =
+      TextureFormat textureFormat =
           switch (format) {
-            case RGBA -> NativeImage.InternalFormat.RGBA;
-            case RGB -> NativeImage.InternalFormat.RGB;
-            case LUMINANCE_ALPHA -> NativeImage.InternalFormat.RG;
-            case LUMINANCE -> NativeImage.InternalFormat.RED;
+            case RGBA -> TextureFormat.RGBA8;
+            case RGB -> TextureFormat.RGBA8;
+            case LUMINANCE_ALPHA -> TextureFormat.RGBA8;
+            case LUMINANCE -> TextureFormat.RED8;
           };
-      TextureUtil.prepareImage(
-          internalFormat, this.getGlId(), numMipmapLevels - 1, PAGE_SIZE, PAGE_SIZE);
+      this.glTexture =
+          RenderSystem.getDevice()
+              .createTexture(
+                  () -> "Caxton atlas page #" + pageNum,
+                  textureFormat,
+                  PAGE_SIZE,
+                  PAGE_SIZE,
+                  numMipmapLevels);
       // Technically, the contents of this texture are undefined at this
       // point, which can pose a problem with the edges of any inserted
       // textures. Hopefully this doesn’t blow up on us at some point!
@@ -266,11 +273,6 @@ public class CaxtonAtlas implements AutoCloseable {
 
     public NativeImage.Format getFormat() {
       return format;
-    }
-
-    @Override
-    public void close() {
-      this.clearGlId();
     }
   }
 }

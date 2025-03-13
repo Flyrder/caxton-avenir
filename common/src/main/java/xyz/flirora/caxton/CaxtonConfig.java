@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -22,7 +19,11 @@ public class CaxtonConfig {
   public static final Path CONFIG_PATH = Path.of(CONFIG_PATH_STR);
   public static final Path CONFIG_DIR = CONFIG_PATH.getParent();
   public static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeNulls().setLenient().create();
+      new GsonBuilder()
+          .setPrettyPrinting()
+          .serializeNulls()
+          .setStrictness(Strictness.LENIENT)
+          .create();
   public @Nullable String rustTarget = null;
   public boolean tweakExpText = true;
   public boolean sortTextRenderLayers = false;

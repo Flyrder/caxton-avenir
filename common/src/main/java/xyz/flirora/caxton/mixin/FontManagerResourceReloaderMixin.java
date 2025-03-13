@@ -35,15 +35,8 @@ public class FontManagerResourceReloaderMixin {
       method =
           "reload(Lnet/minecraft/client/font/FontManager$ProviderIndex;Lnet/minecraft/util/profiler/Profiler;)V")
   private void onPrepare(FontManager.ProviderIndex index, Profiler profiler, CallbackInfo ci) {
-    if (RenderSystem.isOnRenderThreadOrInit()) {
-      CaxtonTextRenderer.getInstance().clearCaches();
-      CaxtonTextRenderer.getAdvanceValidatingInstance().clearCaches();
-      return;
-    }
-    RenderSystem.recordRenderCall(
-        () -> {
-          CaxtonTextRenderer.getInstance().clearCaches();
-          CaxtonTextRenderer.getAdvanceValidatingInstance().clearCaches();
-        });
+    RenderSystem.assertOnRenderThread();
+    CaxtonTextRenderer.getInstance().clearCaches();
+    CaxtonTextRenderer.getAdvanceValidatingInstance().clearCaches();
   }
 }

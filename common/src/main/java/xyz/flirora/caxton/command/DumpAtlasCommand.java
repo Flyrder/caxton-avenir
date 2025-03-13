@@ -5,7 +5,7 @@ package xyz.flirora.caxton.command;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
@@ -14,11 +14,11 @@ import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import java.io.File;
 import java.io.FileWriter;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.texture.NativeImage;
 import net.minecraft.text.Text;
 import net.minecraft.util.Util;
 import org.slf4j.Logger;
@@ -53,23 +53,12 @@ public class DumpAtlasCommand {
     CaxtonGlyphCache cache = caxtonRenderer.getCache();
 
     List<CaxtonAtlas.Page> pages = cache.getAtlas().getAllPages();
+    Path outputPath = outputDir.toPath();
     for (int i = 0; i < pages.size(); i++) {
       CaxtonAtlas.Page page = pages.get(i);
       int numMipmaps = page.getNumMipmapLevels();
-      GlStateManager._bindTexture(page.getGlId());
-      for (int mipmap = 0; mipmap < numMipmaps; ++mipmap) {
-        String name = mipmap > 0 ? "page" + i + "_lv" + mipmap + ".png" : "page" + i + ".png";
-        File imageOut = new File(outputDir, name);
-        try (NativeImage image =
-            new NativeImage(
-                CaxtonAtlas.PAGE_SIZE >> mipmap, CaxtonAtlas.PAGE_SIZE >> mipmap, false)) {
-          image.loadFromTextureImage(mipmap, false);
-          image.writeTo(imageOut);
-        } catch (Exception exception) {
-          LOGGER.warn("Couldn’t save atlas page #" + i + ", level " + mipmap, exception);
-          throw ATLAS_FAILED.create(i);
-        }
-      }
+      String name = "page" + i;
+      TextureUtil.writeAsPNG(outputPath, name, page.getGlTexture(), numMipmaps, color -> color);
     }
 
     Map<CaxtonFont, Int2LongMap> locations = cache.getLocations();

@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.render;
 
-import com.mojang.blaze3d.platform.GlConst;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.CommandEncoder;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import java.util.HashMap;
 import java.util.Map;
+import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
@@ -92,28 +94,34 @@ public class CaxtonGlyphCache {
                     font.getPixelFormat());
             if (location == 0) return location;
 
-            atlas.getAtlasPageTexture(CaxtonAtlas.getPage(location)).bindTexture();
-            GlStateManager._pixelStore(GlConst.GL_UNPACK_ROW_LENGTH, 0);
-            GlStateManager._pixelStore(GlConst.GL_UNPACK_SKIP_PIXELS, 0);
-            GlStateManager._pixelStore(GlConst.GL_UNPACK_SKIP_ROWS, 0);
-            GlStateManager._pixelStore(
-                GlConst.GL_UNPACK_ALIGNMENT, font.getPixelFormat().getChannelCount());
+            GpuTexture page =
+                atlas.getAtlasPageTexture(CaxtonAtlas.getPage(location)).getGlTexture();
+            CommandEncoder commandEncoder = RenderSystem.getDevice().createCommandEncoder();
 
             for (int mipmap = 0; mipmap < numMipmapLevels; ++mipmap) {
               tlLoc = font.getTlistLocation(glyphId, mipmap);
               width = (int) (tlLoc & 0xFFFF);
               height = (int) ((tlLoc >> 16) & 0xFFFF);
               int offset = (int) (tlLoc >>> 32);
-              GlStateManager._texSubImage2D(
-                  GlConst.GL_TEXTURE_2D,
+              NativeImage nativeImage =
+                  new NativeImage(
+                      font.getPixelFormat(),
+                      width,
+                      height,
+                      false,
+                      font.getPixelData(mipmap) + 4 * Integer.toUnsignedLong(offset));
+              commandEncoder.writeToTexture(
+                  page,
+                  nativeImage,
                   mipmap,
                   CaxtonAtlas.getX(location) >> mipmap,
                   CaxtonAtlas.getY(location) >> mipmap,
                   width,
                   height,
-                  font.getPixelFormat().toGl(),
-                  GlConst.GL_UNSIGNED_BYTE,
-                  font.getPixelData(mipmap) + 4 * Integer.toUnsignedLong(offset));
+                  0,
+                  0);
+              // Since nativeImage uses borrowed memory,
+              // we should not close it
             }
             return location;
           });
