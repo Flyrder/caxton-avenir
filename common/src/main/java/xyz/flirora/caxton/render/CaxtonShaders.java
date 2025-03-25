@@ -6,7 +6,7 @@ import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gl.ShaderPipelines;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gl.UniformType;
 import net.minecraft.util.Identifier;
 import xyz.flirora.caxton.CaxtonModClient;
@@ -21,7 +21,7 @@ public class CaxtonShaders {
       Identifier.of(CaxtonModClient.MOD_ID, "core/rendertype_text_outline");
 
   public static final RenderPipeline TEXT =
-      RenderPipeline.builder(ShaderPipelines.TEXT_SNIPPET, ShaderPipelines.FOG_SNIPPET)
+      RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
           .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text"))
           .withVertexShader(TEXT_ID)
           .withFragmentShader(TEXT_ID)
@@ -30,7 +30,7 @@ public class CaxtonShaders {
           .withUniform("UnitRange", UniformType.FLOAT)
           .build();
   public static final RenderPipeline TEXT_OFFSET =
-      RenderPipeline.builder(ShaderPipelines.TEXT_SNIPPET, ShaderPipelines.FOG_SNIPPET)
+      RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
           .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text"))
           .withVertexShader(TEXT_ID)
           .withFragmentShader(TEXT_ID)
@@ -40,7 +40,7 @@ public class CaxtonShaders {
           .withUniform("UnitRange", UniformType.FLOAT)
           .build();
   public static final RenderPipeline TEXT_SEE_THROUGH =
-      RenderPipeline.builder(ShaderPipelines.TEXT_SNIPPET)
+      RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET)
           .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text_see_through"))
           .withVertexShader(TEXT_SEE_THROUGH_ID)
           .withFragmentShader(TEXT_SEE_THROUGH_ID)
@@ -51,7 +51,7 @@ public class CaxtonShaders {
           .withUniform("UnitRange", UniformType.FLOAT)
           .build();
   public static final RenderPipeline TEXT_OUTLINE =
-      RenderPipeline.builder(ShaderPipelines.TEXT_SNIPPET, ShaderPipelines.FOG_SNIPPET)
+      RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
           .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text_outline"))
           .withVertexShader(TEXT_OUTLINE_ID)
           .withFragmentShader(TEXT_OUTLINE_ID)

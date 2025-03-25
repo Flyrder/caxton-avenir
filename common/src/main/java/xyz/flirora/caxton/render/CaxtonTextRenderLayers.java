@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gl.ShaderPipelines;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.render.*;
 import net.minecraft.util.TriState;
 import xyz.flirora.caxton.font.FontTech;
@@ -152,13 +152,13 @@ public class CaxtonTextRenderLayers {
 
     private static RenderLayer ofTextR(CaxtonAtlas.Page page) {
       return make(
-          "caxton_text_raster", ShaderPipelines.RENDERTYPE_TEXT_INTENSITY, page, true, false);
+          "caxton_text_raster", RenderPipelines.RENDERTYPE_TEXT_INTENSITY, page, true, false);
     }
 
     private static RenderLayer ofTextSeeThroughR(CaxtonAtlas.Page page) {
       return make(
           "caxton_text_see_through_raster",
-          ShaderPipelines.RENDERTYPE_TEXT_INTENSITY_SEETHROUGH,
+          RenderPipelines.RENDERTYPE_TEXT_INTENSITY_SEETHROUGH,
           page,
           true,
           false);
@@ -167,7 +167,7 @@ public class CaxtonTextRenderLayers {
     private static RenderLayer ofTextOffsetR(CaxtonAtlas.Page page) {
       return make(
           "caxton_text_outline_raster",
-          ShaderPipelines.RENDERTYPE_TEXT_INTENSITY,
+          RenderPipelines.RENDERTYPE_TEXT_INTENSITY,
           page,
           true,
           false);
@@ -175,13 +175,13 @@ public class CaxtonTextRenderLayers {
 
     private static RenderLayer ofTextRA(CaxtonAtlas.Page page) {
       return make(
-          "caxton_text_raster", ShaderPipelines.RENDERTYPE_TEXT_INTENSITY, page, true, true);
+          "caxton_text_raster", RenderPipelines.RENDERTYPE_TEXT_INTENSITY, page, true, true);
     }
 
     private static RenderLayer ofTextSeeThroughRA(CaxtonAtlas.Page page) {
       return make(
           "caxton_text_see_through_raster",
-          ShaderPipelines.RENDERTYPE_TEXT_INTENSITY_SEETHROUGH,
+          RenderPipelines.RENDERTYPE_TEXT_INTENSITY_SEETHROUGH,
           page,
           true,
           true);
@@ -190,7 +190,7 @@ public class CaxtonTextRenderLayers {
     private static RenderLayer ofTextOffsetRA(CaxtonAtlas.Page page) {
       return make(
           "caxton_text_outline_raster",
-          ShaderPipelines.RENDERTYPE_TEXT_INTENSITY,
+          RenderPipelines.RENDERTYPE_TEXT_INTENSITY,
           page,
           true,
           true);
