@@ -3,6 +3,7 @@
 package xyz.flirora.caxton.mixin;
 
 import com.mojang.blaze3d.vertex.VertexFormat;
+import java.util.Set;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gl.GlUniform;
@@ -36,6 +37,8 @@ public abstract class ShaderMixin implements ShaderExt {
   @Shadow
   public abstract @Nullable GlUniform getUniform(String name);
 
+  @Shadow public static Set<String> PREDEFINED_UNIFORMS;
+
   @Inject(at = @At("RETURN"), method = "set")
   private void onInit(CallbackInfo ci) {
     this.caxton$initUniforms();
@@ -50,5 +53,11 @@ public abstract class ShaderMixin implements ShaderExt {
       float g,
       CallbackInfo ci) {
     if (this.unitRange != null) this.unitRange.set(CaxtonShaders.unitRange);
+  }
+
+  // Needed for some reason on NeoForge.
+  @Inject(at = @At("RETURN"), method = "<clinit>")
+  private static void onInitializePredefinedUniforms(CallbackInfo ci) {
+    PREDEFINED_UNIFORMS.add("UnitRange");
   }
 }

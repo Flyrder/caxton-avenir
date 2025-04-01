@@ -9,21 +9,23 @@ import net.minecraft.text.Text;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
-import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
 import net.neoforged.neoforgespi.locating.IModFile;
 import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.command.CaxtonCommands;
-import xyz.flirora.caxton.render.CaxtonShaders;
 
 @Mod(CaxtonModClient.MOD_ID)
 public class CaxtonModResourceLocationFlavor {
   public CaxtonModResourceLocationFlavor(IEventBus modBus) {
+    modBus.addListener(this::initCaxtonMod);
     NeoForge.EVENT_BUS.addListener(CaxtonModResourceLocationFlavor::registerCommands);
     modBus.addListener(this::addPackFinders);
-    modBus.addListener(this::addShaders);
+  }
+
+  private void initCaxtonMod(AddClientReloadListenersEvent event) {
     CaxtonModClient.init(new PlatformHooksResourceLocationFlavor());
   }
 
@@ -57,13 +59,6 @@ public class CaxtonModResourceLocationFlavor {
         event.addRepositorySource(profileAdder -> profileAdder.accept(pack));
       }
     }
-  }
-
-  private void addShaders(RegisterShadersEvent event) {
-    CaxtonModClient.LOGGER.info("Registering core shaders");
-    event.registerShader(CaxtonShaders.TEXT_KEY);
-    event.registerShader(CaxtonShaders.TEXT_SEE_THROUGH_KEY);
-    event.registerShader(CaxtonShaders.TEXT_OUTLINE_KEY);
   }
 
   private static void registerCommands(RegisterClientCommandsEvent event) {

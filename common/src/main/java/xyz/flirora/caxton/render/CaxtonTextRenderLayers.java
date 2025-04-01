@@ -122,6 +122,7 @@ public class CaxtonTextRenderLayers {
               .texturing(
                   rasterized
                       ? RenderPhase.DEFAULT_TEXTURING
+                      // Hope this hackery becomes unnecessary in a later version.
                       : new Texturing(
                           "set_unit_range",
                           () -> {
