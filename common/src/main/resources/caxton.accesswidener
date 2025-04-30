@@ -15,12 +15,11 @@ accessible method net/minecraft/client/render/RenderLayer$MultiPhaseParameters$B
 accessible method net/minecraft/client/render/RenderLayer$MultiPhaseParameters$Builder build (Z)Lnet/minecraft/client/render/RenderLayer$MultiPhaseParameters;
 accessible method net/minecraft/client/render/RenderLayer$MultiPhaseParameters$Builder build (Lnet/minecraft/client/render/RenderLayer$OutlineMode;)Lnet/minecraft/client/render/RenderLayer$MultiPhaseParameters;
 
-accessible class net/minecraft/client/gui/screen/ingame/BookEditScreen$PageContent
-accessible class net/minecraft/client/gui/screen/ingame/BookEditScreen$Line
-accessible class net/minecraft/client/gui/screen/ingame/BookEditScreen$Position
 accessible class net/minecraft/client/gui/EditBox$Substring
 accessible class net/minecraft/client/font/FontManager$ProviderIndex
 accessible class net/minecraft/client/font/FontManager$Providers
 accessible method net/minecraft/client/font/FontManager$Providers  <init> (Ljava/util/List;)V
 accessible field net/minecraft/client/gl/RenderPipelines TEXT_SNIPPET Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;
 accessible field net/minecraft/client/gl/RenderPipelines FOG_SNIPPET Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;
+
+accessible class net/minecraft/client/gui/DrawContext$ScissorStack

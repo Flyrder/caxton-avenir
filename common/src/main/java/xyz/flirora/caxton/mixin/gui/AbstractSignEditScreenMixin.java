@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin.gui;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.entity.SignBlockEntity;
@@ -9,7 +10,6 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.AbstractSignEditScreen;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.util.SelectionManager;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -22,7 +22,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import xyz.flirora.caxton.layout.CaxtonText;
 import xyz.flirora.caxton.layout.CaxtonTextHandler;
 import xyz.flirora.caxton.layout.DirectionSetting;
-import xyz.flirora.caxton.mixin.DrawContextAccessor;
 import xyz.flirora.caxton.render.CaxtonTextRenderer;
 import xyz.flirora.caxton.render.HasCaxtonTextRenderer;
 import xyz.flirora.caxton.render.Voepfxo;
@@ -48,9 +47,9 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/gui/DrawContext;drawText(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;IIIZ)I",
+                  "Lnet/minecraft/client/gui/DrawContext;drawText(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;IIIZ)V",
               ordinal = 0))
-  private int drawRowTextProxy(
+  private void drawRowTextProxy(
       DrawContext instance,
       TextRenderer textRenderer,
       String currentLine,
@@ -71,23 +70,8 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
     // The use of `==` is intentional; this check will pass if we are
     // indeed on the current row.
     if (currentLine == this.messages[this.currentRow]) this.currentRowText = rowText;
-    int x2 =
-        (int)
-            ctr.draw(
-                this.rowText,
-                -cth.getWidth(rowText) / 2.0f,
-                y,
-                color,
-                false,
-                instance.getMatrices().peek().getPositionMatrix(),
-                ((DrawContextAccessor) instance).getVertexConsumers(),
-                false,
-                0,
-                0xF000F0,
-                0,
-                Float.POSITIVE_INFINITY);
-    instance.draw();
-    return x2;
+    Voepfxo.drawText(
+        instance, textRenderer, this.rowText, -cth.getWidth(rowText) / 2.0f, y, color, false);
   }
 
   // Use the more precise CaxtonTextHandler.getWidth instead of TextHandler.getWidth
@@ -97,9 +81,9 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/gui/DrawContext;drawText(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;IIIZ)I",
+                  "Lnet/minecraft/client/gui/DrawContext;drawText(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;IIIZ)V",
               ordinal = 1))
-  private int drawEndCursorProxy(
+  private void drawEndCursorProxy(
       DrawContext instance,
       TextRenderer textRenderer,
       String text,
@@ -109,7 +93,7 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
       boolean shadow) {
     CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
     CaxtonTextHandler cth = ctr.getHandler();
-    return Voepfxo.drawText(instance, textRenderer, "_", cth.getWidth(rowText) / 2.0f, y, color);
+    Voepfxo.drawText(instance, textRenderer, "_", cth.getWidth(rowText) / 2.0f, y, color);
   }
 
   @Redirect(
@@ -147,9 +131,9 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/gui/DrawContext;fill(Lnet/minecraft/client/render/RenderLayer;IIIII)V"))
+                  "Lnet/minecraft/client/gui/DrawContext;fill(Lcom/mojang/blaze3d/pipeline/RenderPipeline;IIIII)V"))
   private void drawHighlights(
-      DrawContext context, RenderLayer renderLayer, int x1, int y1, int x2, int y2, int color) {
+      DrawContext context, RenderPipeline pipeline, int x1, int y1, int x2, int y2, int color) {
     CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
     CaxtonTextHandler cth = ctr.getHandler();
 
@@ -166,7 +150,7 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
         (start, end) -> {
           Voepfxo.fill(
               context,
-              renderLayer,
+              pipeline,
               start - x,
               lineY,
               end - x,

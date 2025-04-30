@@ -3,6 +3,7 @@
 package xyz.flirora.caxton.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.TextureFormat;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -245,6 +246,7 @@ public class CaxtonAtlas implements AutoCloseable {
           RenderSystem.getDevice()
               .createTexture(
                   () -> "Caxton atlas page #" + pageNum,
+                  GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING,
                   textureFormat,
                   PAGE_SIZE,
                   PAGE_SIZE,

@@ -62,7 +62,7 @@ public class TextRendererMixin implements HasCaxtonTextRenderer {
   @Inject(
       at = @At("HEAD"),
       method =
-          "drawLayer(Ljava/lang/String;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/client/font/TextRenderer$TextLayerType;IIZ)F",
+          "drawLayer(Ljava/lang/String;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/client/font/TextRenderer$TextLayerType;IIZ)V",
       cancellable = true)
   private void onDrawLayerString(
       String text,
@@ -76,28 +76,28 @@ public class TextRendererMixin implements HasCaxtonTextRenderer {
       int backgroundColor,
       int light,
       boolean swapZIndex,
-      CallbackInfoReturnable<Float> cir) {
-    cir.setReturnValue(
-        caxtonRenderer.drawLayer(
-            text,
-            x,
-            y,
-            color,
-            shadow,
-            matrix,
-            vertexConsumerProvider,
-            layerType,
-            backgroundColor,
-            light,
-            swapZIndex,
-            -1,
-            Float.POSITIVE_INFINITY));
+      CallbackInfo ci) {
+    caxtonRenderer.drawLayer(
+        text,
+        x,
+        y,
+        color,
+        shadow,
+        matrix,
+        vertexConsumerProvider,
+        layerType,
+        backgroundColor,
+        light,
+        swapZIndex,
+        -1,
+        Float.POSITIVE_INFINITY);
+    ci.cancel();
   }
 
   @Inject(
       at = @At("HEAD"),
       method =
-          "drawLayer(Lnet/minecraft/text/OrderedText;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/client/font/TextRenderer$TextLayerType;IIZ)F",
+          "drawLayer(Lnet/minecraft/text/OrderedText;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/client/font/TextRenderer$TextLayerType;IIZ)V",
       cancellable = true)
   private void onDrawLayerOrderedText(
       OrderedText text,
@@ -111,22 +111,22 @@ public class TextRendererMixin implements HasCaxtonTextRenderer {
       int backgroundColor,
       int light,
       boolean swapZIndex,
-      CallbackInfoReturnable<Float> cir) {
-    cir.setReturnValue(
-        caxtonRenderer.drawLayer(
-            text,
-            x,
-            y,
-            color,
-            shadow,
-            matrix,
-            vertexConsumerProvider,
-            layerType,
-            backgroundColor,
-            light,
-            swapZIndex,
-            -1,
-            Float.POSITIVE_INFINITY));
+      CallbackInfo ci) {
+    caxtonRenderer.drawLayer(
+        text,
+        x,
+        y,
+        color,
+        shadow,
+        matrix,
+        vertexConsumerProvider,
+        layerType,
+        backgroundColor,
+        light,
+        swapZIndex,
+        -1,
+        Float.POSITIVE_INFINITY);
+    ci.cancel();
   }
 
   @Inject(at = @At("HEAD"), method = "drawWithOutline", cancellable = true)

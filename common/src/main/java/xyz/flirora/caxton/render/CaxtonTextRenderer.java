@@ -4,7 +4,6 @@ package xyz.flirora.caxton.render;
 
 import static xyz.flirora.caxton.layout.Interleaving.*;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.ints.IntList;
 import java.util.function.Supplier;
@@ -79,7 +78,7 @@ public class CaxtonTextRenderer {
       Window window = MinecraftClient.getInstance().getWindow();
       Vector3f v = new Vector3f(0, 1, 0);
       modelView.transformDirection(v);
-      RenderSystem.getProjectionMatrix().transformDirection(v);
+      //      RenderSystem.getProjectionMatrix().transformDirection(v);
       v.mul(window.getWidth() / 2.0f, window.getHeight() / 2.0f, 0);
       float fontUnitYPx = MathHelper.sqrt(v.x * v.x + v.y * v.y);
       return 1.0f / fontUnitYPx;

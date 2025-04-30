@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.font.TextRenderLayerSet;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.render.*;
 import net.minecraft.util.TriState;
@@ -43,6 +44,13 @@ public class CaxtonTextRenderLayers {
     return (switch (tech) {
       case MSDF -> msdf.text(page, layerType);
       case RASTER -> (blur ? rasterAa : raster).text(page, layerType);
+    });
+  }
+
+  public TextRenderLayerSet renderLayerSet(CaxtonAtlas.Page page, FontTech tech, boolean blur) {
+    return (switch (tech) {
+      case MSDF -> msdf.renderLayerSet(page);
+      case RASTER -> (blur ? rasterAa : raster).renderLayerSet(page);
     });
   }
 
@@ -84,6 +92,13 @@ public class CaxtonTextRenderLayers {
         case OUTLINE -> textOutline.computeIfAbsent(page, this.ofTextOutline);
         case POLYGON_OFFSET -> textOffset.computeIfAbsent(page, this.ofTextOffset);
       };
+    }
+
+    public TextRenderLayerSet renderLayerSet(CaxtonAtlas.Page page) {
+      return new TextRenderLayerSet(
+          text.computeIfAbsent(page, this.ofText),
+          textSeeThrough.computeIfAbsent(page, this.ofTextSeeThrough),
+          textOffset.computeIfAbsent(page, this.ofTextOffset));
     }
   }
 

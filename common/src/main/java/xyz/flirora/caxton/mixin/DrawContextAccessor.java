@@ -5,7 +5,7 @@ package xyz.flirora.caxton.mixin;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.gui.render.state.GuiRenderState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
@@ -13,5 +13,8 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(DrawContext.class)
 public interface DrawContextAccessor {
   @Accessor
-  VertexConsumerProvider.Immediate getVertexConsumers();
+  GuiRenderState getState();
+
+  @Accessor
+  DrawContext.ScissorStack getScissorStack();
 }

@@ -11,7 +11,6 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.logging.LogUtils;
-import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import java.io.File;
 import java.io.FileWriter;
 import java.nio.file.Path;
@@ -61,7 +60,7 @@ public class DumpAtlasCommand {
       TextureUtil.writeAsPNG(outputPath, name, page.getGlTexture(), numMipmaps, color -> color);
     }
 
-    Map<CaxtonFont, Int2LongMap> locations = cache.getLocations();
+    Map<CaxtonFont, CaxtonGlyphCache.Font> locations = cache.getLocations();
     File locationsOut = new File(outputDir, "locations.json");
     try (FileWriter writer = new FileWriter(locationsOut);
         JsonWriter jsonWriter = GSON.newJsonWriter(writer)) {
@@ -70,7 +69,7 @@ public class DumpAtlasCommand {
         CaxtonFont font = fontEntry.getKey();
         jsonWriter.name(font.getId().toString());
         jsonWriter.beginObject();
-        for (var locationEntry : fontEntry.getValue().int2LongEntrySet()) {
+        for (var locationEntry : fontEntry.getValue().getEntry().int2LongEntrySet()) {
           int glyphId = locationEntry.getIntKey();
           String glyphName = font.getGlyphName(glyphId);
           jsonWriter.name(glyphName != null ? glyphName : "_glyph" + glyphId);
