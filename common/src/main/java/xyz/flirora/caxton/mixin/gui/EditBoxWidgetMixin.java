@@ -63,15 +63,9 @@ public abstract class EditBoxWidgetMixin extends ScrollableTextFieldWidget {
             && cursorPos >= line.beginIndex()
             && cursorPos <= line.endIndex()) {
           // Draw vertical cursor for this line
-          x =
-              Voepfxo.drawTextWithShadow(
-                      context,
-                      this.textRenderer,
-                      lineStr,
-                      (float) this.getTextX(),
-                      (float) y,
-                      0xffe0e0e0)
-                  - 1;
+          Voepfxo.drawTextWithShadow(
+              context, this.textRenderer, lineStr, (float) this.getTextX(), (float) y, 0xffe0e0e0);
+          x = this.getTextX() + this.textRenderer.getWidth(lineStr) - 1;
           float cursorX =
               this.getTextX()
                   + cth.getOffsetAtIndex(
@@ -87,15 +81,9 @@ public abstract class EditBoxWidgetMixin extends ScrollableTextFieldWidget {
               y + 1 + this.textRenderer.fontHeight,
               0xffd0d0d0);
         } else {
-          x =
-              Voepfxo.drawTextWithShadow(
-                      context,
-                      this.textRenderer,
-                      lineStr,
-                      (float) this.getTextX(),
-                      (float) y,
-                      0xffe0e0e0)
-                  - 1;
+          Voepfxo.drawTextWithShadow(
+              context, this.textRenderer, lineStr, (float) this.getTextX(), (float) y, 0xffe0e0e0);
+          x = this.getTextX() + this.textRenderer.getWidth(lineStr) - 1;
         }
       }
       endY = y;

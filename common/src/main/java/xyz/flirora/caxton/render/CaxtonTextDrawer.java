@@ -44,6 +44,7 @@ public class CaxtonTextDrawer implements CharacterVisitor {
   private final float maxX;
   private final Threshold threshold;
   private final Random random = Random.createLocal();
+  private boolean outline = false;
 
   // TODO: If we want to convert all text rendering over to CTD,
   // then we need to track maxX and threshold.
@@ -80,12 +81,16 @@ public class CaxtonTextDrawer implements CharacterVisitor {
       float y,
       int color,
       boolean shadow,
-      Matrix4f matrix,
       TextRenderer.TextLayerType layerType,
       int light,
       float maxX,
       Threshold threshold) {
     this(textRenderer, x, y, color, 0, shadow, layerType, light, true, maxX, threshold);
+  }
+
+  public CaxtonTextDrawer outlined() {
+    this.outline = true;
+    return this;
   }
 
   public float getX() {
@@ -262,10 +267,9 @@ public class CaxtonTextDrawer implements CharacterVisitor {
 
       long atlasLoc = cacheForFont.getOrCreateAtlasLocation(glyphOffset + glyphId);
       BakedGlyph bakedGlyph =
-          cacheForFont.getBakedGlyph(glyphId, renderLayers, cache, configuredFont);
+          cacheForFont.getBakedGlyph(glyphId, renderLayers, cache, configuredFont, this.outline);
       if (bakedGlyph != null) {
         int atlasPageIndex = CaxtonAtlas.getPage(atlasLoc);
-        CaxtonAtlas.Page atlasPage = cache.getAtlasPageTexture(atlasPageIndex);
 
         long glyphBbox = font.getBbox(glyphId);
         short bbXMin = (short) glyphBbox;

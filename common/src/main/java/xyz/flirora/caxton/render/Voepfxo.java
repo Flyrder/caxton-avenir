@@ -8,10 +8,13 @@ import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.gui.render.state.SimpleGuiElementRenderState;
+import net.minecraft.client.gui.render.state.TextGuiElementRenderState;
+import net.minecraft.client.gui.render.state.TextRenderState;
 import net.minecraft.client.render.*;
 import net.minecraft.client.texture.TextureSetup;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
+import net.minecraft.util.Pair;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3x2f;
 import xyz.flirora.caxton.layout.CaxtonText;
@@ -85,22 +88,22 @@ public class Voepfxo {
     fill(context, RenderPipelines.GUI_TEXT_HIGHLIGHT, left, top, right, bottom, 0xff0000ff);
   }
 
-  public static int drawTextWithShadow(
+  public static void drawTextWithShadow(
       DrawContext context, TextRenderer textRenderer, Text text, float x, float y, int color) {
-    return Voepfxo.drawText(context, textRenderer, text, x, y, color, true);
+    Voepfxo.drawText(context, textRenderer, text, x, y, color, true);
   }
 
-  public static int drawTextWithShadow(
+  public static void drawTextWithShadow(
       DrawContext context, TextRenderer textRenderer, String text, float x, float y, int color) {
-    return drawText(context, textRenderer, text, x, y, color, true);
+    drawText(context, textRenderer, text, x, y, color, true);
   }
 
-  public static int drawText(
+  public static void drawText(
       DrawContext context, TextRenderer textRenderer, String text, float x, float y, int color) {
-    return drawText(context, textRenderer, text, x, y, color, false);
+    drawText(context, textRenderer, text, x, y, color, false);
   }
 
-  public static int drawText(
+  public static void drawText(
       DrawContext context,
       TextRenderer textRenderer,
       @Nullable Text text,
@@ -109,24 +112,22 @@ public class Voepfxo {
       int color,
       boolean shadow) {
     if (text == null) {
-      return 0;
+      return;
     }
-    int i =
-        textRenderer.draw(
-            text,
+    TextRenderState textRenderState =
+        textRenderer.buildState(
+            text.asOrderedText(),
             x,
             y,
             color,
             shadow,
-            context.getMatrices().peek().getPositionMatrix(),
-            ((DrawContextAccessor) context).getVertexConsumers(),
             TextRenderer.TextLayerType.NORMAL,
             0,
-            0xF000F0);
-    return i;
+            0xf000f0);
+    Voepfxo.drawText(context, textRenderState, x, y);
   }
 
-  public static int drawText(
+  public static void drawText(
       DrawContext context,
       TextRenderer textRenderer,
       @Nullable String text,
@@ -135,24 +136,15 @@ public class Voepfxo {
       int color,
       boolean shadow) {
     if (text == null) {
-      return 0;
+      return;
     }
-    int i =
-        textRenderer.draw(
-            text,
-            x,
-            y,
-            color,
-            shadow,
-            context.getMatrices().peek().getPositionMatrix(),
-            ((DrawContextAccessor) context).getVertexConsumers(),
-            TextRenderer.TextLayerType.NORMAL,
-            0,
-            0xF000F0);
-    return i;
+    TextRenderState textRenderState =
+        textRenderer.buildState(
+            text, x, y, color, shadow, TextRenderer.TextLayerType.NORMAL, 0, 0xf000f0);
+    Voepfxo.drawText(context, textRenderState, x, y);
   }
 
-  public static float drawText(
+  public static void drawText(
       DrawContext context,
       TextRenderer textRenderer,
       @Nullable CaxtonText text,
@@ -160,10 +152,10 @@ public class Voepfxo {
       float y,
       int color,
       boolean shadow) {
-    return drawText(context, textRenderer, text, x, y, color, shadow, -1, Float.POSITIVE_INFINITY);
+    drawText(context, textRenderer, text, x, y, color, shadow, -1, Float.POSITIVE_INFINITY);
   }
 
-  public static float drawText(
+  public static void drawText(
       DrawContext context,
       TextRenderer textRenderer,
       @Nullable CaxtonText text,
@@ -174,25 +166,14 @@ public class Voepfxo {
       int firstCharacterIndex,
       float maxWidth) {
     if (text == null) {
-      return 0;
+      return;
     }
-    float i =
+    TextRenderState textRenderState =
         ((HasCaxtonTextRenderer) textRenderer)
             .getCaxtonTextRenderer()
-            .draw(
-                text,
-                x,
-                y,
-                color,
-                shadow,
-                context.getMatrices().peek().getPositionMatrix(),
-                ((DrawContextAccessor) context).getVertexConsumers(),
-                false,
-                0,
-                0xF000F0,
-                firstCharacterIndex,
-                maxWidth);
-    return i;
+            .buildLayerState(
+                text, x, y, color, shadow, TextRenderer.TextLayerType.NORMAL, 0, 0xf000f0, true);
+    Voepfxo.drawText(context, textRenderState, x, y);
   }
 
   public static void drawText4Way(
@@ -203,18 +184,27 @@ public class Voepfxo {
       float y,
       int color,
       int outlineColor) {
-    ((HasCaxtonTextRenderer) textRenderer)
-        .getCaxtonTextRenderer()
-        .drawWithOutline(
-            text,
-            x,
-            y,
-            color,
-            outlineColor,
-            context.getMatrices().peek().getPositionMatrix(),
-            ((DrawContextAccessor) context).getVertexConsumers(),
-            0xF000F0,
-            false);
+    if (text == null) {
+      return;
+    }
+    Pair<TextRenderState, TextRenderState> textRenderStates =
+        ((HasCaxtonTextRenderer) textRenderer)
+            .getCaxtonTextRenderer()
+            .buildLayerStateOutlined(text, x, y, color, outlineColor, 0xf000f0, false);
+    Voepfxo.drawText(context, textRenderStates.getLeft(), x, y);
+    Voepfxo.drawText(context, textRenderStates.getRight(), x, y);
+  }
+
+  private static void drawText(DrawContext context, TextRenderState state, float x, float y) {
+    ((DrawContextAccessor) context)
+        .getState()
+        .addText(
+            new TextGuiElementRenderState(
+                state,
+                new Matrix3x2f(context.getMatrices()),
+                Math.round(x),
+                Math.round(y),
+                ((DrawContextAccessor) context).getScissorStack().peekLast()));
   }
 
   public static int sus(int codePoint) {

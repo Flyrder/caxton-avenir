@@ -47,10 +47,11 @@ public class CaxtonTextRenderLayers {
     });
   }
 
-  public TextRenderLayerSet renderLayerSet(CaxtonAtlas.Page page, FontTech tech, boolean blur) {
+  public TextRenderLayerSet renderLayerSet(
+      CaxtonAtlas.Page page, FontTech tech, boolean blur, boolean outline) {
     return (switch (tech) {
-      case MSDF -> msdf.renderLayerSet(page);
-      case RASTER -> (blur ? rasterAa : raster).renderLayerSet(page);
+      case MSDF -> msdf.renderLayerSet(page, outline);
+      case RASTER -> (blur ? rasterAa : raster).renderLayerSet(page, outline);
     });
   }
 
@@ -94,11 +95,18 @@ public class CaxtonTextRenderLayers {
       };
     }
 
-    public TextRenderLayerSet renderLayerSet(CaxtonAtlas.Page page) {
-      return new TextRenderLayerSet(
-          text.computeIfAbsent(page, this.ofText),
-          textSeeThrough.computeIfAbsent(page, this.ofTextSeeThrough),
-          textOffset.computeIfAbsent(page, this.ofTextOffset));
+    public TextRenderLayerSet renderLayerSet(CaxtonAtlas.Page page, boolean outline) {
+      if (outline) {
+        return new TextRenderLayerSet(
+            textOutline.computeIfAbsent(page, this.ofText),
+            textSeeThrough.computeIfAbsent(page, this.ofTextSeeThrough),
+            textOffset.computeIfAbsent(page, this.ofTextOffset));
+      } else {
+        return new TextRenderLayerSet(
+            text.computeIfAbsent(page, this.ofText),
+            textSeeThrough.computeIfAbsent(page, this.ofTextSeeThrough),
+            textOffset.computeIfAbsent(page, this.ofTextOffset));
+      }
     }
   }
 

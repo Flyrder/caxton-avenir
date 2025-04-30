@@ -19,6 +19,7 @@ import net.minecraft.client.util.Window;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Pair;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.random.Random;
 import org.apache.commons.lang3.mutable.MutableFloat;
@@ -171,7 +172,7 @@ public class CaxtonTextRenderer {
       VertexConsumerProvider vertexConsumers,
       int light,
       boolean addCorners) {
-    Threshold NO_THRESHOLD = new Threshold(-1);
+    Threshold NO_THRESHOLD = new Threshold();
     float minThickness = getMinThickness(matrix);
 
     CaxtonText runGroups =
@@ -181,16 +182,16 @@ public class CaxtonTextRenderer {
 
     CaxtonTextDrawer outlineDrawer =
         new CaxtonTextDrawer(
-            this,
-            0.0f,
-            0.0f,
-            effectiveOutlineColor,
-            false,
-            matrix,
-            TextRenderer.TextLayerType.NORMAL,
-            light,
-            Float.POSITIVE_INFINITY,
-            new Threshold());
+                this,
+                0.0f,
+                0.0f,
+                effectiveOutlineColor,
+                false,
+                TextRenderer.TextLayerType.NORMAL,
+                light,
+                Float.POSITIVE_INFINITY,
+                new Threshold())
+            .outlined();
     CaxtonTextDrawer centralDrawer =
         new CaxtonTextDrawer(
             this,
@@ -198,7 +199,6 @@ public class CaxtonTextRenderer {
             y,
             effectiveColor,
             false,
-            matrix,
             TextRenderer.TextLayerType.POLYGON_OFFSET,
             light,
             Float.POSITIVE_INFINITY,
@@ -283,6 +283,7 @@ public class CaxtonTextRenderer {
                   0);
         }
       }
+      // FIXME: I’m sure we only need to do this at the end of the method, not every loop iteration
       outlineDrawer.drawLayer(x, vertexConsumers, matrix);
       centralDrawer.drawLayer(x, vertexConsumers, matrix);
     }
@@ -610,7 +611,7 @@ public class CaxtonTextRenderer {
     return x + cumulAdvanceX * scale - configuredFont.shiftX();
   }
 
-  private TextRenderState buildLayerState(
+  public TextRenderState buildLayerState(
       CaxtonText text,
       float x,
       float y,
@@ -653,6 +654,108 @@ public class CaxtonTextRenderer {
       }
     }
     return drawer.buildState();
+  }
+
+  public Pair<TextRenderState, TextRenderState> buildLayerStateOutlined(
+      OrderedText text,
+      float x,
+      float y,
+      int color,
+      int outlineColor,
+      int light,
+      boolean addCorners) {
+    getCache();
+    Threshold NO_THRESHOLD = new Threshold();
+    float minThickness = getMinThickness(new Matrix4f());
+
+    CaxtonText runGroups =
+        CaxtonText.from(text, this::getFontStorage, false, this.rtl, handler.getCache());
+    int effectiveOutlineColor = tweakTransparency(outlineColor);
+    int effectiveColor = tweakTransparency(color);
+
+    CaxtonTextDrawer outlineDrawer =
+        new CaxtonTextDrawer(
+                this,
+                0.0f,
+                0.0f,
+                effectiveOutlineColor,
+                false,
+                TextRenderer.TextLayerType.NORMAL,
+                light,
+                Float.POSITIVE_INFINITY,
+                new Threshold())
+            .outlined();
+    CaxtonTextDrawer centralDrawer =
+        new CaxtonTextDrawer(
+            this,
+            x,
+            y,
+            effectiveColor,
+            false,
+            TextRenderer.TextLayerType.POLYGON_OFFSET,
+            light,
+            Float.POSITIVE_INFINITY,
+            new Threshold());
+
+    for (RunGroup runGroup : runGroups.runGroups()) {
+      ConfiguredCaxtonFont font = runGroup.getFont();
+      if (font == null) {
+        MutableFloat xBox = new MutableFloat();
+        for (int dx = -1; dx <= 1; ++dx) {
+          for (int dy = -1; dy <= 1; ++dy) {
+            if (dx == 0 && dy == 0) continue;
+            if (!addCorners && dx != 0 && dy != 0) continue;
+            xBox.setValue(x);
+            int dxf = dx, dyf = dy;
+            runGroup.acceptRender(
+                (index, style, codePoint) -> {
+                  int index2 = runGroup.getCharOffset() + index;
+
+                  FontStorage fontStorage = this.getFontStorage(style.getFont());
+                  Glyph glyph = fontStorage.getGlyph(codePoint, false);
+                  float shadowOffset = glyph.getShadowOffset();
+
+                  outlineDrawer.setX(xBox.floatValue() + dxf * shadowOffset);
+                  outlineDrawer.setY(y + dyf * shadowOffset);
+                  xBox.add(glyph.getAdvance(style.isBold()));
+                  return outlineDrawer.accept(index2, style, codePoint);
+                });
+          }
+        }
+        centralDrawer.setX(x);
+        runGroup.acceptRender(
+            (index, style, codePoint) -> {
+              int index2 = runGroup.getCharOffset() + index;
+              return centralDrawer.accept(index2, style, codePoint);
+            });
+        x = centralDrawer.getX();
+      } else {
+        ShapingResult[] shapingResults = runGroup.getShapingResults();
+
+        int outlinedGlyphOffset =
+            font.font().getOptions().fontTech().offsetOutlineGlyphsByGlyphCounts()
+                ? font.font().getGlyphCount()
+                : 0;
+
+        // FIXME (hard): underlines and strikethroughs don’t render
+        // properly with this strategy
+        for (int i = 0; i < shapingResults.length; i++) {
+          ShapingResult shapingResult = shapingResults[i];
+          centralDrawer.acceptShapedRun(
+              shapingResult, runGroup, i, this.cache, 0, minThickness, this.renderLayers);
+          outlineDrawer.acceptShapedRun(
+              shapingResult,
+              runGroup,
+              i,
+              this.cache,
+              outlinedGlyphOffset,
+              minThickness,
+              this.renderLayers);
+          x = centralDrawer.getX();
+        }
+      }
+    }
+    return new Pair<>(outlineDrawer.buildState(), centralDrawer.buildState());
   }
 
   public CaxtonGlyphCache getCache() {
