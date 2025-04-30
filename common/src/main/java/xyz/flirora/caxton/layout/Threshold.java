@@ -22,6 +22,11 @@ public class Threshold {
     this.threshold = threshold;
   }
 
+  /** Constructs a new {@link Threshold} that does not skip over glyphs. */
+  public Threshold() {
+    this(-1);
+  }
+
   public int getValue() {
     return threshold;
   }

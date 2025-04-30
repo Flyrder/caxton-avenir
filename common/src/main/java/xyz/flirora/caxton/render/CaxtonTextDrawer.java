@@ -2,24 +2,30 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.render;
 
+import static xyz.flirora.caxton.layout.Interleaving.SHAPING_RUN_OFF_START;
+import static xyz.flirora.caxton.layout.Interleaving.SHAPING_RUN_STRIDE;
+
+import it.unimi.dsi.fastutil.ints.IntList;
 import java.util.ArrayList;
 import java.util.List;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.*;
+import net.minecraft.client.gui.render.state.TextRenderState;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.text.CharacterVisitor;
 import net.minecraft.text.Style;
 import net.minecraft.text.TextColor;
 import net.minecraft.util.math.ColorHelper;
+import net.minecraft.util.math.random.Random;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import xyz.flirora.caxton.font.CaxtonFont;
-import xyz.flirora.caxton.font.CaxtonFontOptions;
 import xyz.flirora.caxton.font.ConfiguredCaxtonFont;
 import xyz.flirora.caxton.layout.RunGroup;
 import xyz.flirora.caxton.layout.ShapingResult;
+import xyz.flirora.caxton.layout.Threshold;
 import xyz.flirora.caxton.mixin.TextRendererAccessor;
 
 @Environment(EnvType.CLIENT)
@@ -35,6 +41,9 @@ public class CaxtonTextDrawer implements CharacterVisitor {
   private float y;
   private final List<BakedGlyph.DrawnGlyph> glyphs;
   @Nullable private List<BakedGlyph.Rectangle> rectangles;
+  private final float maxX;
+  private final Threshold threshold;
+  private final Random random = Random.createLocal();
 
   // TODO: If we want to convert all text rendering over to CTD,
   // then we need to track maxX and threshold.
@@ -48,7 +57,9 @@ public class CaxtonTextDrawer implements CharacterVisitor {
       boolean shadow,
       TextRenderer.TextLayerType layerType,
       int light,
-      boolean swapZIndex) {
+      boolean swapZIndex,
+      float maxX,
+      Threshold threshold) {
     this.textRenderer = textRenderer;
     this.shadow = shadow;
     this.color = color;
@@ -59,6 +70,8 @@ public class CaxtonTextDrawer implements CharacterVisitor {
     this.x = x;
     this.y = y;
     this.glyphs = new ArrayList<>();
+    this.maxX = maxX;
+    this.threshold = threshold;
   }
 
   public CaxtonTextDrawer(
@@ -69,8 +82,10 @@ public class CaxtonTextDrawer implements CharacterVisitor {
       boolean shadow,
       Matrix4f matrix,
       TextRenderer.TextLayerType layerType,
-      int light) {
-    this(textRenderer, x, y, color, 0, shadow, layerType, light, true);
+      int light,
+      float maxX,
+      Threshold threshold) {
+    this(textRenderer, x, y, color, 0, shadow, layerType, light, true, maxX, threshold);
   }
 
   public float getX() {
@@ -106,6 +121,10 @@ public class CaxtonTextDrawer implements CharacterVisitor {
    */
   @Override
   public boolean accept(int index, Style style, int codePoint) {
+    if (this.x >= this.maxX) {
+      return false;
+    }
+
     FontStorage storage = this.textRenderer.getFontStorage(style.getFont());
     Glyph glyph =
         storage.getGlyph(
@@ -162,17 +181,154 @@ public class CaxtonTextDrawer implements CharacterVisitor {
     }
 
     this.x += advance;
+    this.threshold.updateLegacy(index);
     return true;
   }
 
-  public void acceptShapedRun(
-      ShapingResult shapingResult, RunGroup runGroup, int index, CaxtonGlyphCache cache) {
+  public boolean acceptShapedRun(
+      ShapingResult shapedRun,
+      RunGroup runGroup,
+      int index,
+      CaxtonGlyphCache cache,
+      int glyphOffset,
+      float minThickness,
+      CaxtonTextRenderLayers renderLayers) {
+    if (this.x >= this.maxX) {
+      return false;
+    }
+    float origX = x;
+
     ConfiguredCaxtonFont configuredFont = runGroup.getFont();
     CaxtonFont font = configuredFont.font();
-    CaxtonFontOptions options = font.getOptions();
     CaxtonGlyphCache.Font cacheForFont = cache.forFont(font);
 
-    // TODO…
+    assert glyphOffset + font.getGlyphCount() <= font.getTlistSize();
+    float shadowOffset = configuredFont.shadowOffset();
+    float textZ = shadow ? 0.03f : 0.0f;
+
+    int offset = runGroup.getBidiRuns()[SHAPING_RUN_STRIDE * index + SHAPING_RUN_OFF_START];
+
+    int underlinePosition = font.getMetrics(CaxtonFont.Metrics.UNDERLINE_POSITION);
+    int underlineThickness = font.getMetrics(CaxtonFont.Metrics.UNDERLINE_THICKNESS);
+    int strikeoutPosition = font.getMetrics(CaxtonFont.Metrics.STRIKEOUT_POSITION);
+    int strikeoutThickness = font.getMetrics(CaxtonFont.Metrics.STRIKEOUT_THICKNESS);
+
+    float scale = configuredFont.getScale();
+    float baselineY = y + 7.0f + configuredFont.shiftY();
+    x += configuredFont.shiftX();
+
+    float yu = baselineY - underlinePosition * scale;
+    float ys = baselineY - strikeoutPosition * scale;
+    float dyu = underlineThickness * scale;
+    float dys = strikeoutThickness * scale;
+    float ou = 0.5f * dyu, os = 0.5f * dys;
+
+    // I don’t want to have to deal with computing this for every underlined
+    // character
+    if (dyu < minThickness) dyu = minThickness;
+    if (dys < minThickness) dys = minThickness;
+
+    float y0u = yu + 0.5f * dyu;
+    float y1u = yu - 0.5f * dyu;
+    float y0s = ys + 0.5f * dys;
+    float y1s = ys - 0.5f * dys;
+
+    int numGlyphs = shapedRun.numGlyphs();
+    int cumulAdvanceX = 0;
+
+    for (int i = 0; i < numGlyphs; ++i) {
+      int glyphId = shapedRun.glyphId(i);
+      int clusterIndex = shapedRun.clusterIndex(i);
+
+      if (threshold.updateCaxton(runGroup, index, shapedRun, i)) {
+        continue;
+      }
+
+      Style style = runGroup.getStyleAt(offset + clusterIndex);
+      if (style.isObfuscated()) {
+        long tlLoc = font.getTlistLocation(glyphId, 0);
+        int width = (int) (tlLoc & 0xFFFF);
+        IntList others = font.getGlyphsByWidth().get(width);
+        glyphId = others.getInt(this.random.nextInt(others.size()));
+      }
+      int textColor = this.getTextColor(style.getColor());
+      int shadowColor = this.getShadowColor(style, textColor);
+      Style drawnStyle = style.withBold(false).withItalic(false);
+
+      int advanceX = shapedRun.advanceX(i);
+      int offsetX = shapedRun.offsetX(i);
+      int offsetY = shapedRun.offsetY(i);
+      int gx = cumulAdvanceX + offsetX;
+
+      long atlasLoc = cacheForFont.getOrCreateAtlasLocation(glyphOffset + glyphId);
+      BakedGlyph bakedGlyph =
+          cacheForFont.getBakedGlyph(glyphId, renderLayers, cache, configuredFont);
+      if (bakedGlyph != null) {
+        int atlasPageIndex = CaxtonAtlas.getPage(atlasLoc);
+        CaxtonAtlas.Page atlasPage = cache.getAtlasPageTexture(atlasPageIndex);
+
+        long glyphBbox = font.getBbox(glyphId);
+        short bbXMin = (short) glyphBbox;
+        short bbYMin = (short) (glyphBbox >> 16);
+        gx += bbXMin;
+        offsetY += bbYMin;
+
+        // Draw the quad
+
+        float glyphX = x + gx * scale;
+        float glyphY = -offsetY * scale + baselineY;
+        this.glyphs.add(
+            new BakedGlyph.DrawnGlyph(
+                glyphX,
+                glyphY,
+                textColor,
+                shadowColor,
+                bakedGlyph,
+                drawnStyle,
+                0.0f,
+                configuredFont.shadowOffset()));
+
+        if (glyphX + advanceX >= this.maxX) break;
+      }
+
+      float x0a = x + cumulAdvanceX * scale;
+      float x1a = x + (cumulAdvanceX + advanceX) * scale;
+      if (style.isUnderlined()) {
+        this.addRectangle(
+            new BakedGlyph.Rectangle(
+                x0a, y0u, x1a, y1u, this.getForegroundZIndex() + textZ, textColor));
+        if (shadow) {
+          this.addRectangle(
+              new BakedGlyph.Rectangle(
+                  x0a + shadowOffset,
+                  y0u + shadowOffset,
+                  x1a + shadowOffset,
+                  y1u + shadowOffset,
+                  this.getForegroundZIndex(),
+                  shadowColor));
+        }
+      }
+      if (style.isStrikethrough()) {
+        this.addRectangle(
+            new BakedGlyph.Rectangle(
+                x0a, y0s, x1a, y1s, this.getForegroundZIndex() + textZ, textColor));
+        if (shadow) {
+          this.addRectangle(
+              new BakedGlyph.Rectangle(
+                  x0a + shadowOffset,
+                  y0s + shadowOffset,
+                  x1a + shadowOffset,
+                  y1s + shadowOffset,
+                  this.getForegroundZIndex(),
+                  shadowColor));
+        }
+      }
+
+      cumulAdvanceX += advanceX;
+    }
+
+    this.x = origX + cumulAdvanceX * scale - configuredFont.shiftX();
+    return true;
   }
 
   public int getTextColor(TextColor textColor) {
@@ -245,5 +401,19 @@ public class CaxtonTextDrawer implements CharacterVisitor {
 
   private float getBackgroundZIndex() {
     return this.swapZIndex ? -0.01F : 0.01F;
+  }
+
+  public TextRenderState buildState() {
+    return new TextRenderState(
+        this.shadow,
+        this.color,
+        this.backgroundColor,
+        this.layerType,
+        this.light,
+        this.glyphs,
+        this.rectangles,
+        9,
+        textRenderer.getFontStorage(Style.DEFAULT_FONT_ID).getRectangleBakedGlyph(),
+        this.x);
   }
 }

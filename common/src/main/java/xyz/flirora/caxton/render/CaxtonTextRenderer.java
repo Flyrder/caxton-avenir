@@ -188,7 +188,9 @@ public class CaxtonTextRenderer {
             false,
             matrix,
             TextRenderer.TextLayerType.NORMAL,
-            light);
+            light,
+            Float.POSITIVE_INFINITY,
+            new Threshold());
     CaxtonTextDrawer centralDrawer =
         new CaxtonTextDrawer(
             this,
@@ -198,7 +200,9 @@ public class CaxtonTextRenderer {
             false,
             matrix,
             TextRenderer.TextLayerType.POLYGON_OFFSET,
-            light);
+            light,
+            Float.POSITIVE_INFINITY,
+            new Threshold());
 
     for (RunGroup runGroup : runGroups.runGroups()) {
       ConfiguredCaxtonFont font = runGroup.getFont();
@@ -362,7 +366,17 @@ public class CaxtonTextRenderer {
     float maxX = x + maxWidth;
     CaxtonTextDrawer drawer =
         new CaxtonTextDrawer(
-            this, x, y, color, backgroundColor, shadow, layerType.asVanilla(), light, mirror);
+            this,
+            x,
+            y,
+            color,
+            backgroundColor,
+            shadow,
+            layerType.asVanilla(),
+            light,
+            mirror,
+            maxX,
+            threshold);
     for (RunGroup runGroup : text.runGroups()) {
       if (threshold.shouldSkip(runGroup)) {
         continue;
@@ -607,10 +621,20 @@ public class CaxtonTextRenderer {
       int light,
       boolean swapZIndex) {
     getCache();
-    float origX = x;
+    float minThickness = getMinThickness(new Matrix4f());
     CaxtonTextDrawer drawer =
         new CaxtonTextDrawer(
-            this, x, y, color, backgroundColor, shadow, layerType, light, swapZIndex);
+            this,
+            x,
+            y,
+            color,
+            backgroundColor,
+            shadow,
+            layerType,
+            light,
+            swapZIndex,
+            Float.POSITIVE_INFINITY,
+            new Threshold());
     for (RunGroup runGroup : text.runGroups()) {
       if (runGroup.getFont() == null) {
         runGroup.acceptRender(
@@ -623,13 +647,12 @@ public class CaxtonTextRenderer {
 
         for (int index = 0; index < shapingResults.length; ++index) {
           ShapingResult shapingResult = shapingResults[index];
-          drawer.acceptShapedRun(shapingResult, runGroup, index, this.cache);
+          drawer.acceptShapedRun(
+              shapingResult, runGroup, index, this.cache, 0, minThickness, this.renderLayers);
         }
       }
     }
-    drawer.setX(x);
-    drawer.drawLayer(origX, vertexConsumerProvider, matrix);
-    return x;
+    return drawer.buildState();
   }
 
   public CaxtonGlyphCache getCache() {
