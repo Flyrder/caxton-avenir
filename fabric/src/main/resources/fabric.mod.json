@@ -1,32 +1,42 @@
 {
-    "schemaVersion": 1,
-    "breaks": {
-        "memoryleakfix": "<=1.1.1",
-        "emojiful": "*"
-    },
-    "depends": {
-        "minecraft": ">=1.21.5",
-        "fabric-api": "*",
-        "fabricloader": ">=0.16.3"
-    },
-    "icon": "assets/caxton/icon.png",
-    "description": "Adds TTF and OTF font support to Minecraft.",
-    "version": "${version}",
-    "license": "MIT",
-    "environment": "client",
-    "mixins": ["caxton.mixins.json"],
-    "contact": {
-        "sources": "https://gitlab.com/Kyarei/caxton",
-        "issues": "https://gitlab.com/Kyarei/caxton/-/issues",
-        "homepage": "https://gitlab.com/Kyarei/caxton"
-    },
-    "name": "Caxton",
-    "conflicts": {"iris": "*"},
-    "entrypoints": {
-        "client": ["xyz.flirora.caxton.fabric.CaxtonModIdentifierFlavor"],
-        "main": [],
-        "mm:early_risers": ["xyz.flirora.caxton.fabric.CaxtonEarlyRiser"]
-    },
-    "id": "caxton",
-    "authors": ["+merlan #flirora"]
+  "schemaVersion": 1,
+  "breaks": {
+    "memoryleakfix": "<=1.1.1",
+    "emojiful": "*"
+  },
+  "depends": {
+    "minecraft": ">=1.21.6-alpha.25.18.a",
+    "fabric-api": "*",
+    "fabricloader": ">=0.16.3"
+  },
+  "icon": "assets/caxton/icon.png",
+  "description": "Adds TTF and OTF font support to Minecraft.",
+  "version": "${version}",
+  "license": "MIT",
+  "environment": "client",
+  "mixins": [
+    "caxton.mixins.json"
+  ],
+  "contact": {
+    "sources": "https://gitlab.com/Kyarei/caxton",
+    "issues": "https://gitlab.com/Kyarei/caxton/-/issues",
+    "homepage": "https://gitlab.com/Kyarei/caxton"
+  },
+  "name": "Caxton",
+  "conflicts": {
+    "iris": "*"
+  },
+  "entrypoints": {
+    "client": [
+      "xyz.flirora.caxton.fabric.CaxtonModIdentifierFlavor"
+    ],
+    "main": [],
+    "mm:early_risers": [
+      "xyz.flirora.caxton.fabric.CaxtonEarlyRiser"
+    ]
+  },
+  "id": "caxton",
+  "authors": [
+    "+merlan #flirora"
+  ]
 }
