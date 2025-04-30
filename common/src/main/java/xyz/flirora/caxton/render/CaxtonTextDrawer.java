@@ -15,16 +15,19 @@ import net.minecraft.text.TextColor;
 import net.minecraft.util.math.ColorHelper;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
+import xyz.flirora.caxton.font.CaxtonFont;
+import xyz.flirora.caxton.font.CaxtonFontOptions;
+import xyz.flirora.caxton.font.ConfiguredCaxtonFont;
+import xyz.flirora.caxton.layout.RunGroup;
+import xyz.flirora.caxton.layout.ShapingResult;
 import xyz.flirora.caxton.mixin.TextRendererAccessor;
 
 @Environment(EnvType.CLIENT)
 public class CaxtonTextDrawer implements CharacterVisitor {
   private final CaxtonTextRenderer textRenderer;
-  final VertexConsumerProvider vertexConsumers;
   private final boolean shadow;
   private final int color;
   private final int backgroundColor;
-  private final Matrix4f matrix;
   private final TextRenderer.TextLayerType layerType;
   private final int light;
   private final boolean swapZIndex;
@@ -33,24 +36,23 @@ public class CaxtonTextDrawer implements CharacterVisitor {
   private final List<BakedGlyph.DrawnGlyph> glyphs;
   @Nullable private List<BakedGlyph.Rectangle> rectangles;
 
+  // TODO: If we want to convert all text rendering over to CTD,
+  // then we need to track maxX and threshold.
+
   public CaxtonTextDrawer(
       CaxtonTextRenderer textRenderer,
-      VertexConsumerProvider vertexConsumers,
       float x,
       float y,
       int color,
       int backgroundColor,
       boolean shadow,
-      Matrix4f matrix,
       TextRenderer.TextLayerType layerType,
       int light,
       boolean swapZIndex) {
     this.textRenderer = textRenderer;
-    this.vertexConsumers = vertexConsumers;
     this.shadow = shadow;
     this.color = color;
     this.backgroundColor = backgroundColor;
-    this.matrix = matrix;
     this.layerType = layerType;
     this.light = light;
     this.swapZIndex = swapZIndex;
@@ -61,7 +63,6 @@ public class CaxtonTextDrawer implements CharacterVisitor {
 
   public CaxtonTextDrawer(
       CaxtonTextRenderer textRenderer,
-      VertexConsumerProvider vertexConsumers,
       float x,
       float y,
       int color,
@@ -69,7 +70,7 @@ public class CaxtonTextDrawer implements CharacterVisitor {
       Matrix4f matrix,
       TextRenderer.TextLayerType layerType,
       int light) {
-    this(textRenderer, vertexConsumers, x, y, color, 0, shadow, matrix, layerType, light, true);
+    this(textRenderer, x, y, color, 0, shadow, layerType, light, true);
   }
 
   public float getX() {
@@ -95,7 +96,14 @@ public class CaxtonTextDrawer implements CharacterVisitor {
     this.rectangles.add(rectangle);
   }
 
-  // Called for legacy-font glyphs
+  /**
+   * Add a glyph from a legacy font.
+   *
+   * @param index the current index of the character
+   * @param style the style of the character, containing formatting and font information
+   * @param codePoint the code point of the character
+   * @return whether to continue with visiting the text, namely {@code true}
+   */
   @Override
   public boolean accept(int index, Style style, int codePoint) {
     FontStorage storage = this.textRenderer.getFontStorage(style.getFont());
@@ -157,6 +165,16 @@ public class CaxtonTextDrawer implements CharacterVisitor {
     return true;
   }
 
+  public void acceptShapedRun(
+      ShapingResult shapingResult, RunGroup runGroup, int index, CaxtonGlyphCache cache) {
+    ConfiguredCaxtonFont configuredFont = runGroup.getFont();
+    CaxtonFont font = configuredFont.font();
+    CaxtonFontOptions options = font.getOptions();
+    CaxtonGlyphCache.Font cacheForFont = cache.forFont(font);
+
+    // TODO…
+  }
+
   public int getTextColor(TextColor textColor) {
     return textColor != null
         ? ColorHelper.withAlpha(ColorHelper.getAlpha(this.color), textColor.getRgb())
@@ -177,7 +195,7 @@ public class CaxtonTextDrawer implements CharacterVisitor {
     }
   }
 
-  float drawLayer(float x) {
+  float drawLayer(float x, VertexConsumerProvider vertexConsumers, Matrix4f matrix) {
     BakedGlyph bakedGlyph = null;
     if (this.backgroundColor != 0) {
       BakedGlyph.Rectangle rectangle =
@@ -190,11 +208,11 @@ public class CaxtonTextDrawer implements CharacterVisitor {
               this.backgroundColor);
       bakedGlyph = this.textRenderer.getFontStorage(Style.DEFAULT_FONT_ID).getRectangleBakedGlyph();
       VertexConsumer vertexConsumer =
-          this.vertexConsumers.getBuffer(bakedGlyph.getLayer(this.layerType));
-      bakedGlyph.drawRectangle(rectangle, this.matrix, vertexConsumer, this.light);
+          vertexConsumers.getBuffer(bakedGlyph.getLayer(this.layerType));
+      bakedGlyph.drawRectangle(rectangle, matrix, vertexConsumer, this.light);
     }
 
-    this.drawGlyphs();
+    this.drawGlyphs(vertexConsumers, matrix);
     if (this.rectangles != null) {
       if (bakedGlyph == null) {
         bakedGlyph =
@@ -202,22 +220,22 @@ public class CaxtonTextDrawer implements CharacterVisitor {
       }
 
       VertexConsumer vertexConsumer2 =
-          this.vertexConsumers.getBuffer(bakedGlyph.getLayer(this.layerType));
+          vertexConsumers.getBuffer(bakedGlyph.getLayer(this.layerType));
 
       for (BakedGlyph.Rectangle rectangle2 : this.rectangles) {
-        bakedGlyph.drawRectangle(rectangle2, this.matrix, vertexConsumer2, this.light);
+        bakedGlyph.drawRectangle(rectangle2, matrix, vertexConsumer2, this.light);
       }
     }
 
     return this.x;
   }
 
-  void drawGlyphs() {
+  void drawGlyphs(VertexConsumerProvider vertexConsumers, Matrix4f matrix) {
     for (BakedGlyph.DrawnGlyph drawnGlyph : this.glyphs) {
       BakedGlyph bakedGlyph = drawnGlyph.glyph();
       VertexConsumer vertexConsumer =
-          this.vertexConsumers.getBuffer(bakedGlyph.getLayer(this.layerType));
-      bakedGlyph.draw(drawnGlyph, this.matrix, vertexConsumer, this.light);
+          vertexConsumers.getBuffer(bakedGlyph.getLayer(this.layerType));
+      bakedGlyph.draw(drawnGlyph, matrix, vertexConsumer, this.light);
     }
   }
 

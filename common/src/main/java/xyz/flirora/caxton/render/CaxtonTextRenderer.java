@@ -11,6 +11,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.*;
+import net.minecraft.client.gui.render.state.TextRenderState;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -181,7 +182,6 @@ public class CaxtonTextRenderer {
     CaxtonTextDrawer outlineDrawer =
         new CaxtonTextDrawer(
             this,
-            vertexConsumers,
             0.0f,
             0.0f,
             effectiveOutlineColor,
@@ -192,7 +192,6 @@ public class CaxtonTextRenderer {
     CaxtonTextDrawer centralDrawer =
         new CaxtonTextDrawer(
             this,
-            vertexConsumers,
             x,
             y,
             effectiveColor,
@@ -280,8 +279,8 @@ public class CaxtonTextRenderer {
                   0);
         }
       }
-      outlineDrawer.drawLayer(x);
-      centralDrawer.drawLayer(x);
+      outlineDrawer.drawLayer(x, vertexConsumers, matrix);
+      centralDrawer.drawLayer(x, vertexConsumers, matrix);
     }
   }
 
@@ -363,17 +362,7 @@ public class CaxtonTextRenderer {
     float maxX = x + maxWidth;
     CaxtonTextDrawer drawer =
         new CaxtonTextDrawer(
-            this,
-            vertexConsumerProvider,
-            x,
-            y,
-            color,
-            backgroundColor,
-            shadow,
-            matrix,
-            layerType.asVanilla(),
-            light,
-            mirror);
+            this, x, y, color, backgroundColor, shadow, layerType.asVanilla(), light, mirror);
     for (RunGroup runGroup : text.runGroups()) {
       if (threshold.shouldSkip(runGroup)) {
         continue;
@@ -417,7 +406,7 @@ public class CaxtonTextRenderer {
       }
     }
     drawer.setX(x);
-    drawer.drawLayer(origX);
+    drawer.drawLayer(origX, vertexConsumerProvider, matrix);
     return x;
   }
 
@@ -605,6 +594,42 @@ public class CaxtonTextRenderer {
       cumulAdvanceX += advanceX;
     }
     return x + cumulAdvanceX * scale - configuredFont.shiftX();
+  }
+
+  private TextRenderState buildLayerState(
+      CaxtonText text,
+      float x,
+      float y,
+      int color,
+      boolean shadow,
+      TextRenderer.TextLayerType layerType,
+      int backgroundColor,
+      int light,
+      boolean swapZIndex) {
+    getCache();
+    float origX = x;
+    CaxtonTextDrawer drawer =
+        new CaxtonTextDrawer(
+            this, x, y, color, backgroundColor, shadow, layerType, light, swapZIndex);
+    for (RunGroup runGroup : text.runGroups()) {
+      if (runGroup.getFont() == null) {
+        runGroup.acceptRender(
+            (index, style, codePoint) -> {
+              int index2 = runGroup.getCharOffset() + index;
+              return drawer.accept(index2, style, codePoint);
+            });
+      } else {
+        ShapingResult[] shapingResults = runGroup.getShapingResults();
+
+        for (int index = 0; index < shapingResults.length; ++index) {
+          ShapingResult shapingResult = shapingResults[index];
+          drawer.acceptShapedRun(shapingResult, runGroup, index, this.cache);
+        }
+      }
+    }
+    drawer.setX(x);
+    drawer.drawLayer(origX, vertexConsumerProvider, matrix);
+    return x;
   }
 
   public CaxtonGlyphCache getCache() {
