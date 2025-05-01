@@ -29,7 +29,6 @@ import xyz.flirora.caxton.layout.ShapingResult;
  * @param ptr the address of the pointer to the configured font in native memory
  * @param shadowOffset the shadow offset of the font
  * @param computedScaleFactor the scale factor from typographic units to scaled GUI units
- * @param blur true if the glyph textures should be antialiased
  * @param shiftX the horizontal shift to apply, in scaled GUI units
  * @param shiftY the vertical shift to apply, in scaled GUI units
  * @param slant the slant amount
@@ -42,7 +41,6 @@ public record ConfiguredCaxtonFont(
     long ptr,
     float shadowOffset,
     float computedScaleFactor,
-    boolean blur,
     float shiftX,
     float shiftY,
     float slant)
@@ -65,12 +63,13 @@ public record ConfiguredCaxtonFont(
     long ptr = CaxtonInternal.configureFont(font.getFontPtr(), config);
     float shadowOffset = 1.0f;
     double scaleFactor = 1.0f;
-    boolean blur = false;
     float shiftX = 0.0f, shiftY = 0.0f, slant = 0.0f;
     if (settings.settings != null) {
       shadowOffset = JsonHelper.getFloat(settings.settings, "shadow_offset", shadowOffset);
       scaleFactor = JsonHelper.getDouble(settings.settings, "scale_factor", scaleFactor);
-      blur = JsonHelper.getBoolean(settings.settings, "blur", blur);
+      if (JsonHelper.hasBoolean(settings.settings, "blur")) {
+        throw new JsonSyntaxException("blur is no longer configurable per glyph provider");
+      }
       JsonElement shiftE = settings.settings.get("shift");
       if (shiftE instanceof JsonArray shift) {
         if (shift.size() != 2) {
@@ -91,7 +90,7 @@ public record ConfiguredCaxtonFont(
     float computedScaleFactor =
         (float) (7.0 * scaleFactor / font.getMetrics(CaxtonFont.Metrics.ASCENDER));
     return new ConfiguredCaxtonFont(
-        font, ptr, shadowOffset, computedScaleFactor, blur, shiftX, shiftY, slant);
+        font, ptr, shadowOffset, computedScaleFactor, shiftX, shiftY, slant);
   }
 
   /**

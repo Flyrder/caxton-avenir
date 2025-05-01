@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @Environment(EnvType.CLIENT)
 public record CaxtonFontOptions(
-    FontTech fontTech, double shrinkage, int margin, int range, Invert invert) {
+    FontTech fontTech, double shrinkage, int margin, int range, Invert invert, boolean forceBlur) {
   public CaxtonFontOptions {
     if (shrinkage <= 0.0) {
       throw new IllegalArgumentException("shrinkage must be positive");
@@ -47,7 +47,12 @@ public record CaxtonFontOptions(
         JsonHelper.getDouble(json, "shrinkage", 32.0),
         JsonHelper.getInt(json, "margin", -1),
         JsonHelper.getInt(json, "range", 4),
-        Invert.fromJson(json.get("invert")));
+        Invert.fromJson(json.get("invert")),
+        JsonHelper.getBoolean(json, "blur", false));
+  }
+
+  public boolean blur() {
+    return this.fontTech == FontTech.MSDF || this.forceBlur;
   }
 
   public enum Invert {

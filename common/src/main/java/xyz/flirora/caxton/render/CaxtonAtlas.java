@@ -3,6 +3,7 @@
 package xyz.flirora.caxton.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.TextureFormat;
 import com.mojang.logging.LogUtils;
@@ -101,7 +102,8 @@ public class CaxtonAtlas implements AutoCloseable {
       int additionalMargin,
       int fontRange,
       int numMipmapLevels,
-      NativeImage.Format format) {
+      NativeImage.Format format,
+      boolean blur) {
     if (fontRange < 0 || fontRange >= 256) {
       throw new IllegalArgumentException("fontRange must be in [0, 256)");
     }
@@ -122,12 +124,18 @@ public class CaxtonAtlas implements AutoCloseable {
     if (width == 0 || height == 0) {
       return pack(0, 0, width, height, 0);
     }
-    long space = this.insertInternal(totalWidth, totalHeight, fontRange, numMipmapLevels, format);
+    long space =
+        this.insertInternal(totalWidth, totalHeight, fontRange, numMipmapLevels, format, blur);
     return pack(getX(space), getY(space), width, height, getPage(space));
   }
 
   private long insertInternal(
-      int width, int height, int range, int numMipmapLevels, NativeImage.Format format) {
+      int width,
+      int height,
+      int range,
+      int numMipmapLevels,
+      NativeImage.Format format,
+      boolean blur) {
     int bucket = heightToBucketId(height);
     while (bucket >= shelves.size()) {
       shelves.add(new LongArrayList());
@@ -141,6 +149,7 @@ public class CaxtonAtlas implements AutoCloseable {
       if (getW(shelf) != numMipmapLevels) continue; // Wrong # mipmap levels
       if (getH(shelf) != range) continue; // Wrong range
       if (getAtlasPageTexture(page).format != format) continue; // Wrong format
+      if (getAtlasPageTexture(page).blur != blur) continue;
       long space = pack(x, y, width, height, page);
       long remainingShelf = pack(x + width, y, numMipmapLevels, range, page);
       shelvesInBucket.set(i, remainingShelf);
@@ -154,7 +163,7 @@ public class CaxtonAtlas implements AutoCloseable {
       return space;
     }
     {
-      long shelf = allocateShelf(bucket, range, numMipmapLevels, format);
+      long shelf = allocateShelf(bucket, range, numMipmapLevels, format, blur);
       int x = getX(shelf), y = getY(shelf);
       int page = getPage(shelf);
       long remainingShelf = pack(width, y, numMipmapLevels, range, page);
@@ -164,7 +173,7 @@ public class CaxtonAtlas implements AutoCloseable {
   }
 
   private long allocateShelf(
-      int bucket, int range, int numMipmapLevels, NativeImage.Format format) {
+      int bucket, int range, int numMipmapLevels, NativeImage.Format format, boolean blur) {
     int height = bucketIdToHeight(bucket);
     int minHeight = bucketIdToHeight(0);
     while (true) {
@@ -187,22 +196,23 @@ public class CaxtonAtlas implements AutoCloseable {
         }
         return pack(0, y, numMipmapLevels, range, page);
       }
-      addNewPage(range, numMipmapLevels, format);
+      addNewPage(range, numMipmapLevels, format, blur);
     }
   }
 
-  private void addNewPage(int range, int numMipmapLevels, NativeImage.Format format) {
+  private void addNewPage(int range, int numMipmapLevels, NativeImage.Format format, boolean blur) {
     int pageNum = pages.size();
     if (pageNum >= 4096) {
       throw new RuntimeException("Only 4096 pages are supported");
     }
     LOGGER.info("I am {}", this);
     LOGGER.info(
-        "Adding a new page #{} with range {} and {} mipmap levels",
+        "Adding a new page #{} with range {}, {} mipmap levels, and {} interpolation",
         pageNum,
         range,
-        numMipmapLevels);
-    Page page = new Page(this, pageNum, range, numMipmapLevels, format);
+        numMipmapLevels,
+        blur ? "linear" : "nearest");
+    Page page = new Page(this, pageNum, range, numMipmapLevels, format, blur);
     this.pages.add(page);
     this.unallocatedSpaces.add(pageNum << 12);
   }
@@ -230,10 +240,17 @@ public class CaxtonAtlas implements AutoCloseable {
     private final int range;
     private final int numMipmapLevels;
     private final NativeImage.Format format;
+    private final boolean blur;
 
     public Page(
-        CaxtonAtlas atlas, int pageNum, int range, int numMipmapLevels, NativeImage.Format format) {
+        CaxtonAtlas atlas,
+        int pageNum,
+        int range,
+        int numMipmapLevels,
+        NativeImage.Format format,
+        boolean blur) {
       super();
+      this.blur = blur;
       this.format = format;
       TextureFormat textureFormat =
           switch (format) {
@@ -251,6 +268,8 @@ public class CaxtonAtlas implements AutoCloseable {
                   PAGE_SIZE,
                   PAGE_SIZE,
                   numMipmapLevels);
+      this.glTexture.setTextureFilter(
+          blur ? FilterMode.LINEAR : FilterMode.NEAREST, numMipmapLevels > 1);
       // Technically, the contents of this texture are undefined at this
       // point, which can pose a problem with the edges of any inserted
       // textures. Hopefully this doesn’t blow up on us at some point!

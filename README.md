@@ -143,7 +143,7 @@ key `file` specifies the path:
   // Only has an effect on raster tech. Interpolation is always enabled for
   // MSDF fonts.
   // If true, texels in the glyph bitmap will be interpolated.
-  // Added in Caxton 0.4.0.
+  // Added in Caxton 0.4.0. Removed in Caxton 0.7.0.
   "blur": false
 }
 ```
@@ -200,7 +200,12 @@ rasterizing the font:
   // However, it can be useful for non-pixel fonts when you’re using the raster
   // rendering tech.
   // Added in Caxton 0.4.0.
-  "max_mipmap": 0
+  "max_mipmap": 0,
+  // Only has an effect on raster tech. Interpolation is always enabled for
+  // MSDF fonts.
+  // If true, texels in the glyph bitmap will be interpolated.
+  // Added in Caxton 0.7.0.
+  "blur": false
 }
 ```
 

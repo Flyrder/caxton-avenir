@@ -101,7 +101,8 @@ public class CaxtonGlyphCache {
                     1,
                     font.getOptions().range(),
                     numMipmapLevels,
-                    font.getPixelFormat());
+                    font.getPixelFormat(),
+                    font.getOptions().blur());
             if (location == 0) return location;
 
             GpuTexture page =
@@ -174,8 +175,7 @@ public class CaxtonGlyphCache {
             float y0 = (float) ((-shrink * (atlasHeight - margin)) * scale);
 
             return new BakedGlyph(
-                renderLayers.renderLayerSet(
-                    atlasPage, options.fontTech(), configuredFont.blur(), outline),
+                renderLayers.renderLayerSet(atlasPage, options.fontTech(), outline),
                 atlasPage.getGlTexture(),
                 u0,
                 u1,
