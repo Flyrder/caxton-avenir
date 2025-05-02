@@ -19,7 +19,11 @@ import xyz.flirora.caxton.mixin.RenderPhaseAccessor;
 @Environment(EnvType.CLIENT)
 public class WorldRendererVertexConsumerProvider extends VertexConsumerProvider.Immediate {
   private static final Set<String> CAXTON_TEXT_RENDER_LAYER_NAMES =
-      ImmutableSet.of("caxton_text", "caxton_text_see_through", "caxton_text_outline");
+      ImmutableSet.of(
+          "caxton_text",
+          "caxton_text_see_through",
+          "caxton_text_outline",
+          "caxton_text_polygon_offset");
 
   private final Map<RenderLayer, BufferAllocator> caxtonTextLayerAllocators = new HashMap<>();
   private final Map<RenderLayer, BufferBuilder> caxtonTextLayerBuilders = new HashMap<>();

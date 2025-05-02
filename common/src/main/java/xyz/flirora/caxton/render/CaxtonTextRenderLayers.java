@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.render;
 
-import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.systems.RenderSystem;
-import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import net.fabricmc.api.EnvType;
@@ -13,8 +10,6 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.font.TextRenderLayerSet;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.render.*;
-import org.lwjgl.system.MemoryStack;
-import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.font.FontTech;
 
 @Environment(EnvType.CLIENT)
@@ -137,24 +132,10 @@ public class CaxtonTextRenderLayers {
                       : new Texturing(
                           "set_unit_range",
                           () -> {
-                            var unitRange = ((float) page.getRange()) / CaxtonAtlas.PAGE_SIZE;
-                            CaxtonModClient.LOGGER.info("unitRange = {}", unitRange);
-                            var ubo = CaxtonShaders.UNIT_RANGE_BUFFER.get();
-                            try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-                              ByteBuffer byteBuffer =
-                                  Std140Builder.onStack(
-                                          memoryStack, RenderSystem.PROJECTION_MATRIX_UBO_SIZE)
-                                      .putFloat(unitRange)
-                                      .get();
-                              CaxtonModClient.LOGGER.info("byteBuffer = {}", byteBuffer);
-                              RenderSystem.getDevice()
-                                  .createCommandEncoder()
-                                  .writeToBuffer(ubo.slice(), byteBuffer);
-                            }
-                            CaxtonShaders.unitRange = unitRange;
+                            CaxtonShaders.currentUnitRangeBuffer = page.getUnitRangeBuffer();
                           },
                           () -> {
-                            CaxtonShaders.unitRange = 0.0f;
+                            CaxtonShaders.currentUnitRangeBuffer = null;
                           }))
               .build(false));
     }

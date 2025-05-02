@@ -2,21 +2,31 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.render;
 
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.Std140Builder;
+import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.TextureFormat;
 import com.mojang.logging.LogUtils;
+import it.unimi.dsi.fastutil.floats.Float2ObjectArrayMap;
+import it.unimi.dsi.fastutil.floats.Float2ObjectMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.Nullable;
+import org.lwjgl.system.MemoryStack;
 import org.slf4j.Logger;
 
 /**
@@ -34,6 +44,8 @@ public class CaxtonAtlas implements AutoCloseable {
   private final List<LongList> shelves = new ArrayList<>();
   private final IntList unallocatedSpaces = new IntArrayList();
   private final TextureManager textureManager;
+  private final Map<GpuTexture, Page> pagesByGpuTexture = new IdentityHashMap<>();
+  private final Float2ObjectMap<GpuBuffer> unitRangeBuffersByValue = new Float2ObjectArrayMap<>();
 
   public CaxtonAtlas(TextureManager textureManager) {
     this.textureManager = textureManager;
@@ -214,6 +226,7 @@ public class CaxtonAtlas implements AutoCloseable {
         blur ? "linear" : "nearest");
     Page page = new Page(this, pageNum, range, numMipmapLevels, format, blur);
     this.pages.add(page);
+    this.pagesByGpuTexture.put(page.getGlTexture(), page);
     this.unallocatedSpaces.add(pageNum << 12);
   }
 
@@ -223,6 +236,7 @@ public class CaxtonAtlas implements AutoCloseable {
       page.close();
     }
     this.pages.clear();
+    this.pagesByGpuTexture.clear();
     this.unallocatedSpaces.clear();
   }
 
@@ -231,16 +245,24 @@ public class CaxtonAtlas implements AutoCloseable {
       page.close();
     }
     this.pages.clear();
+    this.pagesByGpuTexture.clear();
     shelves.clear();
     unallocatedSpaces.clear();
   }
 
+  public @Nullable Page getPageByGpuTexture(GpuTexture tex) {
+    return this.pagesByGpuTexture.get(tex);
+  }
+
   public static class Page extends AbstractTexture {
+    private static final int UNIT_RANGE_BUFFER_SIZE = new Std140SizeCalculator().putFloat().get();
+
     private final Identifier id;
     private final int range;
     private final int numMipmapLevels;
     private final NativeImage.Format format;
     private final boolean blur;
+    private final GpuBuffer unitRangeBuffer;
 
     public Page(
         CaxtonAtlas atlas,
@@ -277,6 +299,29 @@ public class CaxtonAtlas implements AutoCloseable {
       this.id = Identifier.of("caxton", "atlas/" + pageNum);
       this.range = range;
       this.numMipmapLevels = numMipmapLevels;
+
+      this.unitRangeBuffer =
+          atlas.unitRangeBuffersByValue.computeIfAbsent(
+              this.getNormalizedRange(),
+              unitRange -> {
+                GpuBuffer ubo =
+                    RenderSystem.getDevice()
+                        .createBuffer(
+                            () -> "Unit range UBO for page #" + pageNum,
+                            GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_COPY_DST,
+                            UNIT_RANGE_BUFFER_SIZE);
+                try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+                  ByteBuffer byteBuffer =
+                      Std140Builder.onStack(memoryStack, RenderSystem.PROJECTION_MATRIX_UBO_SIZE)
+                          .putFloat(unitRange)
+                          .get();
+                  RenderSystem.getDevice()
+                      .createCommandEncoder()
+                      .writeToBuffer(ubo.slice(), byteBuffer);
+                }
+                return ubo;
+              });
+
       atlas.textureManager.registerTexture(id, this);
     }
 
@@ -284,8 +329,8 @@ public class CaxtonAtlas implements AutoCloseable {
       return id;
     }
 
-    public int getRange() {
-      return range;
+    private float getNormalizedRange() {
+      return ((float) this.range) / CaxtonAtlas.PAGE_SIZE;
     }
 
     public int getNumMipmapLevels() {
@@ -294,6 +339,10 @@ public class CaxtonAtlas implements AutoCloseable {
 
     public NativeImage.Format getFormat() {
       return format;
+    }
+
+    public GpuBuffer getUnitRangeBuffer() {
+      return unitRangeBuffer;
     }
   }
 }

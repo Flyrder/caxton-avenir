@@ -14,8 +14,8 @@ import xyz.flirora.caxton.render.CaxtonShaders;
 public class RenderSystemMixin {
   @Inject(method = "bindDefaultUniforms", at = @At("RETURN"))
   private static void onBindDefaultUniforms(RenderPass pass, CallbackInfo ci) {
-    if (CaxtonShaders.unitRange > 0.0f) {
-      pass.setUniform("UnitRangeU", CaxtonShaders.UNIT_RANGE_BUFFER.get());
+    if (CaxtonShaders.currentUnitRangeBuffer != null) {
+      pass.setUniform("UnitRangeU", CaxtonShaders.currentUnitRangeBuffer);
     }
   }
 }

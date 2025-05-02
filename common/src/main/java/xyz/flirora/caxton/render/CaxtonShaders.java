@@ -2,13 +2,9 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.render;
 
-import com.google.common.base.Suppliers;
 import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
-import com.mojang.blaze3d.systems.RenderSystem;
-import java.util.function.Supplier;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gl.RenderPipelines;
@@ -65,14 +61,5 @@ public class CaxtonShaders {
           .build();
 
   // Hacky shit to deal with Mojang fuckage
-  public static float unitRange;
-  private static final int UNIT_RANGE_BUFFER_SIZE = new Std140SizeCalculator().putFloat().get();
-  public static final Supplier<GpuBuffer> UNIT_RANGE_BUFFER =
-      Suppliers.memoize(
-          () ->
-              RenderSystem.getDevice()
-                  .createBuffer(
-                      () -> "Unit range UBO",
-                      GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_COPY_DST,
-                      UNIT_RANGE_BUFFER_SIZE));
+  public static GpuBuffer currentUnitRangeBuffer = null;
 }

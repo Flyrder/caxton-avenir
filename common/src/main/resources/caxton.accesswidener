@@ -23,3 +23,4 @@ accessible field net/minecraft/client/gl/RenderPipelines TEXT_SNIPPET Lcom/mojan
 accessible field net/minecraft/client/gl/RenderPipelines FOG_SNIPPET Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;
 
 accessible class net/minecraft/client/gui/DrawContext$ScissorStack
+accessible class net/minecraft/client/gui/render/GuiRenderer$Draw
