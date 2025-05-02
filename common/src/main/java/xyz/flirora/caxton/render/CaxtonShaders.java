@@ -36,7 +36,7 @@ public class CaxtonShaders {
           .build();
   public static final RenderPipeline TEXT_OFFSET =
       RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
-          .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text"))
+          .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text_polygon_offset"))
           .withVertexShader(TEXT_ID)
           .withFragmentShader(TEXT_ID)
           .withSampler("Sampler0")
@@ -50,7 +50,6 @@ public class CaxtonShaders {
           .withVertexShader(TEXT_SEE_THROUGH_ID)
           .withFragmentShader(TEXT_SEE_THROUGH_ID)
           .withSampler("Sampler0")
-          .withSampler("Sampler2")
           .withDepthWrite(false)
           .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
           .withUniform("UnitRange", UniformType.UNIFORM_BUFFER)

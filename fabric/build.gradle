@@ -9,6 +9,18 @@ architectury {
 
 loom {
     accessWidenerPath = project(":common").loom.accessWidenerPath
+
+    runs {
+        create("clientWithRenderdoc") {
+            client()
+            configName = "Fabric/RenderDoc"
+            appendProjectPathToConfigName = false
+            ideConfigGenerated(true)
+            runDir("run")
+            environmentVariable("LD_PRELOAD", "/usr/lib/librenderdoc.so")
+            programArg("--renderDebugLabels")
+        }
+    }
 }
 
 configurations {

@@ -20,6 +20,6 @@ public abstract class ShaderMixin {
   // Needed for some reason on NeoForge.
   @Inject(at = @At("RETURN"), method = "<clinit>")
   private static void onInitializePredefinedUniforms(CallbackInfo ci) {
-    PREDEFINED_UNIFORMS.add("UnitRange");
+    PREDEFINED_UNIFORMS.add("UnitRangeU");
   }
 }

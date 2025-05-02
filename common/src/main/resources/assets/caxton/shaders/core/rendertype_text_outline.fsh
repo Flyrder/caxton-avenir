@@ -14,7 +14,7 @@ in vec2 texCoord0;
 out vec4 fragColor;
 
 void main() {
-    float opacity = sdf0(Sampler0, texCoord0, screenPxRange());
+    float opacity = sdf0(Sampler0, texCoord0, screenPxRange(texCoord0));
     vec4 color = vertexColor * ColorModulator;
     color.a *= opacity;
     if (color.a < 0.1) discard;

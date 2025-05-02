@@ -14,6 +14,7 @@ import net.minecraft.client.font.TextRenderLayerSet;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.render.*;
 import org.lwjgl.system.MemoryStack;
+import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.font.FontTech;
 
 @Environment(EnvType.CLIENT)
@@ -137,6 +138,7 @@ public class CaxtonTextRenderLayers {
                           "set_unit_range",
                           () -> {
                             var unitRange = ((float) page.getRange()) / CaxtonAtlas.PAGE_SIZE;
+                            CaxtonModClient.LOGGER.info("unitRange = {}", unitRange);
                             var ubo = CaxtonShaders.UNIT_RANGE_BUFFER.get();
                             try (MemoryStack memoryStack = MemoryStack.stackPush()) {
                               ByteBuffer byteBuffer =
@@ -144,6 +146,7 @@ public class CaxtonTextRenderLayers {
                                           memoryStack, RenderSystem.PROJECTION_MATRIX_UBO_SIZE)
                                       .putFloat(unitRange)
                                       .get();
+                              CaxtonModClient.LOGGER.info("byteBuffer = {}", byteBuffer);
                               RenderSystem.getDevice()
                                   .createCommandEncoder()
                                   .writeToBuffer(ubo.slice(), byteBuffer);
@@ -165,7 +168,7 @@ public class CaxtonTextRenderLayers {
     }
 
     private static RenderLayer ofTextOffset(CaxtonAtlas.Page page) {
-      return make("caxton_text", CaxtonShaders.TEXT, page, false);
+      return make("caxton_text_polygon_offset", CaxtonShaders.TEXT_OFFSET, page, false);
     }
 
     private static RenderLayer ofTextOutline(CaxtonAtlas.Page page) {
