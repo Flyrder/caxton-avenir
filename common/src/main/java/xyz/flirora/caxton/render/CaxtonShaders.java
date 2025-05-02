@@ -2,8 +2,12 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.render;
 
+import com.google.common.base.Suppliers;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gl.RenderPipelines;
@@ -11,55 +15,59 @@ import net.minecraft.client.gl.UniformType;
 import net.minecraft.util.Identifier;
 import xyz.flirora.caxton.CaxtonModClient;
 
+import java.util.function.Supplier;
+
 @Environment(EnvType.CLIENT)
 public class CaxtonShaders {
-  public static final Identifier TEXT_ID =
-      Identifier.of(CaxtonModClient.MOD_ID, "core/rendertype_text");
-  public static final Identifier TEXT_SEE_THROUGH_ID =
-      Identifier.of(CaxtonModClient.MOD_ID, "core/rendertype_text_see_through");
-  public static final Identifier TEXT_OUTLINE_ID =
-      Identifier.of(CaxtonModClient.MOD_ID, "core/rendertype_text_outline");
+    public static final Identifier TEXT_ID =
+            Identifier.of(CaxtonModClient.MOD_ID, "core/rendertype_text");
+    public static final Identifier TEXT_SEE_THROUGH_ID =
+            Identifier.of(CaxtonModClient.MOD_ID, "core/rendertype_text_see_through");
+    public static final Identifier TEXT_OUTLINE_ID =
+            Identifier.of(CaxtonModClient.MOD_ID, "core/rendertype_text_outline");
 
-  public static final RenderPipeline TEXT =
-      RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
-          .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text"))
-          .withVertexShader(TEXT_ID)
-          .withFragmentShader(TEXT_ID)
-          .withSampler("Sampler0")
-          .withSampler("Sampler2")
-          .withUniform("UnitRange", UniformType.UNIFORM_BUFFER)
-          .build();
-  public static final RenderPipeline TEXT_OFFSET =
-      RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
-          .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text"))
-          .withVertexShader(TEXT_ID)
-          .withFragmentShader(TEXT_ID)
-          .withSampler("Sampler0")
-          .withSampler("Sampler2")
-          .withDepthBias(-1.0f, -10.0f)
-          .withUniform("UnitRange", UniformType.UNIFORM_BUFFER)
-          .build();
-  public static final RenderPipeline TEXT_SEE_THROUGH =
-      RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET)
-          .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text_see_through"))
-          .withVertexShader(TEXT_SEE_THROUGH_ID)
-          .withFragmentShader(TEXT_SEE_THROUGH_ID)
-          .withSampler("Sampler0")
-          .withSampler("Sampler2")
-          .withDepthWrite(false)
-          .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
-          .withUniform("UnitRange", UniformType.UNIFORM_BUFFER)
-          .build();
-  public static final RenderPipeline TEXT_OUTLINE =
-      RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
-          .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text_outline"))
-          .withVertexShader(TEXT_OUTLINE_ID)
-          .withFragmentShader(TEXT_OUTLINE_ID)
-          .withSampler("Sampler0")
-          .withSampler("Sampler2")
-          .withUniform("UnitRange", UniformType.UNIFORM_BUFFER)
-          .build();
+    public static final RenderPipeline TEXT =
+            RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
+                    .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text"))
+                    .withVertexShader(TEXT_ID)
+                    .withFragmentShader(TEXT_ID)
+                    .withSampler("Sampler0")
+                    .withSampler("Sampler2")
+                    .withUniform("UnitRange", UniformType.UNIFORM_BUFFER)
+                    .build();
+    public static final RenderPipeline TEXT_OFFSET =
+            RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
+                    .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text"))
+                    .withVertexShader(TEXT_ID)
+                    .withFragmentShader(TEXT_ID)
+                    .withSampler("Sampler0")
+                    .withSampler("Sampler2")
+                    .withDepthBias(-1.0f, -10.0f)
+                    .withUniform("UnitRange", UniformType.UNIFORM_BUFFER)
+                    .build();
+    public static final RenderPipeline TEXT_SEE_THROUGH =
+            RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET)
+                    .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text_see_through"))
+                    .withVertexShader(TEXT_SEE_THROUGH_ID)
+                    .withFragmentShader(TEXT_SEE_THROUGH_ID)
+                    .withSampler("Sampler0")
+                    .withSampler("Sampler2")
+                    .withDepthWrite(false)
+                    .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+                    .withUniform("UnitRange", UniformType.UNIFORM_BUFFER)
+                    .build();
+    public static final RenderPipeline TEXT_OUTLINE =
+            RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
+                    .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text_outline"))
+                    .withVertexShader(TEXT_OUTLINE_ID)
+                    .withFragmentShader(TEXT_OUTLINE_ID)
+                    .withSampler("Sampler0")
+                    .withSampler("Sampler2")
+                    .withUniform("UnitRange", UniformType.UNIFORM_BUFFER)
+                    .build();
 
-  // Hacky shit to deal with Mojang fuckage
-  public static float unitRange;
+    // Hacky shit to deal with Mojang fuckage
+    public static float unitRange;
+    private static final int UNIT_RANGE_BUFFER_SIZE = new Std140SizeCalculator().putFloat().get();
+    public static final Supplier<GpuBuffer> UNIT_RANGE_BUFFER = Suppliers.memoize(() -> RenderSystem.getDevice().createBuffer(() -> "Unit range UBO", GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_COPY_DST, UNIT_RANGE_BUFFER_SIZE));
 }
