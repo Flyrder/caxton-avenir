@@ -1,3 +1,5 @@
+// (C) 2025 +merlan #flirora.
+// SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin;
 
 import com.mojang.blaze3d.systems.RenderPass;
@@ -10,10 +12,10 @@ import xyz.flirora.caxton.render.CaxtonShaders;
 
 @Mixin(RenderSystem.class)
 public class RenderSystemMixin {
-    @Inject(method = "bindDefaultUniforms", at = @At("RETURN"))
-    private static void onBindDefaultUniforms(RenderPass pass, CallbackInfo ci) {
-        if (CaxtonShaders.unitRange > 0.0f) {
-            pass.setUniform("UnitRange", CaxtonShaders.UNIT_RANGE_BUFFER.get());
-        }
+  @Inject(method = "bindDefaultUniforms", at = @At("RETURN"))
+  private static void onBindDefaultUniforms(RenderPass pass, CallbackInfo ci) {
+    if (CaxtonShaders.unitRange > 0.0f) {
+      pass.setUniform("UnitRange", CaxtonShaders.UNIT_RANGE_BUFFER.get());
     }
+  }
 }

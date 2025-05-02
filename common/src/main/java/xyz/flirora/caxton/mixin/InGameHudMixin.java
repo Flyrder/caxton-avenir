@@ -18,7 +18,7 @@ import xyz.flirora.caxton.render.Voepfxo;
 
 @Environment(EnvType.CLIENT)
 @Mixin(Bar.class)
-public abstract class InGameHudMixin {
+public interface InGameHudMixin {
   @Inject(
       method = "drawExperienceLevel",
       at =
