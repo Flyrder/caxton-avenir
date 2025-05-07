@@ -264,31 +264,6 @@ public class Voepfxo {
           calculateBounds(x0, y0, x1, y1, pose, scissorArea));
     }
 
-    public ColoredQuadGuiElementRenderStateFloat(
-        RenderPipeline pipeline,
-        TextureSetup textureSetup,
-        Matrix3x2f pose,
-        float x0,
-        float y0,
-        float x1,
-        float y1,
-        int col1,
-        int col2,
-        @Nullable ScreenRect scissorArea,
-        @Nullable ScreenRect bounds) {
-      this.pipeline = pipeline;
-      this.textureSetup = textureSetup;
-      this.pose = pose;
-      this.x0 = x0;
-      this.y0 = y0;
-      this.x1 = x1;
-      this.y1 = y1;
-      this.col1 = col1;
-      this.col2 = col2;
-      this.scissorArea = scissorArea;
-      this.bounds = bounds;
-    }
-
     public void setupVertices(VertexConsumer vertices, float depth) {
       vertices.vertex(this.pose(), this.x0(), this.y0(), depth).color(this.col1());
       vertices.vertex(this.pose(), this.x0(), this.y1(), depth).color(this.col2());
@@ -300,52 +275,8 @@ public class Voepfxo {
         float x0, float y0, float x1, float y1, Matrix3x2f pose, @Nullable ScreenRect scissorArea) {
       ScreenRect screenRect2 =
           (new ScreenRect(Math.round(x0), Math.round(y0), Math.round(x1 - x0), Math.round(y1 - y0)))
-              .method_71523(pose);
+              .transformEachVertex(pose);
       return scissorArea != null ? scissorArea.intersection(screenRect2) : screenRect2;
-    }
-
-    public RenderPipeline pipeline() {
-      return this.pipeline;
-    }
-
-    public TextureSetup textureSetup() {
-      return this.textureSetup;
-    }
-
-    public Matrix3x2f pose() {
-      return this.pose;
-    }
-
-    public float x0() {
-      return this.x0;
-    }
-
-    public float y0() {
-      return this.y0;
-    }
-
-    public float x1() {
-      return this.x1;
-    }
-
-    public float y1() {
-      return this.y1;
-    }
-
-    public int col1() {
-      return this.col1;
-    }
-
-    public int col2() {
-      return this.col2;
-    }
-
-    @Nullable public ScreenRect scissorArea() {
-      return this.scissorArea;
-    }
-
-    @Nullable public ScreenRect bounds() {
-      return this.bounds;
     }
   }
 }

@@ -125,6 +125,7 @@ public class CaxtonGlyphCache {
                   page,
                   nativeImage,
                   mipmap,
+                  0,
                   CaxtonAtlas.getX(location) >> mipmap,
                   CaxtonAtlas.getY(location) >> mipmap,
                   width,
@@ -176,7 +177,7 @@ public class CaxtonGlyphCache {
 
             return new BakedGlyph(
                 renderLayers.renderLayerSet(atlasPage, options.fontTech(), outline),
-                atlasPage.getGlTexture(),
+                atlasPage.getGlTextureView(),
                 u0,
                 u1,
                 v0,

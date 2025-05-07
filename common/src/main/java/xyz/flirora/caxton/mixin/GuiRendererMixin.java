@@ -4,7 +4,7 @@ package xyz.flirora.caxton.mixin;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.systems.RenderPass;
-import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.render.GuiRenderer;
@@ -24,7 +24,7 @@ public class GuiRendererMixin {
           @At(
               value = "INVOKE",
               target =
-                  "Lcom/mojang/blaze3d/systems/RenderPass;bindSampler(Ljava/lang/String;Lcom/mojang/blaze3d/textures/GpuTexture;)V",
+                  "Lcom/mojang/blaze3d/systems/RenderPass;bindSampler(Ljava/lang/String;Lcom/mojang/blaze3d/textures/GpuTextureView;)V",
               ordinal = 0))
   private void onBindSampler0(
       GuiRenderer.Draw draw,
@@ -32,13 +32,13 @@ public class GuiRendererMixin {
       GpuBuffer indexBuffer,
       VertexFormat.IndexType indexType,
       CallbackInfo ci) {
-    GpuTexture texture = draw.textureSetup().texure0();
+    GpuTextureView texture = draw.textureSetup().texure0();
     CaxtonAtlas.Page page =
         ((HasCaxtonTextRenderer) MinecraftClient.getInstance().textRenderer)
             .getCaxtonTextRenderer()
             .getCache()
             .getAtlas()
-            .getPageByGpuTexture(texture);
+            .getPageByGpuTexture(texture.texture());
     if (page != null) {
       pass.setUniform("UnitRangeU", page.getUnitRangeBuffer());
     }

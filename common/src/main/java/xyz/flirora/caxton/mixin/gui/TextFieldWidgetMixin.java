@@ -30,6 +30,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xyz.flirora.caxton.layout.CaxtonText;
+import xyz.flirora.caxton.layout.CaxtonTextHandler;
 import xyz.flirora.caxton.layout.DirectionSetting;
 import xyz.flirora.caxton.layout.gui.TextFieldWidgetExt;
 import xyz.flirora.caxton.render.CaxtonTextRenderer;
@@ -76,6 +77,13 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
   public abstract void setSelectionStart(int cursor);
 
   @Shadow private long lastSwitchFocusTime;
+
+  @Shadow private int textX;
+
+  @Shadow private int textY;
+
+  @Shadow
+  protected abstract boolean isCentered();
 
   @Override
   public void updateCaxtonText(boolean changed) {
@@ -339,8 +347,32 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     ci.cancel();
   }
 
+  @Inject(method = "updateTextPosition", at = @At("HEAD"), cancellable = true)
+  private void onUpdateTextPosition(CallbackInfo ci) {
+    if (this.textRenderer != null) {
+      if (this.isCentered()) {
+        CaxtonTextHandler handler =
+            ((HasCaxtonTextRenderer) this.textRenderer).getCaxtonTextRenderer().getHandler();
+        int i =
+            handler.getCharIndexAtX(
+                this.caxtonText, this.getInnerWidth(), this.firstCharacterIndex, true);
+        this.textX =
+            Math.round(
+                this.getX()
+                    + (this.getWidth()
+                            - handler.getOffsetAtIndex(
+                                this.caxtonText, i, DirectionSetting.FORCE_LTR))
+                        / 2);
+      } else {
+        this.textX = this.getX() + (this.drawsBackground ? 4 : 0);
+      }
+      this.textY = this.drawsBackground ? this.getY() + (this.height - 8) / 2 : this.getY();
+    }
+    ci.cancel();
+  }
+
   // Copy of drawSelectionHighlight with float arguments
-  private void myDrawSelectionHighlight(
+  @Unique private void myDrawSelectionHighlight(
       DrawContext context, float x1, float y1, float x2, float y2) {
     float i;
     if (x1 < x2) {

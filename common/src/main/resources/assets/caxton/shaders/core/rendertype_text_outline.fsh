@@ -7,7 +7,8 @@
 
 uniform sampler2D Sampler0;
 
-in float vertexDistance;
+in float sphericalVertexDistance;
+in float cylindricalVertexDistance;
 in vec4 vertexColor;
 in vec2 texCoord0;
 
@@ -18,5 +19,5 @@ void main() {
     vec4 color = vertexColor * ColorModulator;
     color.a *= opacity;
     if (color.a < 0.1) discard;
-    fragColor = linear_fog(color, vertexDistance, FogStart, FogEnd, FogColor);
+    fragColor = apply_fog(color, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 }

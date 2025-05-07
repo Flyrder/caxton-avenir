@@ -141,7 +141,7 @@ public class CaxtonTextRenderLayers {
     }
 
     private static RenderLayer ofText(CaxtonAtlas.Page page) {
-      return make("caxton_text", CaxtonShaders.TEXT_OFFSET, page, false);
+      return make("caxton_text", CaxtonShaders.TEXT, page, false);
     }
 
     private static RenderLayer ofTextSeeThrough(CaxtonAtlas.Page page) {

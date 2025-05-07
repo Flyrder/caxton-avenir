@@ -225,9 +225,8 @@ public class CaxtonTextHandler {
    * @param x The <var>x</var>-position of the glyph requested.
    * @param from The character index of the leftmost glyph that should be counted, or <code>-1
    *             </code> if all glyphs should be counted.
-   * @return The character index of the glyph at the <var>x</var>-position {@code maxWidth} relative
-   *     to the glyph with character index {@code from}, or to the leftmost glyph if {@code from ==
-   *     -1}.
+   * @return The character index of the glyph at the <var>x</var>-position {@code x} relative to the
+   *     glyph with character index {@code from}, or to the leftmost glyph if {@code from == -1}.
    * @see CaxtonTextHandler#getCharIndexAtX(CaxtonText, float, int, boolean)
    */
   public int getCharIndexAfterX(CaxtonText text, float x, int from) {
@@ -243,9 +242,8 @@ public class CaxtonTextHandler {
    *              </code> if all glyphs should be counted.
    * @param after If true, then this gets the character index of the glyph to the right of the
    *     queried glyph.
-   * @return The character index of the glyph at the <var>x</var>-position {@code maxWidth} relative
-   *     to the glyph with character index {@code from}, or to the leftmost glyph if {@code from ==
-   *     -1}.
+   * @return The character index of the glyph at the <var>x</var>-position {@code x} relative to the
+   *     glyph with character index {@code from}, or to the leftmost glyph if {@code from == -1}.
    */
   // Gets the index of the first char that fails to fit in a width of x, starting from the char at
   // index `from`.

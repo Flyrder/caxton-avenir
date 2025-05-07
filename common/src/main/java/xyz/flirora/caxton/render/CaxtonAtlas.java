@@ -5,6 +5,7 @@ package xyz.flirora.caxton.render;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
+import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
@@ -281,17 +282,19 @@ public class CaxtonAtlas implements AutoCloseable {
             case LUMINANCE_ALPHA -> TextureFormat.RGBA8;
             case LUMINANCE -> TextureFormat.RED8;
           };
+      GpuDevice device = RenderSystem.getDevice();
       this.glTexture =
-          RenderSystem.getDevice()
-              .createTexture(
-                  () -> "Caxton atlas page #" + pageNum,
-                  GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING,
-                  textureFormat,
-                  PAGE_SIZE,
-                  PAGE_SIZE,
-                  numMipmapLevels);
+          device.createTexture(
+              () -> "Caxton atlas page #" + pageNum,
+              GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING,
+              textureFormat,
+              PAGE_SIZE,
+              PAGE_SIZE,
+              1,
+              numMipmapLevels);
       this.glTexture.setTextureFilter(
           blur ? FilterMode.LINEAR : FilterMode.NEAREST, numMipmapLevels > 1);
+      this.glTextureView = device.createTextureView(this.glTexture);
       // Technically, the contents of this texture are undefined at this
       // point, which can pose a problem with the edges of any inserted
       // textures. Hopefully this doesn’t blow up on us at some point!
@@ -305,19 +308,16 @@ public class CaxtonAtlas implements AutoCloseable {
               this.getNormalizedRange(),
               unitRange -> {
                 GpuBuffer ubo =
-                    RenderSystem.getDevice()
-                        .createBuffer(
-                            () -> "Unit range UBO for page #" + pageNum,
-                            GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_COPY_DST,
-                            UNIT_RANGE_BUFFER_SIZE);
+                    device.createBuffer(
+                        () -> "Unit range UBO for page #" + pageNum,
+                        GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_COPY_DST,
+                        UNIT_RANGE_BUFFER_SIZE);
                 try (MemoryStack memoryStack = MemoryStack.stackPush()) {
                   ByteBuffer byteBuffer =
                       Std140Builder.onStack(memoryStack, RenderSystem.PROJECTION_MATRIX_UBO_SIZE)
                           .putFloat(unitRange)
                           .get();
-                  RenderSystem.getDevice()
-                      .createCommandEncoder()
-                      .writeToBuffer(ubo.slice(), byteBuffer);
+                  device.createCommandEncoder().writeToBuffer(ubo.slice(), byteBuffer);
                 }
                 return ubo;
               });
