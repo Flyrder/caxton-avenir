@@ -164,9 +164,9 @@ public class CaxtonTextDrawer implements CharacterVisitor {
       this.addRectangle(
           new BakedGlyph.Rectangle(
               x + shadowOffset,
-              this.y + shadowOffset + 4.5f,
-              this.x + shadowOffset + advance,
               this.y + shadowOffset + 3.5f,
+              this.x + shadowOffset + advance,
+              this.y + shadowOffset + 4.5f,
               this.getForegroundZIndex(),
               color,
               shadowColor,
@@ -176,9 +176,9 @@ public class CaxtonTextDrawer implements CharacterVisitor {
       this.addRectangle(
           new BakedGlyph.Rectangle(
               x + shadowOffset,
-              this.y + shadowOffset + 9.0f,
-              this.x + shadowOffset + advance,
               this.y + shadowOffset + 8.0f,
+              this.x + shadowOffset + advance,
+              this.y + shadowOffset + 9.0f,
               this.getForegroundZIndex(),
               color,
               shadowColor,
@@ -300,14 +300,14 @@ public class CaxtonTextDrawer implements CharacterVisitor {
       if (style.isUnderlined()) {
         this.addRectangle(
             new BakedGlyph.Rectangle(
-                x0a, y0u, x1a, y1u, this.getForegroundZIndex() + textZ, textColor));
+                x0a, y1u, x1a, y0u, this.getForegroundZIndex() + textZ, textColor));
         if (shadow) {
           this.addRectangle(
               new BakedGlyph.Rectangle(
                   x0a + shadowOffset,
-                  y0u + shadowOffset,
-                  x1a + shadowOffset,
                   y1u + shadowOffset,
+                  x1a + shadowOffset,
+                  y0u + shadowOffset,
                   this.getForegroundZIndex(),
                   shadowColor));
         }
@@ -315,14 +315,14 @@ public class CaxtonTextDrawer implements CharacterVisitor {
       if (style.isStrikethrough()) {
         this.addRectangle(
             new BakedGlyph.Rectangle(
-                x0a, y0s, x1a, y1s, this.getForegroundZIndex() + textZ, textColor));
+                x0a, y1s, x1a, y0s, this.getForegroundZIndex() + textZ, textColor));
         if (shadow) {
           this.addRectangle(
               new BakedGlyph.Rectangle(
                   x0a + shadowOffset,
-                  y0s + shadowOffset,
-                  x1a + shadowOffset,
                   y1s + shadowOffset,
+                  x1a + shadowOffset,
+                  y0s + shadowOffset,
                   this.getForegroundZIndex(),
                   shadowColor));
         }
@@ -361,9 +361,9 @@ public class CaxtonTextDrawer implements CharacterVisitor {
       BakedGlyph.Rectangle rectangle =
           new BakedGlyph.Rectangle(
               x - 1.0F,
-              this.y + 9.0F,
-              this.x,
               this.y - 1.0F,
+              this.x,
+              this.y + 9.0F,
               this.getBackgroundZIndex(),
               this.backgroundColor);
       bakedGlyph = this.textRenderer.getFontStorage(Style.DEFAULT_FONT_ID).getRectangleBakedGlyph();
