@@ -32,6 +32,12 @@ public abstract class EditBoxWidgetMixin extends ScrollableTextFieldWidget {
 
   @Shadow private long lastSwitchFocusTime;
 
+  @Shadow @Final private int textColor;
+
+  @Shadow @Final private boolean textShadow;
+
+  @Shadow @Final private int cursorColor;
+
   public EditBoxWidgetMixin(int i, int j, int k, int l, Text text) {
     super(i, j, k, l, text);
   }
@@ -51,23 +57,29 @@ public abstract class EditBoxWidgetMixin extends ScrollableTextFieldWidget {
             && (Util.getMeasuringTimeMs() - this.lastSwitchFocusTime) / 300L % 2L == 0L;
     boolean cursorVertical = cursorPos < text.length();
 
-    int x = 0;
+    float cursorX = 0;
     int endY = 0;
     int y = this.getTextY();
     for (EditBox.Substring line : this.editBox.getLines()) {
       boolean lineVisible = this.isVisible(y, y + this.textRenderer.fontHeight);
       String lineStr = text.substring(line.beginIndex(), line.endIndex());
-      if (lineVisible) {
-        if (drawCursor
-            && cursorVertical
-            && cursorPos >= line.beginIndex()
-            && cursorPos <= line.endIndex()) {
+      int textX = this.getTextX();
+      if (drawCursor
+          && cursorVertical
+          && cursorPos >= line.beginIndex()
+          && cursorPos <= line.endIndex()) {
+        if (lineVisible) {
           // Draw vertical cursor for this line
-          Voepfxo.drawTextWithShadow(
-              context, this.textRenderer, lineStr, (float) this.getTextX(), (float) y, 0xffe0e0e0);
-          x = this.getTextX() + this.textRenderer.getWidth(lineStr) - 1;
-          float cursorX =
-              this.getTextX()
+          Voepfxo.drawText(
+              context,
+              this.textRenderer,
+              lineStr,
+              (float) textX,
+              (float) y,
+              this.textColor,
+              this.textShadow);
+          cursorX =
+              textX
                   + cth.getOffsetAtIndex(
                       CaxtonText.fromForwards(
                           lineStr, ctr::getFontStorage, Style.EMPTY, false, false, cth.getCache()),
@@ -79,21 +91,35 @@ public abstract class EditBoxWidgetMixin extends ScrollableTextFieldWidget {
               y - 1,
               cursorX + 1,
               y + 1 + this.textRenderer.fontHeight,
-              0xffd0d0d0);
-        } else {
-          Voepfxo.drawTextWithShadow(
-              context, this.textRenderer, lineStr, (float) this.getTextX(), (float) y, 0xffe0e0e0);
-          x = this.getTextX() + this.textRenderer.getWidth(lineStr) - 1;
+              this.cursorColor);
         }
+      } else {
+        if (lineVisible) {
+          Voepfxo.drawText(
+              context,
+              this.textRenderer,
+              lineStr,
+              (float) textX,
+              (float) y,
+              this.textColor,
+              this.textShadow);
+          cursorX = textX + cth.getWidth(lineStr);
+        }
+        endY = y;
       }
-      endY = y;
       y += this.textRenderer.fontHeight;
     }
     if (drawCursor
         && !cursorVertical
         && this.isVisible(endY, endY + this.textRenderer.fontHeight)) {
-      Voepfxo.drawTextWithShadow(
-          context, this.textRenderer, UNDERSCORE, (float) x, (float) endY, 0xffd0d0d0);
+      Voepfxo.drawText(
+          context,
+          this.textRenderer,
+          UNDERSCORE,
+          cursorX,
+          (float) endY,
+          this.cursorColor,
+          this.textShadow);
     }
 
     if (this.editBox.hasSelection()) {
