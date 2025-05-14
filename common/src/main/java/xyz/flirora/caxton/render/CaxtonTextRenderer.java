@@ -12,7 +12,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.*;
-import net.minecraft.client.gui.render.state.TextRenderState;
+import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -20,10 +20,10 @@ import net.minecraft.client.util.Window;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.Pair;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.random.Random;
 import org.apache.commons.lang3.mutable.MutableFloat;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
@@ -188,22 +188,12 @@ public class CaxtonTextRenderer {
                 0.0f,
                 effectiveOutlineColor,
                 false,
-                TextRenderer.TextLayerType.NORMAL,
-                light,
                 Float.POSITIVE_INFINITY,
                 NO_THRESHOLD)
             .outlined();
     CaxtonTextDrawer centralDrawer =
         new CaxtonTextDrawer(
-            this,
-            x,
-            y,
-            effectiveColor,
-            false,
-            TextRenderer.TextLayerType.POLYGON_OFFSET,
-            light,
-            Float.POSITIVE_INFINITY,
-            NO_THRESHOLD);
+            this, x, y, effectiveColor, false, Float.POSITIVE_INFINITY, NO_THRESHOLD);
 
     for (RunGroup runGroup : runGroups.runGroups()) {
       ConfiguredCaxtonFont font = runGroup.getFont();
@@ -285,8 +275,9 @@ public class CaxtonTextRenderer {
         }
       }
       // FIXME: I’m sure we only need to do this at the end of the method, not every loop iteration
-      outlineDrawer.drawLayer(x, vertexConsumers, matrix);
-      centralDrawer.drawLayer(x, vertexConsumers, matrix);
+      outlineDrawer.drawLayer(x, vertexConsumers, matrix, TextRenderer.TextLayerType.NORMAL, light);
+      centralDrawer.drawLayer(
+          x, vertexConsumers, matrix, TextRenderer.TextLayerType.POLYGON_OFFSET, light);
     }
   }
 
@@ -367,18 +358,7 @@ public class CaxtonTextRenderer {
     float origX = x;
     float maxX = x + maxWidth;
     CaxtonTextDrawer drawer =
-        new CaxtonTextDrawer(
-            this,
-            x,
-            y,
-            color,
-            backgroundColor,
-            shadow,
-            layerType.asVanilla(),
-            light,
-            mirror,
-            maxX,
-            threshold);
+        new CaxtonTextDrawer(this, x, y, color, backgroundColor, shadow, maxX, threshold);
     for (RunGroup runGroup : text.runGroups()) {
       if (threshold.shouldSkip(runGroup)) {
         continue;
@@ -422,7 +402,7 @@ public class CaxtonTextRenderer {
       }
     }
     drawer.setX(x);
-    drawer.drawLayer(origX, vertexConsumerProvider, matrix);
+    drawer.drawLayer(origX, vertexConsumerProvider, matrix, layerType.asVanilla(), light);
     return x;
   }
 
@@ -611,16 +591,15 @@ public class CaxtonTextRenderer {
     return x + cumulAdvanceX * scale - configuredFont.shiftX();
   }
 
-  public TextRenderState buildLayerState(
+  public TextRenderer.GlyphDrawable prepare(
       CaxtonText text,
       float x,
       float y,
       int color,
       boolean shadow,
-      TextRenderer.TextLayerType layerType,
       int backgroundColor,
-      int light,
-      boolean swapZIndex) {
+      int leftmostCodePoint,
+      float maxWidth) {
     getCache();
     // FIXME: will this be set to the right matrix?
     float minThickness = getMinThickness(RenderSystem.getModelViewMatrix());
@@ -632,11 +611,8 @@ public class CaxtonTextRenderer {
             color,
             backgroundColor,
             shadow,
-            layerType,
-            light,
-            swapZIndex,
-            Float.POSITIVE_INFINITY,
-            new Threshold());
+            x + maxWidth,
+            new Threshold(leftmostCodePoint));
     for (RunGroup runGroup : text.runGroups()) {
       if (runGroup.getFont() == null) {
         runGroup.acceptRender(
@@ -654,11 +630,11 @@ public class CaxtonTextRenderer {
         }
       }
     }
-    return drawer.buildState();
+    return drawer;
   }
 
-  public Pair<TextRenderState, TextRenderState> buildLayerStateOutlined(
-      OrderedText text,
+  public TextRenderer.GlyphDrawable prepareOutlined(
+      CaxtonText runGroups,
       float x,
       float y,
       int color,
@@ -670,8 +646,6 @@ public class CaxtonTextRenderer {
     // FIXME: will this be set to the right matrix?
     float minThickness = getMinThickness(RenderSystem.getModelViewMatrix());
 
-    CaxtonText runGroups =
-        CaxtonText.from(text, this::getFontStorage, false, this.rtl, handler.getCache());
     int effectiveOutlineColor = tweakTransparency(outlineColor);
     int effectiveColor = tweakTransparency(color);
 
@@ -682,22 +656,12 @@ public class CaxtonTextRenderer {
                 0.0f,
                 effectiveOutlineColor,
                 false,
-                TextRenderer.TextLayerType.NORMAL,
-                light,
                 Float.POSITIVE_INFINITY,
                 NO_THRESHOLD)
             .outlined();
     CaxtonTextDrawer centralDrawer =
         new CaxtonTextDrawer(
-            this,
-            x,
-            y,
-            effectiveColor,
-            false,
-            TextRenderer.TextLayerType.POLYGON_OFFSET,
-            light,
-            Float.POSITIVE_INFINITY,
-            NO_THRESHOLD);
+            this, x, y, effectiveColor, false, Float.POSITIVE_INFINITY, NO_THRESHOLD);
 
     for (RunGroup runGroup : runGroups.runGroups()) {
       ConfiguredCaxtonFont font = runGroup.getFont();
@@ -757,7 +721,26 @@ public class CaxtonTextRenderer {
         }
       }
     }
-    return new Pair<>(outlineDrawer.buildState(), centralDrawer.buildState());
+    return new TextRenderer.GlyphDrawable() {
+      @Override
+      public void draw(TextRenderer.GlyphDrawer glyphDrawer) {
+        outlineDrawer.draw(glyphDrawer);
+        centralDrawer.draw(glyphDrawer);
+      }
+
+      @Override
+      public @Nullable ScreenRect getScreenRect() {
+        ScreenRect rect1 = outlineDrawer.getScreenRect();
+        ScreenRect rect2 = centralDrawer.getScreenRect();
+        if (rect1 == null) return rect2;
+        if (rect2 == null) return rect1;
+        int left = Math.min(rect1.getLeft(), rect2.getLeft());
+        int right = Math.max(rect1.getRight(), rect2.getRight());
+        int top = Math.min(rect1.getTop(), rect2.getTop());
+        int bottom = Math.max(rect1.getBottom(), rect2.getBottom());
+        return new ScreenRect(left, top, right - left, bottom - top);
+      }
+    };
   }
 
   public CaxtonGlyphCache getCache() {
@@ -775,5 +758,14 @@ public class CaxtonTextRenderer {
 
   public CaxtonTextHandler getHandler() {
     return handler;
+  }
+
+  public CaxtonText from(OrderedText text) {
+    return CaxtonText.from(text, this::getFontStorage, false, this.rtl, handler.getCache());
+  }
+
+  public CaxtonText fromForwards(String text, Style style) {
+    return CaxtonText.fromForwards(
+        text, this::getFontStorage, style, false, this.rtl, handler.getCache());
   }
 }

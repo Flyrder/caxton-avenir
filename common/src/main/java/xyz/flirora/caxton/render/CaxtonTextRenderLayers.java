@@ -19,13 +19,15 @@ public class CaxtonTextRenderLayers {
           RenderLayerFunctions::ofText,
           RenderLayerFunctions::ofTextSeeThrough,
           RenderLayerFunctions::ofTextOffset,
-          RenderLayerFunctions::ofTextOutline);
+          RenderLayerFunctions::ofTextOutline,
+          CaxtonShaders.TEXT);
   private final Group raster =
       new Group(
           RenderLayerFunctions::ofTextR,
           RenderLayerFunctions::ofTextSeeThroughR,
           RenderLayerFunctions::ofTextOffsetR,
-          RenderLayerFunctions::ofTextR);
+          RenderLayerFunctions::ofTextR,
+          RenderPipelines.RENDERTYPE_TEXT);
 
   public void clear() {
     msdf.clear();
@@ -58,16 +60,19 @@ public class CaxtonTextRenderLayers {
         ofTextSeeThrough,
         ofTextOffset,
         ofTextOutline;
+    private final RenderPipeline pipeline;
 
     public Group(
         Function<CaxtonAtlas.Page, RenderLayer> ofText,
         Function<CaxtonAtlas.Page, RenderLayer> ofTextSeeThrough,
         Function<CaxtonAtlas.Page, RenderLayer> ofTextOffset,
-        Function<CaxtonAtlas.Page, RenderLayer> ofTextOutline) {
+        Function<CaxtonAtlas.Page, RenderLayer> ofTextOutline,
+        RenderPipeline pipeline) {
       this.ofText = ofText;
       this.ofTextSeeThrough = ofTextSeeThrough;
       this.ofTextOffset = ofTextOffset;
       this.ofTextOutline = ofTextOutline;
+      this.pipeline = pipeline;
     }
 
     public void clear() {
@@ -91,12 +96,14 @@ public class CaxtonTextRenderLayers {
         return new TextRenderLayerSet(
             textOutline.computeIfAbsent(page, this.ofText),
             textSeeThrough.computeIfAbsent(page, this.ofTextSeeThrough),
-            textOffset.computeIfAbsent(page, this.ofTextOffset));
+            textOffset.computeIfAbsent(page, this.ofTextOffset),
+            CaxtonShaders.TEXT_OUTLINE);
       } else {
         return new TextRenderLayerSet(
             text.computeIfAbsent(page, this.ofText),
             textSeeThrough.computeIfAbsent(page, this.ofTextSeeThrough),
-            textOffset.computeIfAbsent(page, this.ofTextOffset));
+            textOffset.computeIfAbsent(page, this.ofTextOffset),
+            this.pipeline);
       }
     }
   }

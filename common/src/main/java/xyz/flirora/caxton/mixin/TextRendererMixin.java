@@ -11,7 +11,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.FontStorage;
 import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.render.state.TextRenderState;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
@@ -70,76 +69,6 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
     cir.setReturnValue(text);
   }
 
-  @Inject(
-      at = @At("HEAD"),
-      method =
-          "drawLayer(Ljava/lang/String;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/client/font/TextRenderer$TextLayerType;IIZ)V",
-      cancellable = true)
-  private void onDrawLayerString(
-      String text,
-      float x,
-      float y,
-      int color,
-      boolean shadow,
-      Matrix4f matrix,
-      VertexConsumerProvider vertexConsumerProvider,
-      TextRenderer.TextLayerType layerType,
-      int backgroundColor,
-      int light,
-      boolean swapZIndex,
-      CallbackInfo ci) {
-    caxtonRenderer.drawLayer(
-        text,
-        x,
-        y,
-        color,
-        shadow,
-        matrix,
-        vertexConsumerProvider,
-        layerType,
-        backgroundColor,
-        light,
-        swapZIndex,
-        -1,
-        Float.POSITIVE_INFINITY);
-    ci.cancel();
-  }
-
-  @Inject(
-      at = @At("HEAD"),
-      method =
-          "drawLayer(Lnet/minecraft/text/OrderedText;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/client/font/TextRenderer$TextLayerType;IIZ)V",
-      cancellable = true)
-  private void onDrawLayerOrderedText(
-      OrderedText text,
-      float x,
-      float y,
-      int color,
-      boolean shadow,
-      Matrix4f matrix,
-      VertexConsumerProvider vertexConsumerProvider,
-      TextRenderer.TextLayerType layerType,
-      int backgroundColor,
-      int light,
-      boolean swapZIndex,
-      CallbackInfo ci) {
-    caxtonRenderer.drawLayer(
-        text,
-        x,
-        y,
-        color,
-        shadow,
-        matrix,
-        vertexConsumerProvider,
-        layerType,
-        backgroundColor,
-        light,
-        swapZIndex,
-        -1,
-        Float.POSITIVE_INFINITY);
-    ci.cancel();
-  }
-
   @Inject(at = @At("HEAD"), method = "drawWithOutline", cancellable = true)
   private void onDrawWithOutline(
       OrderedText text,
@@ -159,21 +88,18 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
   @Inject(
       at = @At("HEAD"),
       method =
-          "buildLayerState(Ljava/lang/String;FFIZLnet/minecraft/client/font/TextRenderer$TextLayerType;IIZ)Lnet/minecraft/client/gui/render/state/TextRenderState;",
+          "prepare(Ljava/lang/String;FFIZI)Lnet/minecraft/client/font/TextRenderer$GlyphDrawable;",
       cancellable = true)
-  private void onBuildLayerStateString(
+  private void onPrepareString(
       String text,
       float x,
       float y,
       int color,
       boolean shadow,
-      TextRenderer.TextLayerType layerType,
       int backgroundColor,
-      int light,
-      boolean swapZIndex,
-      CallbackInfoReturnable<TextRenderState> cir) {
+      CallbackInfoReturnable<TextRenderer.GlyphDrawable> cir) {
     cir.setReturnValue(
-        caxtonRenderer.buildLayerState(
+        caxtonRenderer.prepare(
             CaxtonText.fromFormatted(
                 text,
                 caxtonRenderer::getFontStorage,
@@ -185,30 +111,26 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
             y,
             color,
             shadow,
-            layerType,
             backgroundColor,
-            light,
-            swapZIndex));
+            -1,
+            Float.POSITIVE_INFINITY));
   }
 
   @Inject(
       at = @At("HEAD"),
       method =
-          "buildLayerState(Lnet/minecraft/text/OrderedText;FFIZLnet/minecraft/client/font/TextRenderer$TextLayerType;IIZ)Lnet/minecraft/client/gui/render/state/TextRenderState;",
+          "prepare(Lnet/minecraft/text/OrderedText;FFIZI)Lnet/minecraft/client/font/TextRenderer$GlyphDrawable;",
       cancellable = true)
-  private void onBuildLayerStateOrderedText(
+  private void onPrepareOrderedText(
       OrderedText text,
       float x,
       float y,
       int color,
       boolean shadow,
-      TextRenderer.TextLayerType layerType,
       int backgroundColor,
-      int light,
-      boolean swapZIndex,
-      CallbackInfoReturnable<TextRenderState> cir) {
+      CallbackInfoReturnable<TextRenderer.GlyphDrawable> cir) {
     cir.setReturnValue(
-        caxtonRenderer.buildLayerState(
+        caxtonRenderer.prepare(
             CaxtonText.from(
                 text,
                 caxtonRenderer::getFontStorage,
@@ -219,10 +141,9 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
             y,
             color,
             shadow,
-            layerType,
             backgroundColor,
-            light,
-            swapZIndex));
+            -1,
+            Float.POSITIVE_INFINITY));
   }
 
   @Override

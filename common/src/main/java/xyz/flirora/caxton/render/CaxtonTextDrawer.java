@@ -11,13 +11,14 @@ import java.util.List;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.*;
-import net.minecraft.client.gui.render.state.TextRenderState;
+import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.text.CharacterVisitor;
 import net.minecraft.text.Style;
 import net.minecraft.text.TextColor;
 import net.minecraft.util.math.ColorHelper;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.random.Random;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -29,25 +30,31 @@ import xyz.flirora.caxton.layout.Threshold;
 import xyz.flirora.caxton.mixin.TextRendererAccessor;
 
 @Environment(EnvType.CLIENT)
-public class CaxtonTextDrawer implements CharacterVisitor {
+public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDrawable {
   private final CaxtonTextRenderer textRenderer;
   private final boolean shadow;
   private final int color;
   private final int backgroundColor;
-  private final TextRenderer.TextLayerType layerType;
-  private final int light;
-  private final boolean swapZIndex;
   private float x;
   private float y;
   private final List<BakedGlyph.DrawnGlyph> glyphs;
   @Nullable private List<BakedGlyph.Rectangle> rectangles;
-  private final float maxX;
+  private final float xRight;
   private final Threshold threshold;
   private final Random random = Random.createLocal();
   private boolean outline = false;
 
-  // TODO: If we want to convert all text rendering over to CTD,
-  // then we need to track maxX and threshold.
+  private float minX = Float.MAX_VALUE;
+  private float minY = Float.MAX_VALUE;
+  private float maxX = Float.MIN_VALUE;
+  private float maxY = Float.MIN_VALUE;
+  private float minBackgroundX = Float.MAX_VALUE;
+  private float minBackgroundY = Float.MAX_VALUE;
+  private float maxBackgroundX = Float.MIN_VALUE;
+  private float maxBackgroundY = Float.MIN_VALUE;
+
+  private static final float FOREGROUND_Z_INDEX = 0.001F;
+  private static final float BACKGROUND_Z_INDEX = -0.001F;
 
   public CaxtonTextDrawer(
       CaxtonTextRenderer textRenderer,
@@ -56,22 +63,16 @@ public class CaxtonTextDrawer implements CharacterVisitor {
       int color,
       int backgroundColor,
       boolean shadow,
-      TextRenderer.TextLayerType layerType,
-      int light,
-      boolean swapZIndex,
-      float maxX,
+      float xRight,
       Threshold threshold) {
     this.textRenderer = textRenderer;
     this.shadow = shadow;
     this.color = color;
     this.backgroundColor = backgroundColor;
-    this.layerType = layerType;
-    this.light = light;
-    this.swapZIndex = swapZIndex;
     this.x = x;
     this.y = y;
     this.glyphs = new ArrayList<>();
-    this.maxX = maxX;
+    this.xRight = xRight;
     this.threshold = threshold;
   }
 
@@ -81,11 +82,9 @@ public class CaxtonTextDrawer implements CharacterVisitor {
       float y,
       int color,
       boolean shadow,
-      TextRenderer.TextLayerType layerType,
-      int light,
-      float maxX,
+      float xRight,
       Threshold threshold) {
-    this(textRenderer, x, y, color, 0, shadow, layerType, light, true, maxX, threshold);
+    this(textRenderer, x, y, color, 0, shadow, xRight, threshold);
   }
 
   public CaxtonTextDrawer outlined() {
@@ -109,11 +108,43 @@ public class CaxtonTextDrawer implements CharacterVisitor {
     this.y = y;
   }
 
+  private void updateTextBounds(float minX, float minY, float maxX, float maxY) {
+    this.minX = Math.min(this.minX, minX);
+    this.minY = Math.min(this.minY, minY);
+    this.maxX = Math.max(this.maxX, maxX);
+    this.maxY = Math.max(this.maxY, maxY);
+  }
+
+  private void updateBackgroundBounds(float x, float y, float width) {
+    if (ColorHelper.getAlpha(this.backgroundColor) != 0) {
+      this.minBackgroundX = Math.min(this.minBackgroundX, x - 1.0F);
+      this.minBackgroundY = Math.min(this.minBackgroundY, y - 1.0F);
+      this.maxBackgroundX = Math.max(this.maxBackgroundX, x + width);
+      this.maxBackgroundY = Math.max(this.maxBackgroundY, y + 9.0F);
+      this.updateTextBounds(
+          this.minBackgroundX, this.minBackgroundY, this.maxBackgroundX, this.maxBackgroundY);
+    }
+  }
+
+  private void addGlyph(BakedGlyph.DrawnGlyph glyph) {
+    this.glyphs.add(glyph);
+    this.updateTextBounds(
+        glyph.getEffectiveMinX(),
+        glyph.getEffectiveMinY(),
+        glyph.getEffectiveMaxX(),
+        glyph.getEffectiveMaxY());
+  }
+
   public void addRectangle(BakedGlyph.Rectangle rectangle) {
     if (this.rectangles == null) {
       this.rectangles = new ArrayList<>();
     }
     this.rectangles.add(rectangle);
+    this.updateTextBounds(
+        rectangle.getEffectiveMinX(),
+        rectangle.getEffectiveMinY(),
+        rectangle.getEffectiveMaxX(),
+        rectangle.getEffectiveMaxY());
   }
 
   /**
@@ -126,7 +157,7 @@ public class CaxtonTextDrawer implements CharacterVisitor {
    */
   @Override
   public boolean accept(int index, Style style, int codePoint) {
-    if (this.x >= this.maxX) {
+    if (this.x >= this.xRight) {
       return false;
     }
 
@@ -147,7 +178,7 @@ public class CaxtonTextDrawer implements CharacterVisitor {
     float x = index == 0 ? this.x - 1.0f : this.x;
     if (!(bakedGlyph instanceof EmptyBakedGlyph)) {
       float boldOffset = bold ? glyph.getBoldOffset() : 0.0f;
-      this.glyphs.add(
+      this.addGlyph(
           new BakedGlyph.DrawnGlyph(
               this.x,
               this.y,
@@ -167,7 +198,7 @@ public class CaxtonTextDrawer implements CharacterVisitor {
               this.y + shadowOffset + 3.5f,
               this.x + shadowOffset + advance,
               this.y + shadowOffset + 4.5f,
-              this.getForegroundZIndex(),
+              FOREGROUND_Z_INDEX,
               color,
               shadowColor,
               shadowOffset));
@@ -179,7 +210,7 @@ public class CaxtonTextDrawer implements CharacterVisitor {
               this.y + shadowOffset + 8.0f,
               this.x + shadowOffset + advance,
               this.y + shadowOffset + 9.0f,
-              this.getForegroundZIndex(),
+              FOREGROUND_Z_INDEX,
               color,
               shadowColor,
               shadowOffset));
@@ -198,7 +229,7 @@ public class CaxtonTextDrawer implements CharacterVisitor {
       int glyphOffset,
       float minThickness,
       CaxtonTextRenderLayers renderLayers) {
-    if (this.x >= this.maxX) {
+    if (this.x >= this.xRight) {
       return false;
     }
     float origX = x;
@@ -281,7 +312,7 @@ public class CaxtonTextDrawer implements CharacterVisitor {
 
         float glyphX = x + gx * scale;
         float glyphY = -offsetY * scale + baselineY;
-        this.glyphs.add(
+        this.addGlyph(
             new BakedGlyph.DrawnGlyph(
                 glyphX,
                 glyphY,
@@ -292,15 +323,14 @@ public class CaxtonTextDrawer implements CharacterVisitor {
                 0.0f,
                 configuredFont.shadowOffset()));
 
-        if (glyphX + advanceX >= this.maxX) break;
+        if (glyphX + advanceX >= this.xRight) break;
       }
 
       float x0a = x + cumulAdvanceX * scale;
       float x1a = x + (cumulAdvanceX + advanceX) * scale;
       if (style.isUnderlined()) {
         this.addRectangle(
-            new BakedGlyph.Rectangle(
-                x0a, y1u, x1a, y0u, this.getForegroundZIndex() + textZ, textColor));
+            new BakedGlyph.Rectangle(x0a, y1u, x1a, y0u, FOREGROUND_Z_INDEX + textZ, textColor));
         if (shadow) {
           this.addRectangle(
               new BakedGlyph.Rectangle(
@@ -308,14 +338,13 @@ public class CaxtonTextDrawer implements CharacterVisitor {
                   y1u + shadowOffset,
                   x1a + shadowOffset,
                   y0u + shadowOffset,
-                  this.getForegroundZIndex(),
+                  FOREGROUND_Z_INDEX,
                   shadowColor));
         }
       }
       if (style.isStrikethrough()) {
         this.addRectangle(
-            new BakedGlyph.Rectangle(
-                x0a, y1s, x1a, y0s, this.getForegroundZIndex() + textZ, textColor));
+            new BakedGlyph.Rectangle(x0a, y1s, x1a, y0s, FOREGROUND_Z_INDEX + textZ, textColor));
         if (shadow) {
           this.addRectangle(
               new BakedGlyph.Rectangle(
@@ -323,7 +352,7 @@ public class CaxtonTextDrawer implements CharacterVisitor {
                   y1s + shadowOffset,
                   x1a + shadowOffset,
                   y0s + shadowOffset,
-                  this.getForegroundZIndex(),
+                  FOREGROUND_Z_INDEX,
                   shadowColor));
         }
       }
@@ -355,7 +384,12 @@ public class CaxtonTextDrawer implements CharacterVisitor {
     }
   }
 
-  float drawLayer(float x, VertexConsumerProvider vertexConsumers, Matrix4f matrix) {
+  float drawLayer(
+      float x,
+      VertexConsumerProvider vertexConsumers,
+      Matrix4f matrix,
+      TextRenderer.TextLayerType layerType,
+      int light) {
     BakedGlyph bakedGlyph = null;
     if (this.backgroundColor != 0) {
       BakedGlyph.Rectangle rectangle =
@@ -364,60 +398,88 @@ public class CaxtonTextDrawer implements CharacterVisitor {
               this.y - 1.0F,
               this.x,
               this.y + 9.0F,
-              this.getBackgroundZIndex(),
+              BACKGROUND_Z_INDEX,
               this.backgroundColor);
       bakedGlyph = this.textRenderer.getFontStorage(Style.DEFAULT_FONT_ID).getRectangleBakedGlyph();
-      VertexConsumer vertexConsumer =
-          vertexConsumers.getBuffer(bakedGlyph.getLayer(this.layerType));
-      bakedGlyph.drawRectangle(rectangle, matrix, vertexConsumer, this.light);
+      VertexConsumer vertexConsumer = vertexConsumers.getBuffer(bakedGlyph.getLayer(layerType));
+      bakedGlyph.drawRectangle(rectangle, matrix, vertexConsumer, light);
     }
 
-    this.drawGlyphs(vertexConsumers, matrix);
+    this.drawGlyphs(vertexConsumers, matrix, layerType, light);
     if (this.rectangles != null) {
       if (bakedGlyph == null) {
         bakedGlyph =
             this.textRenderer.getFontStorage(Style.DEFAULT_FONT_ID).getRectangleBakedGlyph();
       }
 
-      VertexConsumer vertexConsumer2 =
-          vertexConsumers.getBuffer(bakedGlyph.getLayer(this.layerType));
+      VertexConsumer vertexConsumer2 = vertexConsumers.getBuffer(bakedGlyph.getLayer(layerType));
 
       for (BakedGlyph.Rectangle rectangle2 : this.rectangles) {
-        bakedGlyph.drawRectangle(rectangle2, matrix, vertexConsumer2, this.light);
+        bakedGlyph.drawRectangle(rectangle2, matrix, vertexConsumer2, light);
       }
     }
 
     return this.x;
   }
 
-  void drawGlyphs(VertexConsumerProvider vertexConsumers, Matrix4f matrix) {
+  void drawGlyphs(
+      VertexConsumerProvider vertexConsumers,
+      Matrix4f matrix,
+      TextRenderer.TextLayerType layerType,
+      int light) {
     for (BakedGlyph.DrawnGlyph drawnGlyph : this.glyphs) {
       BakedGlyph bakedGlyph = drawnGlyph.glyph();
-      VertexConsumer vertexConsumer =
-          vertexConsumers.getBuffer(bakedGlyph.getLayer(this.layerType));
-      bakedGlyph.draw(drawnGlyph, matrix, vertexConsumer, this.light);
+      VertexConsumer vertexConsumer = vertexConsumers.getBuffer(bakedGlyph.getLayer(layerType));
+      bakedGlyph.draw(drawnGlyph, matrix, vertexConsumer, light);
     }
   }
 
   public float getForegroundZIndex() {
-    return this.swapZIndex ? 0.01F : -0.01F;
+    return FOREGROUND_Z_INDEX;
   }
 
-  private float getBackgroundZIndex() {
-    return this.swapZIndex ? -0.01F : 0.01F;
+  @Override
+  public void draw(TextRenderer.GlyphDrawer glyphDrawer) {
+    BakedGlyph bakedGlyph = null;
+    if (ColorHelper.getAlpha(this.backgroundColor) != 0) {
+      BakedGlyph.Rectangle rectangle =
+          new BakedGlyph.Rectangle(
+              this.minBackgroundX,
+              this.minBackgroundY,
+              this.maxBackgroundX,
+              this.maxBackgroundY,
+              -0.001F,
+              this.backgroundColor);
+      bakedGlyph = this.textRenderer.getFontStorage(Style.DEFAULT_FONT_ID).getRectangleBakedGlyph();
+      glyphDrawer.drawRectangle(bakedGlyph, rectangle);
+    }
+
+    for (BakedGlyph.DrawnGlyph drawnGlyph : this.glyphs) {
+      glyphDrawer.drawGlyph(drawnGlyph);
+    }
+
+    if (this.rectangles != null) {
+      if (bakedGlyph == null) {
+        bakedGlyph =
+            this.textRenderer.getFontStorage(Style.DEFAULT_FONT_ID).getRectangleBakedGlyph();
+      }
+
+      for (BakedGlyph.Rectangle rectangle2 : this.rectangles) {
+        glyphDrawer.drawRectangle(bakedGlyph, rectangle2);
+      }
+    }
   }
 
-  public TextRenderState buildState() {
-    return new TextRenderState(
-        this.shadow,
-        this.color,
-        this.backgroundColor,
-        this.layerType,
-        this.light,
-        this.glyphs,
-        this.rectangles,
-        9,
-        textRenderer.getFontStorage(Style.DEFAULT_FONT_ID).getRectangleBakedGlyph(),
-        this.x);
+  @Override
+  public @Nullable ScreenRect getScreenRect() {
+    if (!(this.minX >= this.maxX) && !(this.minY >= this.maxY)) {
+      int minX = MathHelper.floor(this.minX);
+      int minY = MathHelper.floor(this.minY);
+      int maxX = MathHelper.floor(this.maxX) + 1;
+      int maxY = MathHelper.floor(this.maxY) + 1;
+      return new ScreenRect(minX, minY, maxX - minX, maxY - minY);
+    } else {
+      return null;
+    }
   }
 }

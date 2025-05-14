@@ -20,6 +20,7 @@
         "ShaderMixin",
         "SplashTextRendererAccessor",
         "SplashTextResourceSupplierMixin",
+        "TextGuiElementRenderStateMixin",
         "TextHandlerAccessor",
         "TextHandlerMixin",
         "TextRendererAccessor",
