@@ -323,7 +323,7 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
                 0.0f,
                 configuredFont.shadowOffset()));
 
-        if (glyphX + advanceX >= this.xRight) break;
+        if (glyphX + advanceX * scale >= this.xRight) break;
       }
 
       float x0a = x + cumulAdvanceX * scale;
