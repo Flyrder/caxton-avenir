@@ -402,7 +402,7 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
               this.backgroundColor);
       bakedGlyph = this.textRenderer.getFontStorage(Style.DEFAULT_FONT_ID).getRectangleBakedGlyph();
       VertexConsumer vertexConsumer = vertexConsumers.getBuffer(bakedGlyph.getLayer(layerType));
-      bakedGlyph.drawRectangle(rectangle, matrix, vertexConsumer, light);
+      bakedGlyph.drawRectangle(rectangle, matrix, vertexConsumer, light, false);
     }
 
     this.drawGlyphs(vertexConsumers, matrix, layerType, light);
@@ -415,7 +415,7 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
       VertexConsumer vertexConsumer2 = vertexConsumers.getBuffer(bakedGlyph.getLayer(layerType));
 
       for (BakedGlyph.Rectangle rectangle2 : this.rectangles) {
-        bakedGlyph.drawRectangle(rectangle2, matrix, vertexConsumer2, light);
+        bakedGlyph.drawRectangle(rectangle2, matrix, vertexConsumer2, light, false);
       }
     }
 
@@ -430,7 +430,7 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
     for (BakedGlyph.DrawnGlyph drawnGlyph : this.glyphs) {
       BakedGlyph bakedGlyph = drawnGlyph.glyph();
       VertexConsumer vertexConsumer = vertexConsumers.getBuffer(bakedGlyph.getLayer(layerType));
-      bakedGlyph.draw(drawnGlyph, matrix, vertexConsumer, light);
+      bakedGlyph.draw(drawnGlyph, matrix, vertexConsumer, light, false);
     }
   }
 
