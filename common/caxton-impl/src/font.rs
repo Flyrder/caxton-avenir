@@ -18,7 +18,7 @@ use fdsm::shape::Shape;
 use fdsm::transform::Transform;
 use image::{Pixel, Rgba32FImage};
 use na::{Affine2, Similarity2, Vector2};
-use nanoserde::{DeJson, DeJsonErr, DeJsonState};
+use nanoserde::{DeJson, DeJsonErr, DeJsonErrReason, DeJsonState};
 use rayon::iter::{
     IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
 };
@@ -48,7 +48,7 @@ impl DeJson for CxVariation {
             Tag::from_bytes_lossy(format.axis.as_bytes())
         } else {
             return Err(DeJsonErr {
-                msg: "axis name must have 4 characters".to_string(),
+                msg: DeJsonErrReason::CannotParse("axis name must have 4 characters".to_string()),
                 line: state.line,
                 col: state.col,
             });
@@ -107,7 +107,7 @@ impl FontOptions {
     fn calculate_sha(&self, contents: &[u8]) -> [u8; 32] {
         let mut sha = Sha256::new();
         sha.update(contents);
-        sha.update(&format!(
+        sha.update(format!(
             "{} {} {} {} {}{:?}",
             self.shrinkage,
             self.margin(),
@@ -124,7 +124,7 @@ impl FontOptions {
             },
         ));
         for var in &self.variations {
-            sha.update(&format!(" {} {}", var.0.axis, var.0.value));
+            sha.update(format!(" {} {}", var.0.axis, var.0.value));
         }
         sha.update(SALT);
         sha.finalize().into()
@@ -187,7 +187,7 @@ impl<'a> Font<'a> {
                     x_max: 0,
                     y_max: 0,
                 });
-                let rect = adjust_bbox(rect, &options);
+                let rect = adjust_bbox(rect, options);
                 (rect.x_min as u16 as u64)
                     | (rect.y_min as u16 as u64) << 16
                     | (rect.x_max as u16 as u64) << 32
@@ -207,10 +207,7 @@ impl<'a> Font<'a> {
                 }
             }
 
-            eprintln!(
-                "Building atlas for {} glyphs; this might take a while",
-                num_glyphs
-            );
+            eprintln!("Building atlas for {num_glyphs} glyphs; this might take a while");
             let before_atlas_construction = Instant::now();
             let tlist = create_atlas(&face, options)?;
             let after_atlas_construction = Instant::now();
@@ -223,6 +220,7 @@ impl<'a> Font<'a> {
             let fh = OpenOptions::new()
                 .write(true)
                 .create(true)
+                .truncate(true)
                 .open(&this_cache);
             match fh {
                 Ok(mut fh) => {
@@ -257,7 +255,7 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Vec<TList>
     let glyph_indices_and_bboxes = (0..face.number_of_glyphs())
         .map(|glyph_idx| {
             let bbox = face.glyph_bounding_box(GlyphId(glyph_idx));
-            let bbox = bbox.map(|bbox| adjust_bbox(bbox, &options));
+            let bbox = bbox.map(|bbox| adjust_bbox(bbox, options));
             (glyph_idx, bbox)
         })
         .collect::<Vec<_>>();
@@ -369,7 +367,7 @@ fn create_mtsdf(
     let width = adjust_dims(width, mipmap);
     let height = adjust_dims(height, mipmap);
 
-    let mut shape = Shape::load_from_face(face.as_ref(), glyph_id);
+    let mut shape = fdsm_ttf_parser::load_shape_from_face(face.as_ref(), glyph_id);
     let framing: Affine2<f64> = framing(options, &bounding_box, mipmap);
     shape.transform(&framing);
     let shape = Shape::edge_coloring_simple(shape, 0.03, 69);
@@ -422,7 +420,7 @@ fn create_bitmap(
             open_point: None,
             last_point: None,
             bbox: &bounding_box,
-            options: &options,
+            options,
             scale: (-(mipmap as f64)).exp2(),
         },
     );

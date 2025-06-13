@@ -1,11 +1,11 @@
-FROM gradle:8.13.0-jdk21-jammy
+FROM gradle:8.14.2-jdk21-jammy
 
 RUN apt-get update && apt-get -y install gcc gcc-mingw-w64-x86-64-win32
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION=1.77.2
+    RUST_VERSION=1.87.0
 
 RUN set -eux; \
     dpkgArch="$(dpkg --print-architecture)"; \

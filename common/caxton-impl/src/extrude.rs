@@ -26,7 +26,7 @@ impl Kernel {
             let lb = result.get(w as usize + 1).map(|x| *x as usize);
             let ub = result[w as usize] as usize;
             assert!(
-                lb.map_or(true, |lb| lb < i) && i <= ub,
+                lb.is_none_or(|lb| lb < i) && i <= ub,
                 "kernel {result:?} for radius {r} is not symmetric about the 45° diagonals: {i} is not in ({lb:?}, {ub}]",
             );
         }

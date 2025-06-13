@@ -57,7 +57,7 @@ impl TList {
     pub fn adds(
         &mut self,
         bit_depth: usize,
-        sizes: impl Iterator<Item=(u32, u32)>,
+        sizes: impl Iterator<Item = (u32, u32)>,
     ) -> anyhow::Result<Vec<TListPendingEntry<'_>>> {
         let first_index = self.pixels.len();
         let mut pending_index = first_index;
@@ -99,7 +99,7 @@ impl TList {
     pub fn adds_pairs(
         &mut self,
         bit_depth: usize,
-        sizes: impl Iterator<Item=(u32, u32)> + Clone,
+        sizes: impl Iterator<Item = (u32, u32)> + Clone,
     ) -> anyhow::Result<Vec<(TListPendingEntry<'_>, TListPendingEntry<'_>)>> {
         let mut entries = self.adds(bit_depth, sizes.clone().chain(sizes))?;
         let midpoint = entries.len() / 2;
@@ -131,10 +131,7 @@ impl TList {
         {
             let slice = self.locations.as_slice();
             let slice = unsafe {
-                slice::from_raw_parts(
-                    slice.as_ptr().cast::<u8>(),
-                    mem::size_of::<TLocation>() * slice.len(),
-                )
+                slice::from_raw_parts(slice.as_ptr().cast::<u8>(), std::mem::size_of_val(slice))
             };
             fh.write_all(slice)?;
         }
@@ -164,7 +161,7 @@ impl TList {
             let slice = unsafe {
                 slice::from_raw_parts_mut(
                     slice.as_mut_ptr().cast::<u8>(),
-                    mem::size_of::<TLocation>() * slice.len(),
+                    std::mem::size_of_val(slice),
                 )
             };
             fh.read_exact(slice)?;

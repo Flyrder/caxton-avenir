@@ -1,15 +1,13 @@
-#![cfg_attr(test, feature(slice_flatten))]
-
 extern crate core;
 extern crate nalgebra as na;
 
 pub mod cfont;
+pub mod error;
 pub mod extrude;
 pub mod font;
 pub mod jni;
 pub mod shape;
 pub mod tlist;
-pub mod error;
 
 #[cfg(test)]
 mod tests {
@@ -54,9 +52,9 @@ mod tests {
             [0, 5, 5, 9, 9],
             [0, 0, 0, 9, 9],
         ];
-        let orig = orig.flatten();
+        let orig = orig.as_flattened();
         let mut actual = vec![0; orig.len()];
         kernel.convolve(orig, &mut actual, 5, 5);
-        assert_eq!(expected.flatten(), actual)
+        assert_eq!(expected.as_flattened(), actual)
     }
 }

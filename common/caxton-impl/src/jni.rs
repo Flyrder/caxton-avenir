@@ -248,7 +248,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
         let _ = throw_null_ptr_exn(&mut env);
         return 0;
     }
-    (*(addr as usize as *const Font)).tlist[mipmap as usize]
+    (&(*(addr as usize as *const Font)).tlist)[mipmap as usize]
         .locations()
         .as_ptr() as usize as i64
 }
@@ -293,7 +293,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
     }
     throw_as_exn! {
         env;
-        let page = (*(addr as usize as *const Font)).tlist[mipmap as usize].data();
+        let page = (&(*(addr as usize as *const Font)).tlist)[mipmap as usize].data();
         let ptr: *const u8 = page.as_ptr();
         Ok(ptr as i64)
     }
@@ -388,7 +388,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontSha
             Some(lang) => Some(env.new_string(lang.as_str())?),
             None => None,
         };
-        let inferred_script = env.new_string(&buffer.script().tag().to_string())?;
+        let inferred_script = env.new_string(buffer.script().tag().to_string())?;
         let null = JObject::null();
 
         env.set_field(
