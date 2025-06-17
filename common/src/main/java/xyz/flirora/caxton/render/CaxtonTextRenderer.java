@@ -556,7 +556,12 @@ public class CaxtonTextRenderer {
   public void clearCaches() {
     this.handler.clearCaches();
     LOGGER.info("Cleared layout caches");
-    if (this.cache != null) this.cache.clear();
+    if (this.cache != null) {
+      this.cache.clear();
+      // Try to avoid a race condition that causes the glyph cache to have empty atlas textures
+      // but a populated glyph location cache on NeoForge.
+      this.cache = null;
+    }
     this.renderLayers.clear();
     LOGGER.info("Cleared rendering caches");
   }

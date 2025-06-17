@@ -28,7 +28,7 @@ public class CaxtonShaders {
           .withFragmentShader(TEXT_ID)
           .withSampler("Sampler0")
           .withSampler("Sampler2")
-          .withUniform("UnitRange", UniformType.UNIFORM_BUFFER)
+          .withUniform("UnitRangeU", UniformType.UNIFORM_BUFFER)
           .build();
   public static final RenderPipeline TEXT_OFFSET =
       RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
@@ -38,7 +38,7 @@ public class CaxtonShaders {
           .withSampler("Sampler0")
           .withSampler("Sampler2")
           .withDepthBias(-1.0f, -10.0f)
-          .withUniform("UnitRange", UniformType.UNIFORM_BUFFER)
+          .withUniform("UnitRangeU", UniformType.UNIFORM_BUFFER)
           .build();
   public static final RenderPipeline TEXT_SEE_THROUGH =
       RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET)
@@ -48,7 +48,7 @@ public class CaxtonShaders {
           .withSampler("Sampler0")
           .withDepthWrite(false)
           .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
-          .withUniform("UnitRange", UniformType.UNIFORM_BUFFER)
+          .withUniform("UnitRangeU", UniformType.UNIFORM_BUFFER)
           .build();
   public static final RenderPipeline TEXT_OUTLINE =
       RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
@@ -57,7 +57,7 @@ public class CaxtonShaders {
           .withFragmentShader(TEXT_OUTLINE_ID)
           .withSampler("Sampler0")
           .withSampler("Sampler2")
-          .withUniform("UnitRange", UniformType.UNIFORM_BUFFER)
+          .withUniform("UnitRangeU", UniformType.UNIFORM_BUFFER)
           .build();
 
   // Hacky shit to deal with Mojang fuckage

@@ -93,10 +93,6 @@ public class CaxtonAtlas implements AutoCloseable {
     return (n + ((1 << p) - 1)) >> p << p;
   }
 
-  public Identifier getAtlasPage(int pageNum) {
-    return this.pages.get(pageNum).id;
-  }
-
   public Page getAtlasPageTexture(int pageNum) {
     return this.pages.get(pageNum);
   }

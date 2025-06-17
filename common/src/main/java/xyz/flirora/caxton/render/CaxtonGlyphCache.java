@@ -15,7 +15,6 @@ import java.util.Map;
 import net.minecraft.client.font.BakedGlyph;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.TextureManager;
-import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import xyz.flirora.caxton.font.CaxtonFont;
@@ -40,10 +39,6 @@ public class CaxtonGlyphCache {
         });
   }
 
-  public Identifier getAtlasPage(int pageNum) {
-    return atlas.getAtlasPage(pageNum);
-  }
-
   public CaxtonAtlas.Page getAtlasPageTexture(int pageNum) {
     int pageCount = this.atlas.getNumPages();
     if (pageNum >= pageCount) {
@@ -59,8 +54,8 @@ public class CaxtonGlyphCache {
   public synchronized void clear() {
     LOGGER.info(
         "Clearing glyph atlas with {} pages and {} fonts", atlas.getNumPages(), cache.size());
-    atlas.clear();
     cache.clear();
+    atlas.clear();
   }
 
   public CaxtonAtlas getAtlas() {
