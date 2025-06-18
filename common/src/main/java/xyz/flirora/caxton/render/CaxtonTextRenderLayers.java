@@ -94,7 +94,7 @@ public class CaxtonTextRenderLayers {
     public TextRenderLayerSet renderLayerSet(CaxtonAtlas.Page page, boolean outline) {
       if (outline) {
         return new TextRenderLayerSet(
-            textOutline.computeIfAbsent(page, this.ofText),
+            textOutline.computeIfAbsent(page, this.ofTextOutline),
             textSeeThrough.computeIfAbsent(page, this.ofTextSeeThrough),
             textOffset.computeIfAbsent(page, this.ofTextOffset),
             CaxtonShaders.TEXT_OUTLINE);

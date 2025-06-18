@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.compat.immediatelyfast;
 
-import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.PlatformHooks;
 
 /**
@@ -19,12 +18,13 @@ public interface BatchingApi {
   boolean isEnabled();
 
   static BatchingApi createImpl(PlatformHooks hooks) {
-    if (hooks.isModAtLeastVersion("immediatelyfast", "1.2.0")) {
-      CaxtonModClient.LOGGER.info("ImmediatelyFast ≥1.2.0 detected; enabling integration");
-      return new ImmediatelyFastBatchingAccess();
-    }
-    CaxtonModClient.LOGGER.info(
-        "Using dummy batching access because ImmediatelyFast is not present or is too old");
+    //    if (hooks.isModAtLeastVersion("immediatelyfast", "1.2.0")) {
+    //      CaxtonModClient.LOGGER.info("ImmediatelyFast ≥1.2.0 detected; enabling integration");
+    //      return new ImmediatelyFastBatchingAccess();
+    //    }
+    //        CaxtonModClient.LOGGER.info(
+    //                "Using dummy batching access because ImmediatelyFast is not present or is too
+    // old");
     return new DummyBatchingAccess();
   }
 }

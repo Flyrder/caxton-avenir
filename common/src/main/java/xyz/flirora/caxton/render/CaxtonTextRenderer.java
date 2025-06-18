@@ -514,6 +514,8 @@ public class CaxtonTextRenderer {
           ShapingResult shapingResult = shapingResults[i];
           centralDrawer.acceptShapedRun(
               shapingResult, runGroup, i, this.cache, 0, minThickness, this.renderLayers);
+          outlineDrawer.setX(x);
+          outlineDrawer.setY(y);
           outlineDrawer.acceptShapedRun(
               shapingResult,
               runGroup,
@@ -549,18 +551,19 @@ public class CaxtonTextRenderer {
   }
 
   public CaxtonGlyphCache getCache() {
-    if (cache == null) cache = cacheSupplier.get();
+    RenderSystem.assertOnRenderThread();
+    if (cache == null) {
+      cache = cacheSupplier.get();
+    }
     return cache;
   }
 
   public void clearCaches() {
+    RenderSystem.assertOnRenderThread();
     this.handler.clearCaches();
     LOGGER.info("Cleared layout caches");
     if (this.cache != null) {
       this.cache.clear();
-      // Try to avoid a race condition that causes the glyph cache to have empty atlas textures
-      // but a populated glyph location cache on NeoForge.
-      this.cache = null;
     }
     this.renderLayers.clear();
     LOGGER.info("Cleared rendering caches");

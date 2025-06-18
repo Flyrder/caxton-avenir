@@ -39,7 +39,7 @@ public interface InGameHudMixin {
       api.endHudBatching();
       api.beginHudBatching();
     }
-    Voepfxo.drawText4Way(context, textRenderer, text.asOrderedText(), x, y, 0x80ff20, 0);
+    Voepfxo.drawText4Way(context, textRenderer, text.asOrderedText(), x, y, 0x80ff20, 0xff000000);
     ci.cancel();
   }
 }
