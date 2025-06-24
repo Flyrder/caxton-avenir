@@ -190,6 +190,8 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
               glyph.getShadowOffset()));
     }
 
+    this.updateBackgroundBounds(this.x, this.y, advance);
+
     float shadowOffset = glyph.getShadowOffset();
     if (style.isStrikethrough()) {
       this.addRectangle(
@@ -322,6 +324,8 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
                 drawnStyle,
                 0.0f,
                 configuredFont.shadowOffset()));
+
+        this.updateBackgroundBounds(glyphX, this.y, advanceX * scale);
 
         if (glyphX + advanceX * scale >= this.xRight) break;
       }
