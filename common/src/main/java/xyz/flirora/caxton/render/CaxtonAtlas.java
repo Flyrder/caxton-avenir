@@ -284,7 +284,8 @@ public class CaxtonAtlas implements AutoCloseable {
               () -> "Caxton atlas page #" + pageNum,
               GpuTexture.USAGE_COPY_DST
                   | GpuTexture.USAGE_COPY_SRC
-                  | GpuTexture.USAGE_TEXTURE_BINDING,
+                  | GpuTexture.USAGE_TEXTURE_BINDING
+                  | GpuTexture.USAGE_RENDER_ATTACHMENT,
               textureFormat,
               PAGE_SIZE,
               PAGE_SIZE,
