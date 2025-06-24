@@ -282,7 +282,9 @@ public class CaxtonAtlas implements AutoCloseable {
       this.glTexture =
           device.createTexture(
               () -> "Caxton atlas page #" + pageNum,
-              GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING,
+              GpuTexture.USAGE_COPY_DST
+                  | GpuTexture.USAGE_COPY_SRC
+                  | GpuTexture.USAGE_TEXTURE_BINDING,
               textureFormat,
               PAGE_SIZE,
               PAGE_SIZE,
@@ -294,6 +296,7 @@ public class CaxtonAtlas implements AutoCloseable {
       // Technically, the contents of this texture are undefined at this
       // point, which can pose a problem with the edges of any inserted
       // textures. Hopefully this doesn’t blow up on us at some point!
+      device.createCommandEncoder().clearColorTexture(this.glTexture, 0);
       // this.clearContents();
       this.id = Identifier.of("caxton", "atlas/" + pageNum);
       this.range = range;
