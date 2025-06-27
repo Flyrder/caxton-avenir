@@ -27,7 +27,7 @@ public class CaxtonTextRenderLayers {
           RenderLayerFunctions::ofTextSeeThroughR,
           RenderLayerFunctions::ofTextOffsetR,
           RenderLayerFunctions::ofTextR,
-          RenderPipelines.RENDERTYPE_TEXT);
+          RenderPipelines.RENDERTYPE_TEXT_INTENSITY);
 
   public void clear() {
     msdf.clear();
