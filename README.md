@@ -37,14 +37,14 @@ Available on [Modrinth](https://modrinth.com/mod/caxton)!
 
 ### Incompatible
 
-| Mod                   | Version                          | Notes                                                                                                                                                                                     |
-|-----------------------|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [Iris Shaders]        | Any                              | Custom core shaders [not supported by Iris](https://github.com/IrisShaders/Iris/blob/1.18.2/docs/development/compatibility/core-shaders.md); in-world text using MSDF fonts do not render |
-| [Emojiful]            | Any                              | Outright replaces Minecraft’s default text renderer                                                                                                                                       |
-| [MemoryLeakFix]       | ≤1.1.1                           |                                                                                                                                                                                           |
-| [VanillaIcecreamFix]  | ≤1.2.1-beta+1.20.4               | [Conflicts with Caxton’s Fabric ASM dependency on startup](https://github.com/repletsin5/VanillaIcecreamFix/issues/27) – fixed in 1.2.2-beta+1.21                                         |
-| [Porting Lib]         | Any for 1.18.2 and likely 1.19.2 | [Conflicts with Fabric API’s core shader registration API](https://github.com/Fabricators-of-Create/Porting-Lib/issues/110)                                                               |
-| [Advent of Ascension] | 1.20.4-3.7.7                     | No crash, but outlined text from AoA does not use MSDF fonts, and AoA’s scrollable pane component does not clip text in MSDF fonts (compatibility add-on planned)                         |
+| Mod                   | Version                                | Notes                                                                                                                                                                                     |
+|-----------------------|----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [Iris Shaders]        | Any                                    | Custom core shaders [not supported by Iris](https://github.com/IrisShaders/Iris/blob/1.18.2/docs/development/compatibility/core-shaders.md); in-world text using MSDF fonts do not render |
+| [Emojiful]            | Any                                    | Outright replaces Minecraft’s default text renderer                                                                                                                                       |
+| [MemoryLeakFix]       | ≤1.1.1                                 |                                                                                                                                                                                           |
+| [VanillaIcecreamFix]  | ≤1.2.1-beta+1.20.4                     | [Conflicts with Caxton’s Fabric ASM dependency on startup](https://github.com/repletsin5/VanillaIcecreamFix/issues/27) – fixed in 1.2.2-beta+1.21                                         |
+| [Porting Lib]         | \<1.2.1451-beta+1.18.2/2.1.1453+1.19.2 | [Conflicts with Fabric API’s core shader registration API](https://github.com/Fabricators-of-Create/Porting-Lib/issues/110)                                                               |
+| [Advent of Ascension] | 1.20.4-3.7.7                           | No crash, but outlined text from AoA does not use MSDF fonts, and AoA’s scrollable pane component does not clip text in MSDF fonts (compatibility add-on planned)                         |
 
 ### Handles layout incorrectly
 
