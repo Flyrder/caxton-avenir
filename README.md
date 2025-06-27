@@ -29,11 +29,11 @@ Available on [Modrinth](https://modrinth.com/mod/caxton)!
 
 ### Compatible with some caveats
 
-| Mod               | Version                                 | Notes                                                                                                                                       |
-|-------------------|-----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| [Sodium]          | Any except Caxton <0.6.0 + Sodium 0.5.5 | Outlined text was [misrendered with Sodium 0.5.5 and pre-0.6.0 versions of Caxton](https://github.com/CaffeineMC/sodium-fabric/issues/2218) |
-| [ImmediatelyFast] | ≥1.2.0                                  | Disable Caxton’s `sortTextRenderLayers` option (plus `reuseTextRendererDrawer` for Caxton <0.6.0) (done automatically)                      |
-| [Exordium]        | Any                                     | [Disable Exordium’s sign buffering](https://github.com/tr7zw/Exordium/issues/48)                                                            |
+| Mod               | Version                                 | Notes                                                                                                                                                                                                                                                               |
+|-------------------|-----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [Sodium]          | Any except Caxton <0.6.0 + Sodium 0.5.5 | Outlined text was [misrendered with Sodium 0.5.5 and pre-0.6.0 versions of Caxton](https://github.com/CaffeineMC/sodium-fabric/issues/2218)                                                                                                                         |
+| [ImmediatelyFast] | ≥1.2.0                                  | Disable Caxton’s `sortTextRenderLayers` option (plus `reuseTextRendererDrawer` for Caxton <0.6.0) (done automatically). [Make sure ImmediatelyFast’s `experimental_sign_text_buffering` option is disabled.](https://github.com/RaphiMC/ImmediatelyFast/issues/338) |
+| [Exordium]        | Any                                     | [Disable Exordium’s sign buffering](https://github.com/tr7zw/Exordium/issues/48)                                                                                                                                                                                    |
 
 ### Incompatible
 
@@ -136,6 +136,7 @@ key `file` specifies the path:
   // but it is always preferable to use a dedicated italic variant if one is
   // available.
   // Added in Caxton 0.5.6.
+  // Not supported in Caxton 0.7.0.
   "the_font_designer_couldnt_be_assed_to_make_an_italic_variant_so_slant_the_text": 0,
   // A list of OpenType feature tags. See below for the syntax:
   // https://docs.rs/rustybuzz/0.6.0/rustybuzz/struct.Feature.html#method.from_str
@@ -143,7 +144,7 @@ key `file` specifies the path:
   // Only has an effect on raster tech. Interpolation is always enabled for
   // MSDF fonts.
   // If true, texels in the glyph bitmap will be interpolated.
-  // Added in Caxton 0.4.0. Removed in Caxton 0.7.0.
+  // Added in Caxton 0.4.0. Replaced by font metadata setting in Caxton 0.7.0.
   "blur": false
 }
 ```
@@ -204,7 +205,7 @@ rasterizing the font:
   // Only has an effect on raster tech. Interpolation is always enabled for
   // MSDF fonts.
   // If true, texels in the glyph bitmap will be interpolated.
-  // Added in Caxton 0.7.0.
+  // Replaces the font provider setting in Caxton 0.7.0.
   "blur": false
 }
 ```
