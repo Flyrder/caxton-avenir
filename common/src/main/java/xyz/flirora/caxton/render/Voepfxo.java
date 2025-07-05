@@ -84,9 +84,9 @@ public class Voepfxo {
                 ((DrawContextAccessor) context).getScissorStack().peekLast()));
   }
 
-  public static void drawSelection(
-      DrawContext context, float left, float top, float right, float bottom) {
-    fill(context, RenderPipelines.GUI_TEXT_HIGHLIGHT, left, top, right, bottom, 0xff0000ff);
+  public static void drawSelection(DrawContext context, float x1, float y1, float x2, float y2) {
+    Voepfxo.fill(context, RenderPipelines.GUI_INVERT, x1, y1, x2, y2, 0xffffffff);
+    Voepfxo.fill(context, RenderPipelines.GUI_TEXT_HIGHLIGHT, x1, y1, x2, y2, 0xff0000ff);
   }
 
   public static void drawTextWithShadow(

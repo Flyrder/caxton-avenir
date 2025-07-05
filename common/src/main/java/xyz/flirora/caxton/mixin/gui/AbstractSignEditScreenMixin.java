@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin.gui;
 
-import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.entity.SignBlockEntity;
@@ -130,10 +129,8 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
       at =
           @At(
               value = "INVOKE",
-              target =
-                  "Lnet/minecraft/client/gui/DrawContext;fill(Lcom/mojang/blaze3d/pipeline/RenderPipeline;IIIII)V"))
-  private void drawHighlights(
-      DrawContext context, RenderPipeline pipeline, int x1, int y1, int x2, int y2, int color) {
+              target = "Lnet/minecraft/client/gui/DrawContext;drawSelection(IIII)V"))
+  private void drawHighlights(DrawContext context, int x1, int y1, int x2, int y2) {
     CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
     CaxtonTextHandler cth = ctr.getHandler();
 
@@ -148,14 +145,8 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
         Math.min(selectionStart, selectionEnd),
         Math.max(selectionStart, selectionEnd),
         (start, end) -> {
-          Voepfxo.fill(
-              context,
-              pipeline,
-              start - x,
-              lineY,
-              end - x,
-              lineY + this.blockEntity.getTextLineHeight(),
-              color);
+          Voepfxo.drawSelection(
+              context, start - x, lineY, end - x, lineY + this.blockEntity.getTextLineHeight());
         });
   }
 }
