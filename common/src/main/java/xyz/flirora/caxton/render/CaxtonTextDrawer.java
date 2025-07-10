@@ -369,7 +369,7 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
   }
 
   public int getTextColor(TextColor textColor) {
-    return textColor != null
+    return textColor != null && !this.outline
         ? ColorHelper.withAlpha(ColorHelper.getAlpha(this.color), textColor.getRgb())
         : this.color;
   }
