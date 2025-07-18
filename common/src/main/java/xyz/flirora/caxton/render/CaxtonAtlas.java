@@ -18,10 +18,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.TextureManager;
@@ -45,7 +42,9 @@ public class CaxtonAtlas implements AutoCloseable {
   private final List<LongList> shelves = new ArrayList<>();
   private final IntList unallocatedSpaces = new IntArrayList();
   private final TextureManager textureManager;
-  private final Map<GpuTexture, Page> pagesByGpuTexture = new IdentityHashMap<>();
+  // Due to NeoForge’s `ValidationGpuTexture` wrapping, we have to use
+  // the textures’ labels instead of the objects themselves.
+  private final Map<String, Page> pagesByGpuTexture = new IdentityHashMap<>();
   private final Float2ObjectMap<GpuBuffer> unitRangeBuffersByValue = new Float2ObjectArrayMap<>();
 
   public CaxtonAtlas(TextureManager textureManager) {
@@ -223,7 +222,7 @@ public class CaxtonAtlas implements AutoCloseable {
         blur ? "linear" : "nearest");
     Page page = new Page(this, pageNum, range, numMipmapLevels, format, blur);
     this.pages.add(page);
-    this.pagesByGpuTexture.put(page.getGlTexture(), page);
+    this.pagesByGpuTexture.put(page.getGlTexture().getLabel(), page);
     this.unallocatedSpaces.add(pageNum << 12);
   }
 
@@ -248,7 +247,7 @@ public class CaxtonAtlas implements AutoCloseable {
   }
 
   public @Nullable Page getPageByGpuTexture(GpuTexture tex) {
-    return this.pagesByGpuTexture.get(tex);
+    return this.pagesByGpuTexture.get(tex.getLabel());
   }
 
   public static class Page extends AbstractTexture {
