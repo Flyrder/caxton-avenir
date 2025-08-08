@@ -351,18 +351,22 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
   private void onUpdateTextPosition(CallbackInfo ci) {
     if (this.textRenderer != null) {
       if (this.isCentered()) {
-        CaxtonTextHandler handler =
-            ((HasCaxtonTextRenderer) this.textRenderer).getCaxtonTextRenderer().getHandler();
-        int i =
-            handler.getCharIndexAtX(
-                this.caxtonText, this.getInnerWidth(), this.firstCharacterIndex, true);
-        this.textX =
-            Math.round(
-                this.getX()
-                    + (this.getWidth()
-                            - handler.getOffsetAtIndex(
-                                this.caxtonText, i, DirectionSetting.FORCE_LTR))
-                        / 2);
+        if (this.caxtonText == null) {
+          this.textX = this.getX() + (this.getWidth() / 2);
+        } else {
+          CaxtonTextHandler handler =
+              ((HasCaxtonTextRenderer) this.textRenderer).getCaxtonTextRenderer().getHandler();
+          int i =
+              handler.getCharIndexAtX(
+                  this.caxtonText, this.getInnerWidth(), this.firstCharacterIndex, true);
+          this.textX =
+              Math.round(
+                  this.getX()
+                      + (this.getWidth()
+                              - handler.getOffsetAtIndex(
+                                  this.caxtonText, i, DirectionSetting.FORCE_LTR))
+                          / 2);
+        }
       } else {
         this.textX = this.getX() + (this.drawsBackground ? 4 : 0);
       }
