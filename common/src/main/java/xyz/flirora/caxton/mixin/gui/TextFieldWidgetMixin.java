@@ -85,6 +85,11 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
   @Shadow
   protected abstract boolean isCentered();
 
+  @Shadow
+  protected abstract void updateTextPosition();
+
+  @Shadow private boolean textShadow;
+
   @Override
   public void updateCaxtonText(boolean changed) {
     // Protect against mods that do things such as *gasp* registering
@@ -120,6 +125,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
       //        System.err.println("caxtonText = " + this.caxtonText);
     } finally {
       updatingCaxtonText = false;
+      this.updateTextPosition();
     }
   }
 
@@ -155,6 +161,17 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     this.selectionEnd = selectionStart;
     updateCaxtonText(true);
     return me;
+  }
+
+  @Inject(
+      method = "setCursor",
+      at =
+          @At(
+              value = "INVOKE",
+              target =
+                  "Lnet/minecraft/client/gui/widget/TextFieldWidget;onChanged(Ljava/lang/String;)V"))
+  private void onSetCursor(int cursor, boolean shiftKeyPressed, CallbackInfo ci) {
+    updateCaxtonText(false);
   }
 
   @ModifyReceiver(
@@ -202,8 +219,8 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
 
     int color = editable ? editableColor : uneditableColor;
-    int x = drawsBackground ? getX() + 4 : getX();
-    int y = drawsBackground ? getY() + (height - 8) / 2 : getY();
+    int x = this.textX;
+    int y = this.textY;
 
     float firstCharLocation = 0, selectionStartLocation = 0;
 
@@ -215,7 +232,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
           x,
           y,
           color,
-          true,
+          this.textShadow,
           firstCharacterIndex,
           getInnerWidth());
       firstCharLocation =
@@ -250,8 +267,8 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
         Voepfxo.fill(
             context, cursorX, y - 1, cursorX + 1, y + 1 + this.textRenderer.fontHeight, 0xFFD0D0D0);
       } else {
-        Voepfxo.drawTextWithShadow(
-            context, this.textRenderer, HORIZONTAL_CURSOR, cursorX, y, color);
+        Voepfxo.drawText(
+            context, this.textRenderer, HORIZONTAL_CURSOR, cursorX, y, color, this.textShadow);
       }
     }
 
