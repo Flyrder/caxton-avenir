@@ -9,8 +9,10 @@ import net.minecraft.client.render.BufferBuilderStorage;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
-import net.minecraft.client.render.entity.EntityRenderDispatcher;
+import net.minecraft.client.render.block.entity.BlockEntityRenderManager;
+import net.minecraft.client.render.command.RenderDispatcher;
+import net.minecraft.client.render.entity.EntityRenderManager;
+import net.minecraft.client.render.entity.EntityRenderStates;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,9 +31,11 @@ public class WorldRendererMixin {
   @Inject(method = "<init>", at = @At("RETURN"))
   private void initFields(
       MinecraftClient client,
-      EntityRenderDispatcher entityRenderDispatcher,
-      BlockEntityRenderDispatcher blockEntityRenderDispatcher,
+      EntityRenderManager entityRenderManager,
+      BlockEntityRenderManager blockEntityRenderManager,
       BufferBuilderStorage bufferBuilders,
+      EntityRenderStates entityRenderStates,
+      RenderDispatcher entityRenderDispatcher,
       CallbackInfo ci) {
     warnOnNonWrvcp = !CaxtonModClient.FORCE_DISABLE_BATCHING_HACK;
   }

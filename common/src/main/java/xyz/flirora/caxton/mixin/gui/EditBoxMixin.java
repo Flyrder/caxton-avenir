@@ -48,7 +48,12 @@ public abstract class EditBoxMixin {
     CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
     CaxtonText caxtonText =
         CaxtonText.fromForwards(
-            text, ctr::getFontStorage, Style.EMPTY, false, false, ctr.getHandler().getCache());
+            text,
+            ctr.getFontStorageAccessor(),
+            Style.EMPTY,
+            false,
+            false,
+            ctr.getHandler().getCache());
     return Math.round(
         ctr.getHandler()
             .getOffsetAtIndex(

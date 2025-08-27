@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.font;
 
+import java.util.function.Supplier;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.font.BuiltinEmptyGlyph;
 import net.minecraft.client.font.Glyph;
+import net.minecraft.client.info.BakedGlyph;
 
 /**
  * Describes a pair of glyphs: a non-advance-validating glyph and an advance-validating glyph. The
@@ -14,9 +15,6 @@ import net.minecraft.client.font.Glyph;
  */
 @Environment(EnvType.CLIENT)
 public interface CaxtonGlyphPair {
-  /** The {@link CaxtonGlyphPair} used when the glyph is not found in any of the eligible fonts. */
-  CaxtonGlyphPair MISSING = new Legacy(BuiltinEmptyGlyph.MISSING, BuiltinEmptyGlyph.MISSING);
-
   /**
    * Gets one of the glyphs in the glyph pair depending on whether to validate advances.
    *
@@ -46,7 +44,10 @@ public interface CaxtonGlyphPair {
    * @param glyph the non-advance-validating {@link Glyph}
    * @param advanceValidatingGlyph the advance-validating {@link Glyph}
    */
-  record Legacy(Glyph glyph, Glyph advanceValidatingGlyph) implements CaxtonGlyphPair {
+  record Legacy(
+      Supplier<BakedGlyph> glyph,
+      Supplier<net.minecraft.client.info.BakedGlyph> advanceValidatingGlyph)
+      implements CaxtonGlyphPair {
     @Override
     public CaxtonGlyphResult getGlyph(boolean advanceValidating) {
       return new CaxtonGlyphResult.Legacy(advanceValidating ? advanceValidatingGlyph : glyph);

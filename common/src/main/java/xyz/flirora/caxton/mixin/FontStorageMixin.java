@@ -7,15 +7,12 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.font.BuiltinEmptyGlyph;
-import net.minecraft.client.font.Font;
-import net.minecraft.client.font.FontFilterType;
-import net.minecraft.client.font.FontStorage;
-import net.minecraft.client.font.Glyph;
-import net.minecraft.client.texture.TextureManager;
+import net.minecraft.client.font.*;
+import net.minecraft.client.info.BakedGlyph;
 import net.minecraft.text.Style;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -35,18 +32,16 @@ import xyz.flirora.caxton.font.CaxtonTypeface;
 @Mixin(FontStorage.class)
 public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStorage {
   @Unique private Int2ObjectMap<CaxtonGlyphPair>[] caxtonGlyphCache = null;
-  @Shadow @Final private List<Font> availableFonts;
-  @Shadow @Final private TextureManager textureManager;
+  @Shadow private List<Font> availableFonts;
+
+  @Shadow @Final private Supplier<BakedGlyph> blankGlyphSupplier;
 
   @Shadow
-  private static boolean isAdvanceInvalid(Glyph glyph) {
-    throw new UnsupportedOperationException("this is a mixin, silly");
+  private static boolean isAdvanceInvalid(GlyphMetrics glyph) {
+    return false;
   }
 
-  @Inject(
-      at = @At(value = "TAIL"),
-      method =
-          "<init>(Lnet/minecraft/client/texture/TextureManager;Lnet/minecraft/util/Identifier;)V")
+  @Inject(at = @At(value = "TAIL"), method = "<init>")
   @SuppressWarnings("unchecked")
   private void init(CallbackInfo ci) {
     caxtonGlyphCache = new Int2ObjectMap[4];
@@ -94,24 +89,33 @@ public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStora
 
   // Based on the findGlyph method.
   @Unique private CaxtonGlyphPair findCaxtonGlyph(int codePoint, Style style) {
-    Glyph glyph = null;
+    FontStorage.LazyBakedGlyph first = null;
+
     for (Font font : this.availableFonts) {
       if (font instanceof CaxtonTypeface caxtonFont
           && caxtonFont.supportsCodePoint(codePoint, style)) {
         return new CaxtonGlyphPair.Caxton(caxtonFont.getFontByStyle(style));
       }
-      Glyph glyph2 = font.getGlyph(codePoint);
-      if (glyph2 == null) continue;
-      if (glyph == null) {
-        glyph = glyph2;
+
+      Glyph current = font.getGlyph(codePoint);
+      if (current == null) continue;
+
+      if (first == null) {
+        first = LazyBakedGlyphAccessor.construct((FontStorage) (Object) this, current);
       }
-      if (isAdvanceInvalid(glyph2)) continue;
-      return new CaxtonGlyphPair.Legacy(glyph, glyph2);
+
+      if (isAdvanceInvalid(current.getMetrics())) continue;
+      if (((LazyBakedGlyphAccessor) first).getGlyph() == current) {
+        return new CaxtonGlyphPair.Legacy(first, first);
+      } else {
+        return new CaxtonGlyphPair.Legacy(
+            first, LazyBakedGlyphAccessor.construct((FontStorage) (Object) this, current));
+      }
     }
-    if (glyph != null) {
-      return new CaxtonGlyphPair.Legacy(glyph, BuiltinEmptyGlyph.MISSING);
+    if (first != null) {
+      return new CaxtonGlyphPair.Legacy(first, this.blankGlyphSupplier);
     }
-    return CaxtonGlyphPair.MISSING;
+    return new CaxtonGlyphPair.Legacy(this.blankGlyphSupplier, this.blankGlyphSupplier);
   }
 
   @Override

@@ -7,6 +7,7 @@ import static xyz.flirora.caxton.layout.Interleaving.*;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.ints.IntList;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -19,6 +20,7 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.Window;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
+import net.minecraft.text.StyleSpriteSource;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.random.Random;
@@ -31,6 +33,8 @@ import xyz.flirora.caxton.font.CaxtonFont;
 import xyz.flirora.caxton.font.CaxtonFontOptions;
 import xyz.flirora.caxton.font.ConfiguredCaxtonFont;
 import xyz.flirora.caxton.layout.*;
+import xyz.flirora.caxton.mixin.FontManagerAccessor;
+import xyz.flirora.caxton.mixin.FontManagerFontsAccessor;
 import xyz.flirora.caxton.mixin.TextRendererAccessor;
 
 @Environment(EnvType.CLIENT)
@@ -45,15 +49,21 @@ public class CaxtonTextRenderer {
   private final Supplier<CaxtonGlyphCache> cacheSupplier;
   private final CaxtonTextRenderLayers renderLayers;
   public boolean rtl;
+  private final boolean validatesAdvance;
+  private final Function<Identifier, FontStorage> fontStorageAccessor;
 
   public CaxtonTextRenderer(
       TextRenderer vanillaTextRenderer,
       TextHandler vanillaTextHandler,
       Supplier<CaxtonGlyphCache> cacheSupplier) {
-    this.handler = new CaxtonTextHandler(this::getFontStorage, vanillaTextHandler);
     this.vanillaTextRenderer = vanillaTextRenderer;
+    this.fontStorageAccessor =
+        ((FontManagerAccessor) ((FontManagerFontsAccessor) this.getFonts()).getOuter())
+            ::callGetStorageInternal;
+    this.handler = new CaxtonTextHandler(this.fontStorageAccessor, vanillaTextHandler);
     this.cacheSupplier = cacheSupplier;
     this.renderLayers = new CaxtonTextRenderLayers();
+    this.validatesAdvance = ((FontManagerFontsAccessor) this.getFonts()).getAdvanceValidating();
   }
 
   public static CaxtonTextRenderer getInstance() {
@@ -89,8 +99,21 @@ public class CaxtonTextRenderer {
     return 0.0f;
   }
 
-  public FontStorage getFontStorage(Identifier id) {
-    return ((TextRendererAccessor) this.vanillaTextRenderer).callGetFontStorage(id);
+  public GlyphProvider getGlyphs(StyleSpriteSource source) {
+    return ((TextRendererAccessor) this.vanillaTextRenderer).callGetGlyphs(source);
+  }
+
+  public FontManager.Fonts getFonts() {
+    // This is the only implementor of GlyphsProvider
+    return (FontManager.Fonts) ((TextRendererAccessor) this.vanillaTextRenderer).getFonts();
+  }
+
+  public Function<Identifier, FontStorage> getFontStorageAccessor() {
+    return this.fontStorageAccessor;
+  }
+
+  public boolean validatesAdvance() {
+    return this.validatesAdvance;
   }
 
   public void drawWithOutline(
@@ -107,7 +130,7 @@ public class CaxtonTextRenderer {
     float minThickness = getMinThickness(matrix);
 
     CaxtonText runGroups =
-        CaxtonText.from(text, this::getFontStorage, false, this.rtl, handler.getCache());
+        CaxtonText.from(text, fontStorageAccessor, validatesAdvance, this.rtl, handler.getCache());
     int effectiveOutlineColor = tweakTransparency(outlineColor);
     int effectiveColor = tweakTransparency(color);
 
@@ -139,13 +162,14 @@ public class CaxtonTextRenderer {
                 (index, style, codePoint) -> {
                   int index2 = runGroup.getCharOffset() + index;
 
-                  FontStorage fontStorage = this.getFontStorage(style.getFont());
-                  Glyph glyph = fontStorage.getGlyph(codePoint, false);
-                  float shadowOffset = glyph.getShadowOffset();
+                  net.minecraft.client.info.BakedGlyph glyph =
+                      ((TextRendererAccessor) this.vanillaTextRenderer)
+                          .callGetGlyph(codePoint, style);
+                  float shadowOffset = glyph.glyph().getShadowOffset();
 
                   outlineDrawer.setX(xBox.floatValue() + dxf * shadowOffset);
                   outlineDrawer.setY(y + dyf * shadowOffset);
-                  xBox.add(glyph.getAdvance(style.isBold()));
+                  xBox.add(glyph.glyph().getAdvance(style.isBold()));
                   return outlineDrawer.accept(index2, style, codePoint);
                 });
           }
@@ -205,9 +229,12 @@ public class CaxtonTextRenderer {
         }
       }
       // FIXME: I’m sure we only need to do this at the end of the method, not every loop iteration
-      outlineDrawer.drawLayer(x, vertexConsumers, matrix, TextRenderer.TextLayerType.NORMAL, light);
-      centralDrawer.drawLayer(
-          x, vertexConsumers, matrix, TextRenderer.TextLayerType.POLYGON_OFFSET, light);
+      outlineDrawer.draw(
+          TextRenderer.GlyphDrawer.drawing(
+              vertexConsumers, matrix, TextRenderer.TextLayerType.NORMAL, light));
+      centralDrawer.draw(
+          TextRenderer.GlyphDrawer.drawing(
+              vertexConsumers, matrix, TextRenderer.TextLayerType.POLYGON_OFFSET, light));
     }
   }
 
@@ -233,6 +260,7 @@ public class CaxtonTextRenderer {
     CaxtonFont font = configuredFont.font();
     CaxtonFontOptions options = font.getOptions();
     CaxtonGlyphCache.Font cacheForFont = cache.forFont(font);
+    EffectGlyph rectangle = this.getFonts().getRectangleGlyph();
 
     assert glyphOffset + font.getGlyphCount() <= font.getTlistSize();
 
@@ -286,7 +314,7 @@ public class CaxtonTextRenderer {
         IntList others = font.getGlyphsByWidth().get(width);
         glyphId = others.getInt(RANDOM.nextInt(others.size()));
       }
-      int textColor = drawer.getTextColor(style.getColor());
+      int textColor = drawer.getRenderColor(style.getColor());
       int shadowColor = drawer.getShadowColor(style, textColor);
 
       int advanceX = shapedRun.advanceX(i);
@@ -362,33 +390,27 @@ public class CaxtonTextRenderer {
       float x1a = x + (cumulAdvanceX + advanceX) * scale;
       if (style.isUnderlined()) {
         drawer.addRectangle(
-            new BakedGlyph.Rectangle(
-                x0a, y0u, x1a, y1u, drawer.getForegroundZIndex() + textZ, textColor));
-        if (shadow) {
-          drawer.addRectangle(
-              new BakedGlyph.Rectangle(
-                  x0a + shadowOffset,
-                  y0u + shadowOffset,
-                  x1a + shadowOffset,
-                  y1u + shadowOffset,
-                  drawer.getForegroundZIndex(),
-                  shadowColor));
-        }
+            rectangle.create(
+                x0a,
+                y0u,
+                x1a,
+                y1u,
+                drawer.getForegroundZIndex() + textZ,
+                textColor,
+                shadowColor,
+                shadowOffset));
       }
       if (style.isStrikethrough()) {
         drawer.addRectangle(
-            new BakedGlyph.Rectangle(
-                x0a, y0s, x1a, y1s, drawer.getForegroundZIndex() + textZ, textColor));
-        if (shadow) {
-          drawer.addRectangle(
-              new BakedGlyph.Rectangle(
-                  x0a + shadowOffset,
-                  y0s + shadowOffset,
-                  x1a + shadowOffset,
-                  y1s + shadowOffset,
-                  drawer.getForegroundZIndex(),
-                  shadowColor));
-        }
+            rectangle.create(
+                x0a,
+                y0s,
+                x1a,
+                y1s,
+                drawer.getForegroundZIndex() + textZ,
+                textColor,
+                shadowColor,
+                shadowOffset));
       }
 
       cumulAdvanceX += advanceX;
@@ -482,13 +504,14 @@ public class CaxtonTextRenderer {
                 (index, style, codePoint) -> {
                   int index2 = runGroup.getCharOffset() + index;
 
-                  FontStorage fontStorage = this.getFontStorage(style.getFont());
-                  Glyph glyph = fontStorage.getGlyph(codePoint, false);
-                  float shadowOffset = glyph.getShadowOffset();
+                  net.minecraft.client.info.BakedGlyph glyph =
+                      ((TextRendererAccessor) this.vanillaTextRenderer)
+                          .callGetGlyph(codePoint, style);
+                  float shadowOffset = glyph.glyph().getShadowOffset();
 
                   outlineDrawer.setX(xBox.floatValue() + dxf * shadowOffset);
                   outlineDrawer.setY(y + dyf * shadowOffset);
-                  xBox.add(glyph.getAdvance(style.isBold()));
+                  xBox.add(glyph.glyph().getAdvance(style.isBold()));
                   return outlineDrawer.accept(index2, style, codePoint);
                 });
           }
@@ -574,11 +597,12 @@ public class CaxtonTextRenderer {
   }
 
   public CaxtonText from(OrderedText text) {
-    return CaxtonText.from(text, this::getFontStorage, false, this.rtl, handler.getCache());
+    return CaxtonText.from(
+        text, fontStorageAccessor, validatesAdvance, this.rtl, handler.getCache());
   }
 
   public CaxtonText fromForwards(String text, Style style) {
     return CaxtonText.fromForwards(
-        text, this::getFontStorage, style, false, this.rtl, handler.getCache());
+        text, fontStorageAccessor, style, validatesAdvance, this.rtl, handler.getCache());
   }
 }

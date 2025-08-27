@@ -3,7 +3,6 @@
 package xyz.flirora.caxton.mixin.gui;
 
 import com.llamalad7.mixinextras.injector.ModifyReceiver;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -11,7 +10,6 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Drawable;
 import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.OrderedText;
@@ -54,7 +52,6 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
   @Unique private CaxtonText caxtonText;
   @Shadow private int selectionStart;
   @Shadow private int selectionEnd;
-  @Shadow private BiFunction<String, Integer, OrderedText> renderTextProvider;
   @Shadow private @Nullable String suggestion;
   @Shadow private @Nullable Text placeholder;
   @Shadow private @Nullable Consumer<String> changedListener;
@@ -90,6 +87,9 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
 
   @Shadow private boolean textShadow;
 
+  @Shadow
+  protected abstract OrderedText format(String string, int firstCharacterIndex);
+
   @Override
   public void updateCaxtonText(boolean changed) {
     // Protect against mods that do things such as *gasp* registering
@@ -110,8 +110,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
       // We need to check for empty text – some mods (such as EMI)
       // assume that their render text providers will never be called
       // for an empty text box
-      OrderedText text =
-          this.text.isEmpty() ? OrderedText.EMPTY : renderTextProvider.apply(this.text, 0);
+      OrderedText text = this.text.isEmpty() ? OrderedText.EMPTY : this.format(this.text, 0);
       if (!hideSuggestion && suggestion != null) {
         text =
             OrderedText.concat(
@@ -121,7 +120,8 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
       if (textRenderer == null) return;
       CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
       this.caxtonText =
-          CaxtonText.from(text, ctr::getFontStorage, true, false, ctr.getHandler().getCache());
+          CaxtonText.from(
+              text, ctr.getFontStorageAccessor(), true, false, ctr.getHandler().getCache());
       //        System.err.println("caxtonText = " + this.caxtonText);
     } finally {
       updatingCaxtonText = false;
@@ -297,23 +297,20 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
           @At(
               value = "INVOKE",
               target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;getInnerWidth()I"),
-      method = "onClick",
+      method = "method_74039",
       cancellable = true)
-  private void onMouseClicked(double mouseX, double mouseY, CallbackInfo ci) {
+  private void onMouseClicked(double mouseX, boolean select, CallbackInfo ci) {
     if (caxtonText == null) {
       updateCaxtonText(false);
     }
 
     CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
 
-    float xOffset = (float) (mouseX - this.getX());
-    if (this.drawsBackground) {
-      xOffset -= 4;
-    }
+    float xOffset = Math.min((float) (mouseX - this.textX), this.getInnerWidth());
 
     int index = ctr.getHandler().getCharIndexAtX(caxtonText, xOffset, firstCharacterIndex);
 
-    this.setCursor(index, Screen.hasShiftDown());
+    this.setCursor(index, select);
     ci.cancel();
   }
 

@@ -61,7 +61,7 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
     this.rowText =
         CaxtonText.fromFormatted(
             currentLine,
-            ctr::getFontStorage,
+            ctr.getFontStorageAccessor(),
             Style.EMPTY,
             false,
             this.textRenderer.isRightToLeft(),

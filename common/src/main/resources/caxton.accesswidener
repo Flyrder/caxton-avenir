@@ -24,3 +24,5 @@ accessible field net/minecraft/client/gl/RenderPipelines FOG_SNIPPET Lcom/mojang
 
 accessible class net/minecraft/client/gui/DrawContext$ScissorStack
 accessible class net/minecraft/client/gui/render/GuiRenderer$Draw
+accessible class net/minecraft/client/font/FontManager$Fonts
+accessible class net/minecraft/client/font/FontStorage$LazyBakedGlyph

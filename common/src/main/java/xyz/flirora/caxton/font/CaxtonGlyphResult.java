@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.font;
 
+import java.util.function.Supplier;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.Glyph;
+import net.minecraft.client.info.BakedGlyph;
 import org.jetbrains.annotations.Nullable;
 
 /** Describes a glyph from either a Caxton or a legacy font. */
@@ -37,7 +39,7 @@ public sealed interface CaxtonGlyphResult {
    *
    * @param glyph the {@link Glyph}
    */
-  record Legacy(Glyph glyph) implements CaxtonGlyphResult {
+  record Legacy(Supplier<BakedGlyph> glyph) implements CaxtonGlyphResult {
     @Override
     public @Nullable ConfiguredCaxtonFont getCaxtonFont() {
       return null;

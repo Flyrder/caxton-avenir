@@ -153,14 +153,17 @@ public record Run(String text, Style style, @Nullable ConfiguredCaxtonFont font)
 
     @Override
     public boolean accept(int index, Style style, int codePoint) {
+      StyleSpriteSource source = style.getFont();
       ConfiguredCaxtonFont font =
-          ((CaxtonFontStorage) fonts.apply(style.getFont()))
-              .getCaxtonGlyph(codePoint, validateAdvance, style)
-              .getCaxtonFont();
+          source instanceof StyleSpriteSource.Font(Identifier fontId)
+              ? ((CaxtonFontStorage) fonts.apply(fontId))
+                  .getCaxtonGlyph(codePoint, validateAdvance, style)
+                  .getCaxtonFont()
+              : null;
       if (runs.isEmpty()) {
         addNewRun(codePoint, style, font);
       } else {
-        PendingRun lastRun = runs.get(runs.size() - 1);
+        PendingRun lastRun = runs.getLast();
         if (lastRun.style.equals(style) && lastRun.font == font) {
           lastRun.appendCodePoint(codePoint);
         } else {

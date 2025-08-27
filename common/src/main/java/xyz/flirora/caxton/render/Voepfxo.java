@@ -292,11 +292,11 @@ public class Voepfxo {
           calculateBounds(x0, y0, x1, y1, pose, scissorArea));
     }
 
-    public void setupVertices(VertexConsumer vertices, float depth) {
-      vertices.vertex(this.pose(), this.x0(), this.y0(), depth).color(this.col1());
-      vertices.vertex(this.pose(), this.x0(), this.y1(), depth).color(this.col2());
-      vertices.vertex(this.pose(), this.x1(), this.y1(), depth).color(this.col2());
-      vertices.vertex(this.pose(), this.x1(), this.y0(), depth).color(this.col1());
+    public void setupVertices(VertexConsumer vertices) {
+      vertices.vertex(this.pose(), this.x0(), this.y0()).color(this.col1());
+      vertices.vertex(this.pose(), this.x0(), this.y1()).color(this.col2());
+      vertices.vertex(this.pose(), this.x1(), this.y1()).color(this.col2());
+      vertices.vertex(this.pose(), this.x1(), this.y0()).color(this.col1());
     }
 
     @Nullable private static ScreenRect calculateBounds(

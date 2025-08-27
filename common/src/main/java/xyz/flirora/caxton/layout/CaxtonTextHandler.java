@@ -12,7 +12,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.font.FontManager;
 import net.minecraft.client.font.FontStorage;
 import net.minecraft.client.font.TextHandler;
 import net.minecraft.text.OrderedText;
@@ -40,8 +39,7 @@ import xyz.flirora.caxton.mixin.TextHandlerAccessor;
  */
 @Environment(EnvType.CLIENT)
 public class CaxtonTextHandler {
-  private static final FontStorage EMPTY_FONT_STORAGE =
-      new FontStorage(null, FontManager.MISSING_STORAGE_ID);
+  private static final FontStorage EMPTY_FONT_STORAGE = new FontStorage(null);
 
   /**
    * A font storage accessor that always returns a missing font storage.

@@ -82,7 +82,12 @@ public abstract class EditBoxWidgetMixin extends ScrollableTextFieldWidget {
               textX
                   + cth.getOffsetAtIndex(
                       CaxtonText.fromForwards(
-                          lineStr, ctr::getFontStorage, Style.EMPTY, false, false, cth.getCache()),
+                          lineStr,
+                          ctr.getFontStorageAccessor(),
+                          Style.EMPTY,
+                          false,
+                          false,
+                          cth.getCache()),
                       cursorPos - line.beginIndex(),
                       DirectionSetting.AUTO);
           Voepfxo.fill(
@@ -140,7 +145,7 @@ public abstract class EditBoxWidgetMixin extends ScrollableTextFieldWidget {
           CaxtonText caxtonLine =
               CaxtonText.fromForwards(
                   text.substring(line.beginIndex(), line.endIndex()),
-                  ctr::getFontStorage,
+                  ctr.getFontStorageAccessor(),
                   Style.EMPTY,
                   false,
                   false,

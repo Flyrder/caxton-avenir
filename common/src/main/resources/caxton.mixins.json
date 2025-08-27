@@ -1,5 +1,5 @@
 {
-    "mixins": [],
+    "mixins": ["FontManagerFontsAccessor"],
     "minVersion": "0.8",
     "package": "xyz.flirora.caxton.mixin",
     "injectors": {"defaultRequire": 1},
@@ -14,6 +14,7 @@
         "FontStorageMixin",
         "GuiRendererMixin",
         "InGameHudMixin",
+        "LazyBakedGlyphAccessor",
         "NativeImageAccessor",
         "RenderPhaseAccessor",
         "RenderSystemMixin",

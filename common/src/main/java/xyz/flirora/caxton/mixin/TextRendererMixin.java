@@ -3,18 +3,15 @@
 package xyz.flirora.caxton.mixin;
 
 import com.google.common.base.Suppliers;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.FontStorage;
 import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
-import net.minecraft.util.Identifier;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -35,11 +32,6 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
   @Shadow @Final private TextHandler handler;
 
   @Shadow
-  abstract FontStorage getFontStorage(Identifier id);
-
-  @Shadow @Final private boolean validateAdvance;
-
-  @Shadow
   public abstract boolean isRightToLeft();
 
   // Would like to put this in a FontManager mixin, but it doesn’t pass itself to TextRenderer’s
@@ -50,11 +42,8 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
 
   @Unique private CaxtonTextRenderer caxtonRenderer;
 
-  @Inject(at = @At("TAIL"), method = "<init>(Ljava/util/function/Function;Z)V")
-  private void onInit(
-      Function<Identifier, FontStorage> fontStorageAccessor,
-      boolean validateAdvance,
-      CallbackInfo ci) {
+  @Inject(at = @At("TAIL"), method = "<init>")
+  private void onInit(TextRenderer.GlyphsProvider fonts, CallbackInfo ci) {
     this.caxtonRenderer = new CaxtonTextRenderer((TextRenderer) (Object) this, handler, CACHE);
   }
 
@@ -102,9 +91,9 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
         caxtonRenderer.prepare(
             CaxtonText.fromFormatted(
                 text,
-                caxtonRenderer::getFontStorage,
+                caxtonRenderer.getFontStorageAccessor(),
                 Style.EMPTY,
-                this.validateAdvance,
+                caxtonRenderer.validatesAdvance(),
                 this.isRightToLeft(),
                 caxtonRenderer.getHandler().getCache()),
             x,
@@ -133,8 +122,8 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
         caxtonRenderer.prepare(
             CaxtonText.from(
                 text,
-                caxtonRenderer::getFontStorage,
-                this.validateAdvance,
+                caxtonRenderer.getFontStorageAccessor(),
+                caxtonRenderer.validatesAdvance(),
                 this.isRightToLeft(),
                 caxtonRenderer.getHandler().getCache()),
             x,

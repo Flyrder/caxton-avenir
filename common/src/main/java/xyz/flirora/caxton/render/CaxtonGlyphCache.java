@@ -13,6 +13,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.client.font.BakedGlyph;
+import net.minecraft.client.font.GlyphMetrics;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.TextureManager;
 import org.jetbrains.annotations.Nullable;
@@ -169,8 +170,10 @@ public class CaxtonGlyphCache {
             float y1 = (float) ((shrink * margin) * scale);
             float x1 = (float) ((shrink * (atlasWidth - margin)) * scale);
             float y0 = (float) ((-shrink * (atlasHeight - margin)) * scale);
+            GlyphMetrics metrics = new CaxtonGlyphMetrics(configuredFont.shadowOffset());
 
             return new BakedGlyph(
+                metrics,
                 renderLayers.renderLayerSet(atlasPage, options.fontTech(), outline),
                 atlasPage.getGlTextureView(),
                 u0,
