@@ -1,5 +1,5 @@
 use std::io::{Read, Write};
-use std::{io, mem, slice};
+use std::{io, slice};
 
 use anyhow::{bail, Context};
 use flate2::read::ZlibDecoder;
