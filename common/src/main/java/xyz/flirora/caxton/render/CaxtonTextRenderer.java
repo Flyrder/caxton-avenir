@@ -162,14 +162,14 @@ public class CaxtonTextRenderer {
                 (index, style, codePoint) -> {
                   int index2 = runGroup.getCharOffset() + index;
 
-                  net.minecraft.client.info.BakedGlyph glyph =
+                  BakedGlyph glyph =
                       ((TextRendererAccessor) this.vanillaTextRenderer)
                           .callGetGlyph(codePoint, style);
-                  float shadowOffset = glyph.glyph().getShadowOffset();
+                  float shadowOffset = glyph.getMetrics().getShadowOffset();
 
                   outlineDrawer.setX(xBox.floatValue() + dxf * shadowOffset);
                   outlineDrawer.setY(y + dyf * shadowOffset);
-                  xBox.add(glyph.glyph().getAdvance(style.isBold()));
+                  xBox.add(glyph.getMetrics().getAdvance(style.isBold()));
                   return outlineDrawer.accept(index2, style, codePoint);
                 });
           }
@@ -504,14 +504,14 @@ public class CaxtonTextRenderer {
                 (index, style, codePoint) -> {
                   int index2 = runGroup.getCharOffset() + index;
 
-                  net.minecraft.client.info.BakedGlyph glyph =
+                  BakedGlyph glyph =
                       ((TextRendererAccessor) this.vanillaTextRenderer)
                           .callGetGlyph(codePoint, style);
-                  float shadowOffset = glyph.glyph().getShadowOffset();
+                  float shadowOffset = glyph.getMetrics().getShadowOffset();
 
                   outlineDrawer.setX(xBox.floatValue() + dxf * shadowOffset);
                   outlineDrawer.setY(y + dyf * shadowOffset);
-                  xBox.add(glyph.glyph().getAdvance(style.isBold()));
+                  xBox.add(glyph.getMetrics().getAdvance(style.isBold()));
                   return outlineDrawer.accept(index2, style, codePoint);
                 });
           }

@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.*;
-import net.minecraft.client.info.BakedGlyph;
+import net.minecraft.client.font.BakedGlyph;
 import net.minecraft.text.Style;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;

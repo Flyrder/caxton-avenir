@@ -121,16 +121,16 @@ public class CaxtonTextRenderLayers {
     }
 
     private static RenderLayer make(
-        String name, RenderPipeline shader, CaxtonAtlas.Page page, boolean rasterized) {
+        String name, RenderPipeline pipeline, CaxtonAtlas.Page page, boolean rasterized) {
       return RenderLayer.of(
           name,
           786432,
           false,
           false,
-          shader,
+          pipeline,
           RenderLayer.MultiPhaseParameters.builder()
               .texture(new RenderPhase.Texture(page.getId(), page.getNumMipmapLevels() > 1))
-              .target(RenderPhase.TRANSLUCENT_TARGET)
+              //                            .target(RenderPhase.TRANSLUCENT_TARGET)
               .lightmap(ENABLE_LIGHTMAP)
               .texturing(
                   rasterized

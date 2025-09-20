@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Drawable;
 import net.minecraft.client.gui.Element;
@@ -27,6 +28,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import xyz.flirora.caxton.layout.CaxtonText;
 import xyz.flirora.caxton.layout.CaxtonTextHandler;
 import xyz.flirora.caxton.layout.DirectionSetting;
@@ -297,21 +299,20 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
           @At(
               value = "INVOKE",
               target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;getInnerWidth()I"),
-      method = "method_74039",
+      method = "method_74215",
       cancellable = true)
-  private void onMouseClicked(double mouseX, boolean select, CallbackInfo ci) {
+  private void overrideCursorPosition(Click click, CallbackInfoReturnable<Integer> cir) {
     if (caxtonText == null) {
       updateCaxtonText(false);
     }
 
     CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
 
-    float xOffset = Math.min((float) (mouseX - this.textX), this.getInnerWidth());
+    float xOffset = Math.min((float) (click.x() - this.textX), this.getInnerWidth());
 
     int index = ctr.getHandler().getCharIndexAtX(caxtonText, xOffset, firstCharacterIndex);
 
-    this.setCursor(index, select);
-    ci.cancel();
+    cir.setReturnValue(index);
   }
 
   @Inject(at = @At("HEAD"), method = "updateFirstCharacterIndex", cancellable = true)

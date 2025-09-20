@@ -15,11 +15,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Environment(EnvType.CLIENT)
 @Mixin(ShaderProgram.class)
 public abstract class ShaderMixin {
-  @Shadow public static Set<String> PREDEFINED_UNIFORMS;
+  @Shadow public static Set<String> predefinedUniforms;
 
   // Needed for some reason on NeoForge.
   @Inject(at = @At("RETURN"), method = "<clinit>")
   private static void onInitializePredefinedUniforms(CallbackInfo ci) {
-    PREDEFINED_UNIFORMS.add("UnitRangeU");
+    predefinedUniforms.add("UnitRangeU");
   }
 }

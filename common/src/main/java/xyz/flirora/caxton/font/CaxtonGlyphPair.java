@@ -5,8 +5,8 @@ package xyz.flirora.caxton.font;
 import java.util.function.Supplier;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.font.BakedGlyph;
 import net.minecraft.client.font.Glyph;
-import net.minecraft.client.info.BakedGlyph;
 
 /**
  * Describes a pair of glyphs: a non-advance-validating glyph and an advance-validating glyph. The
@@ -44,9 +44,7 @@ public interface CaxtonGlyphPair {
    * @param glyph the non-advance-validating {@link Glyph}
    * @param advanceValidatingGlyph the advance-validating {@link Glyph}
    */
-  record Legacy(
-      Supplier<BakedGlyph> glyph,
-      Supplier<net.minecraft.client.info.BakedGlyph> advanceValidatingGlyph)
+  record Legacy(Supplier<BakedGlyph> glyph, Supplier<BakedGlyph> advanceValidatingGlyph)
       implements CaxtonGlyphPair {
     @Override
     public CaxtonGlyphResult getGlyph(boolean advanceValidating) {

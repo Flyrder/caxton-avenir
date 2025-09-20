@@ -162,8 +162,8 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
     return this.accept(index, style, glyph);
   }
 
-  public boolean accept(int index, Style style, net.minecraft.client.info.BakedGlyph glyph) {
-    GlyphMetrics glyphMetrics = glyph.glyph();
+  public boolean accept(int index, Style style, BakedGlyph glyph) {
+    GlyphMetrics glyphMetrics = glyph.getMetrics();
     boolean bold = style.isBold();
     TextColor textColor = style.getColor();
     int renderColor = getRenderColor(textColor);

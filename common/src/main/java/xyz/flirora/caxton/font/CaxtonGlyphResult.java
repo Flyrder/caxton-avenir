@@ -5,8 +5,8 @@ package xyz.flirora.caxton.font;
 import java.util.function.Supplier;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.font.BakedGlyph;
 import net.minecraft.client.font.Glyph;
-import net.minecraft.client.info.BakedGlyph;
 import org.jetbrains.annotations.Nullable;
 
 /** Describes a glyph from either a Caxton or a legacy font. */

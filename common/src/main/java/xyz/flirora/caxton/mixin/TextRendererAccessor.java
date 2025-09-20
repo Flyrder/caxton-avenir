@@ -4,6 +4,7 @@ package xyz.flirora.caxton.mixin;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.font.BakedGlyph;
 import net.minecraft.client.font.GlyphProvider;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.text.Style;
@@ -22,5 +23,5 @@ public interface TextRendererAccessor {
   TextRenderer.GlyphsProvider getFonts();
 
   @Invoker
-  net.minecraft.client.info.BakedGlyph callGetGlyph(int codePoint, Style style);
+  BakedGlyph callGetGlyph(int codePoint, Style style);
 }

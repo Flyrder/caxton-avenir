@@ -3,6 +3,7 @@
 package xyz.flirora.caxton.render;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
 import net.fabricmc.api.EnvType;
@@ -29,6 +30,7 @@ public class CaxtonShaders {
           .withSampler("Sampler0")
           .withSampler("Sampler2")
           .withUniform("UnitRangeU", UniformType.UNIFORM_BUFFER)
+          .withBlend(BlendFunction.TRANSLUCENT)
           .build();
   public static final RenderPipeline TEXT_OFFSET =
       RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
@@ -39,6 +41,7 @@ public class CaxtonShaders {
           .withSampler("Sampler2")
           .withDepthBias(-1.0f, -10.0f)
           .withUniform("UnitRangeU", UniformType.UNIFORM_BUFFER)
+          .withBlend(BlendFunction.TRANSLUCENT)
           .build();
   public static final RenderPipeline TEXT_SEE_THROUGH =
       RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET)
@@ -49,6 +52,7 @@ public class CaxtonShaders {
           .withDepthWrite(false)
           .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
           .withUniform("UnitRangeU", UniformType.UNIFORM_BUFFER)
+          .withBlend(BlendFunction.TRANSLUCENT)
           .build();
   public static final RenderPipeline TEXT_OUTLINE =
       RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
@@ -58,6 +62,7 @@ public class CaxtonShaders {
           .withSampler("Sampler0")
           .withSampler("Sampler2")
           .withUniform("UnitRangeU", UniformType.UNIFORM_BUFFER)
+          .withBlend(BlendFunction.TRANSLUCENT)
           .build();
 
   // Hacky shit to deal with Mojang fuckage
