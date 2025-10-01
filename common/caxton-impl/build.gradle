@@ -53,18 +53,11 @@ cargo {
 def copyHostPlatformNative = tasks.register('copyHostPlatformNative', Copy) {
     dependsOn build
     mustRunAfter(cargoCrossBuildTasks.values())
-    def hostTarget = new ByteArrayOutputStream().withStream { outputStream ->
-        project.exec {
-            commandLine 'rustc', '-vV'
-            standardOutput = outputStream
-        }
-        def output = outputStream.toString()
-        def matcher = Pattern.compile("^host: (.*)\$", Pattern.MULTILINE).matcher(output)
-        matcher.find()
-        def platform = matcher.group(1)
-        println("Platform is $platform")
-        platform
+    def result = project.providers.exec {
+        commandLine 'rustc', '--print', 'host-tuple'
     }
+    def hostTarget = result.standardOutput.toString().trim()
+    println("Platform is $hostTarget")
     from(build.outputFiles) {
         rename(name -> "$hostTarget-" + name)
     }

@@ -40,15 +40,13 @@ dependencies {
 }
 
 def identifyHostRustcPlatform = tasks.register("identifyHostRustcPlatform", Exec) {
-    commandLine 'rustc', '-vV'
+    commandLine 'rustc', '--print', 'host-tuple'
 
     standardOutput = new ByteArrayOutputStream()
 
     ext.output = {
         def output = standardOutput.toString()
-        def matcher = Pattern.compile("^host: (.*)\$", Pattern.MULTILINE).matcher(output)
-        matcher.find()
-        def platform = matcher.group(1)
+        def platform = output.trim()
         println("Platform is $platform")
         platform
     }
