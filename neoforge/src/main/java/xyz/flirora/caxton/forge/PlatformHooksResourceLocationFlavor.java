@@ -3,7 +3,7 @@
 package xyz.flirora.caxton.forge;
 
 import net.neoforged.fml.ModList;
-import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.fml.loading.FMLEnvironment;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import xyz.flirora.caxton.PlatformHooks;
@@ -27,6 +27,6 @@ public class PlatformHooksResourceLocationFlavor implements PlatformHooks {
 
   @Override
   public boolean isDevelopmentEnvironment() {
-    return !FMLLoader.isProduction();
+    return !FMLEnvironment.isProduction();
   }
 }

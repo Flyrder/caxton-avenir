@@ -41,7 +41,7 @@ public class WorldRendererMixin {
   }
 
   @Redirect(
-      method = {"method_62214", "lambda$addMainPass$3"}, // Lambda in renderMain
+      method = {"method_62214", "lambda$addMainPass$1"}, // Lambda in renderMain
       at =
           @At(
               value = "INVOKE",
