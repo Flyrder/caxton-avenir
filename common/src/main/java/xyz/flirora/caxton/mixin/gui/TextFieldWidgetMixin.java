@@ -299,7 +299,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
           @At(
               value = "INVOKE",
               target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;getInnerWidth()I"),
-      method = "method_74215",
+      method = "calculateCursorPos",
       cancellable = true)
   private void overrideCursorPosition(Click click, CallbackInfoReturnable<Integer> cir) {
     if (caxtonText == null) {
