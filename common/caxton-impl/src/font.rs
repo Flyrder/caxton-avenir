@@ -223,10 +223,10 @@ impl<'a> FontInner<'a> {
                     .bounds(GlyphId::new(i as u32))
                     .unwrap_or(BoundingBox::default());
                 let rect = adjust_bbox(rect, options);
-                (rect.x_min as u16 as i16 as u64)
-                    | (rect.y_min as u16 as i16 as u64) << 16
-                    | (rect.x_max as u16 as i16 as u64) << 32
-                    | (rect.y_max as u16 as i16 as u64) << 48
+                (rect.x_min as i16 as u16 as u64)
+                    | (rect.y_min as i16 as u16 as u64) << 16
+                    | (rect.x_max as i16 as u16 as u64) << 32
+                    | (rect.y_max as i16 as u16 as u64) << 48
             })
             .collect();
 
