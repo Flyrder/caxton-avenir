@@ -16,14 +16,14 @@ logoFile = "assets/caxton/icon.png"
 [[dependencies.caxton]]
 modId = "neoforge"
 type = "required"
-versionRange = "[21.8.0-beta,)"
+versionRange = "[21.9.0-beta,)"
 ordering = "NONE"
 side = "CLIENT"
 
 [[dependencies.caxton]]
 modId = "minecraft"
 type = "required"
-versionRange = "[1.21.8,)"
+versionRange = "[1.21.9,)"
 ordering = "NONE"
 side = "CLIENT"
 
