@@ -1,5 +1,5 @@
 use std::convert::AsRef;
-use std::mem::{self, MaybeUninit};
+use std::ops::Deref;
 use std::str::Chars;
 use std::{
     fs::{self, OpenOptions},
@@ -149,8 +149,39 @@ impl Default for FontOptions {
     }
 }
 
+pub struct Font<'inner, 'data>
+where
+    'data: 'inner,
+{
+    pub inner: &'inner FontInner<'data>,
+    pub shaper: Shaper<'inner>,
+}
+
+impl<'inner, 'data> Font<'inner, 'data>
+where
+    'data: 'inner,
+{
+    pub fn wrap(inner: &'inner FontInner<'data>) -> Font<'inner, 'data> {
+        let shaper = inner
+            .shaper_data
+            .shaper(&inner.face)
+            .instance(Some(&inner.shaper_instance))
+            .build();
+        Font { inner, shaper }
+    }
+}
+
+impl<'inner, 'data> Deref for Font<'inner, 'data> {
+    type Target = FontInner<'data>;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        self.inner
+    }
+}
+
 /// Font information used to render text by Caxton.
-pub struct Font<'a> {
+pub struct FontInner<'a> {
     pub face: FontRef<'a>,
     pub tlist: Vec<TList>,
     pub bboxes: Vec<u64>,
@@ -158,21 +189,11 @@ pub struct Font<'a> {
     pub num_tlist_locations: usize,
     pub bytes_per_pixel: usize,
     pub axes: Location,
-    shaper_instance: Box<ShaperInstance>,
-    // Avoid the pain of self-referential structures
-    pub shaper: *mut (),
+    shaper_data: ShaperData,
+    shaper_instance: ShaperInstance,
 }
 
-impl<'a> Drop for Font<'a> {
-    fn drop(&mut self) {
-        const {
-            assert!(!mem::needs_drop::<Shaper<'a>>());
-        }
-        unsafe { mem::drop(Box::from_raw(self.shaper as *mut Shaper<'a>)) }
-    }
-}
-
-impl<'a> Font<'a> {
+impl<'a> FontInner<'a> {
     pub fn from_memory(
         contents: &'a [u8],
         cache_dir: &'_ Path,
@@ -250,21 +271,16 @@ impl<'a> Font<'a> {
         // Hope and pray that all the tlists have the same number of locations
         let num_tlist_locations = tlist[0].locations().len();
 
-        let shaper_instance = Box::new(ShaperInstance::from_variations(
+        let shaper_data = ShaperData::new(&face);
+        let shaper_instance = ShaperInstance::from_variations(
             &face,
             options.variations.iter().map(|var| Variation {
                 tag: var.0.selector,
                 value: var.0.value,
             }),
-        ));
-        let shaper = Box::into_raw(Box::new(
-            ShaperData::new(&face)
-                .shaper(&face)
-                .instance(Some(&shaper_instance))
-                .build(),
-        )) as *mut ();
+        );
 
-        Ok(Font {
+        Ok(FontInner {
             face,
             tlist,
             bboxes,
@@ -272,17 +288,13 @@ impl<'a> Font<'a> {
             num_tlist_locations,
             bytes_per_pixel: options.tech.bytes_per_pixel(),
             axes,
+            shaper_data,
             shaper_instance,
-            shaper,
         })
     }
 
     pub fn num_mipmap_layers(&self) -> usize {
         self.tlist.len()
-    }
-
-    pub fn shaper(&'a self) -> &'a Shaper<'a> {
-        unsafe { *self.shaper.cast() }
     }
 }
 

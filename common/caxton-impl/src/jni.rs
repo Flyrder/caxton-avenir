@@ -14,6 +14,7 @@ use skrifa::prelude::Size;
 use skrifa::{GlyphId, MetadataProvider, Tag};
 use std::borrow::Cow;
 
+use crate::font::FontInner;
 use crate::to_i16_clamped;
 use crate::{
     cfont::{ConfiguredFont, ConfiguredFontSettings},
@@ -70,11 +71,14 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_createF
                 .context("string decoding failed")?,
         )
         .context("failed to decode options")?;
-        let font = Box::new(
-            Font::from_memory(font_data, &PathBuf::from(cache_path), &options)
+        let font_inner = Box::new(
+            FontInner::from_memory(font_data, &PathBuf::from(cache_path), &options)
                 .context("font creation failed")?,
         );
-        Ok(Box::into_raw(font) as usize as jlong)
+        let font_outer = Box::new(Font::wrap(&font_inner));
+        let ptr = Box::leak(font_outer) as *mut _ as *mut ();
+        Box::leak(font_inner);
+        Ok(ptr as usize as jlong)
     }
 }
 
@@ -95,7 +99,10 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_destroy
         let _ = throw_null_ptr_exn(&mut env);
         return;
     }
-    mem::drop(Box::from_raw(addr as usize as *mut Font));
+    let outer = Box::from_raw(addr as usize as *mut Font);
+    let inner = outer.inner as *const _ as usize;
+    mem::drop(outer);
+    mem::drop(Box::from_raw(inner as *mut FontInner));
 }
 
 /// JNI wrapper for [`rustybuzz::Face::glyph_index`].
@@ -121,6 +128,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontGly
         Err(_) => return -1,
     };
     (*(addr as usize as *const Font))
+        .inner
         .face
         .charmap()
         .map(codepoint)
@@ -212,7 +220,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
         let _ = throw_null_ptr_exn(&mut env);
         return 0;
     }
-    (*(addr as usize as *const Font)).num_glyphs as i32
+    (*(addr as usize as *const Font)).inner.num_glyphs as i32
 }
 
 /// JNI wrapper for the number of texture list locations.
@@ -232,7 +240,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
         let _ = throw_null_ptr_exn(&mut env);
         return 0;
     }
-    (*(addr as usize as *const Font)).num_tlist_locations as i32
+    (*(addr as usize as *const Font)).inner.num_tlist_locations as i32
 }
 
 /// JNI wrapper for accessing atlas locations.
@@ -253,7 +261,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
         let _ = throw_null_ptr_exn(&mut env);
         return 0;
     }
-    (&(*(addr as usize as *const Font)).tlist)[mipmap as usize]
+    (&(*(addr as usize as *const Font)).inner.tlist)[mipmap as usize]
         .locations()
         .as_ptr() as usize as i64
 }
@@ -275,7 +283,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontBbo
         let _ = throw_null_ptr_exn(&mut env);
         return 0;
     }
-    (*(addr as usize as *const Font)).bboxes.as_ptr() as usize as i64
+    (*(addr as usize as *const Font)).inner.bboxes.as_ptr() as usize as i64
 }
 
 /// JNI wrapper for accessing the number of atlas pages.
@@ -298,7 +306,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontAtl
     }
     throw_as_exn! {
         env;
-        let page = (&(*(addr as usize as *const Font)).tlist)[mipmap as usize].data();
+        let page = (&(*(addr as usize as *const Font)).inner.tlist)[mipmap as usize].data();
         let ptr: *const u8 = page.as_ptr();
         Ok(ptr as i64)
     }
@@ -321,7 +329,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontByt
         let _ = throw_null_ptr_exn(&mut env);
         return 0;
     }
-    unsafe { (*(addr as usize as *const Font)).bytes_per_pixel as i32 }
+    unsafe { (*(addr as usize as *const Font)).inner.bytes_per_pixel as i32 }
 }
 
 /// JNI wrapper for getting the glyph name of a glyph in a font.
@@ -427,14 +435,14 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontSha
             ),
         )?;
 
-        let buffer = font.shaper().shape(buffer, &[]);
+        let buffer = font.shaper.shape(buffer, &[]);
 
         env.set_field(
             &mut result,
             "buffer",
             "Ljava/lang/String;",
             JValue::Object(
-                env.new_string(buffer.serialize(font.shaper(), SerializeFlags::default()))?
+                env.new_string(buffer.serialize(&font.shaper, SerializeFlags::default()))?
                     .deref(),
             ),
         )?;

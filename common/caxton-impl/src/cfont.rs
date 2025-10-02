@@ -35,7 +35,7 @@ impl Default for ConfiguredFontSettings {
 }
 
 pub struct ConfiguredFont<'font> {
-    pub font: &'font Font<'font>,
+    pub font: &'font Font<'font, 'font>,
     pub settings: ConfiguredFontSettings,
 }
 
@@ -45,6 +45,6 @@ impl<'font> ConfiguredFont<'font> {
         let features = &self.settings.features;
         // SAFETY: CxFeature and Feature are layout-compatible
         let features = unsafe { slice::from_raw_parts(features.as_ptr().cast(), features.len()) };
-        self.font.shaper().shape(buffer, features)
+        self.font.shaper.shape(buffer, features)
     }
 }
