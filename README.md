@@ -381,10 +381,13 @@ handles glyph metrics incorrectly, causing TTF text to appear off-kilter.
 Caxton would not have been possible without the following projects:
 
 * [Fabric] for Minecraft
+* [Architectury Loom]
 * The [Rust] programming language
 * [Gradle Cargo Wrapper] (Arc-blroth, Apache-2.0)
-* [RustyBuzz] (RazrFalcon, MIT)
-* [ttf-parser] (RazrFalcon, MIT/Apache-2.0)
+* [HarfRust] (MIT)
+    * Versions before 0.8 used [RustyBuzz] (RazrFalcon, MIT)
+* [Skrifa] (MIT/Apache-2.0)
+    * Versions before 0.8 used [ttf-parser] (RazrFalcon, MIT/Apache-2.0)
 * [fdsm] (me, MIT)
     * Versions before 0.5 used [msdfgen] (Chlumsky, MIT) and the [msdfgen-rs] bindings (Kayo Phoenix, MIT), both of
       which have subsequently been invaluable in the development of fdsm.
@@ -402,11 +405,17 @@ Caxton would not have been possible without the following projects:
 
 [Fabric]: https://fabricmc.net/
 
+[Architectury Loom]: https://github.com/architectury/architectury-loom
+
 [Rust]: https://www.rust-lang.org/
 
 [Gradle Cargo Wrapper]: https://github.com/Arc-blroth/gradle-cargo-wrapper
 
+[HarfRust]: https://github.com/harfbuzz/harfrust
+
 [RustyBuzz]: https://github.com/RazrFalcon/rustybuzz
+
+[Skrifa]: https://github.com/googlefonts/fontations/tree/main/skrifa
 
 [ttf-parser]: https://github.com/RazrFalcon/ttf-parser
 
