@@ -367,7 +367,8 @@ fn create_mtsdf(
     let width = adjust_dims(width, mipmap);
     let height = adjust_dims(height, mipmap);
 
-    let mut shape = fdsm_ttf_parser::load_shape_from_face(face.as_ref(), glyph_id);
+    let mut shape = fdsm_ttf_parser::load_shape_from_face(face.as_ref(), glyph_id)
+        .context("Glyph not found")?;
     let framing: Affine2<f64> = framing(options, &bounding_box, mipmap);
     shape.transform(&framing);
     let shape = Shape::edge_coloring_simple(shape, 0.03, 69);
