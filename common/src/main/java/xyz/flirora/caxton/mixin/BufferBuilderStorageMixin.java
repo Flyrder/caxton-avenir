@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import java.util.SequencedMap;
 import net.fabricmc.api.EnvType;
@@ -15,7 +17,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xyz.flirora.caxton.CaxtonModClient;
@@ -41,7 +42,7 @@ public abstract class BufferBuilderStorageMixin {
     //    assignBufferBuilder(map, RenderLayer.getGuiTextHighlight());
   }
 
-  @Redirect(
+  @WrapOperation(
       method = "<init>",
       at =
           @At(
@@ -64,9 +65,11 @@ public abstract class BufferBuilderStorageMixin {
                           "Lnet/minecraft/client/render/BufferBuilderStorage;entityVertexConsumers:Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;")),
       allow = 1)
   private VertexConsumerProvider.Immediate redirect(
-      SequencedMap<RenderLayer, BufferAllocator> layerBuffers, BufferAllocator fallbackBuffer) {
+      SequencedMap<RenderLayer, BufferAllocator> layerBuffers,
+      BufferAllocator fallbackBuffer,
+      Operation<VertexConsumerProvider.Immediate> original) {
     if (CaxtonModClient.FORCE_DISABLE_BATCHING_HACK)
-      return VertexConsumerProvider.immediate(layerBuffers, fallbackBuffer);
+      return original.call(layerBuffers, fallbackBuffer);
     return new WorldRendererVertexConsumerProvider(fallbackBuffer, layerBuffers);
   }
 }
