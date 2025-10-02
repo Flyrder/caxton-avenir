@@ -1,7 +1,7 @@
-use std::{slice, str::FromStr};
 use std::str::Chars;
+use std::{slice, str::FromStr};
 
-use rustybuzz::{Feature, GlyphBuffer, UnicodeBuffer};
+use harfrust::{Feature, GlyphBuffer, UnicodeBuffer};
 use nanoserde::{DeJson, DeJsonErr, DeJsonState};
 
 use crate::font::Font;
@@ -13,9 +13,8 @@ pub struct CxFeature(pub Feature);
 impl DeJson for CxFeature {
     fn de_json(state: &mut DeJsonState, input: &mut Chars) -> Result<Self, DeJsonErr> {
         let feature_string = String::de_json(state, input)?;
-        let feature = Feature::from_str(&feature_string).map_err(|_e| {
-            state.err_parse("feature string")
-        })?;
+        let feature =
+            Feature::from_str(&feature_string).map_err(|_e| state.err_parse("feature string"))?;
         Ok(CxFeature(feature))
     }
 }
@@ -46,6 +45,6 @@ impl<'font> ConfiguredFont<'font> {
         let features = &self.settings.features;
         // SAFETY: CxFeature and Feature are layout-compatible
         let features = unsafe { slice::from_raw_parts(features.as_ptr().cast(), features.len()) };
-        rustybuzz::shape(&self.font.face, features, buffer)
+        self.font.shaper().shape(buffer, features)
     }
 }

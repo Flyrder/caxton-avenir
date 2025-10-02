@@ -1,6 +1,7 @@
 use std::{mem, ops::Deref, path::PathBuf, ptr, slice};
 
 use anyhow::Context;
+use harfrust::{BufferClusterLevel, Direction, Script, SerializeFlags, UnicodeBuffer};
 use jni::objects::{JCharArray, JIntArray, JObjectArray, JShortArray};
 use jni::sys::jobject;
 use jni::{
@@ -9,10 +10,11 @@ use jni::{
     JNIEnv,
 };
 use nanoserde::DeJson;
-use rustybuzz::{BufferClusterLevel, Direction, Script, SerializeFlags, UnicodeBuffer};
+use skrifa::prelude::Size;
+use skrifa::{GlyphId, MetadataProvider, Tag};
 use std::borrow::Cow;
-use ttf_parser::{GlyphId, Tag};
 
+use crate::to_i16_clamped;
 use crate::{
     cfont::{ConfiguredFont, ConfiguredFontSettings},
     error::{throw_null_ptr_exn, CxtError},
@@ -120,8 +122,9 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontGly
     };
     (*(addr as usize as *const Font))
         .face
-        .glyph_index(codepoint)
-        .map(|x| x.0 as i32)
+        .charmap()
+        .map(codepoint)
+        .map(|x| x.to_u32() as i32)
         .unwrap_or(-1)
 }
 
@@ -143,22 +146,24 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontMet
         if addr == 0 {
             return Err(CxtError::Null);
         }
-        let font = (*(addr as usize as *const Font)).face.as_ref();
+        let font = &(*(addr as usize as *const Font));
+        let face = &font.face;
+        let metrics = face.metrics(Size::unscaled(), &font.axes);
         // TODO: compute these metrics using heuristics if they are not available
-        let (underline_position, underline_thickness) = match font.underline_metrics() {
-            Some(underline) => (underline.position, underline.thickness),
+        let (underline_position, underline_thickness) = match &metrics.underline {
+            Some(underline) => (to_i16_clamped(underline.offset), to_i16_clamped(underline.thickness)),
             None => (-1, -1),
         };
-        let (strikeout_position, strikeout_thickness) = match font.strikeout_metrics() {
-            Some(strikeout) => (strikeout.position, strikeout.thickness),
+        let (strikeout_position, strikeout_thickness) = match &metrics.strikeout {
+            Some(strikeout) => (to_i16_clamped(strikeout.offset), to_i16_clamped(strikeout.thickness)),
             None => (-1, -1),
         };
         let metrics = [
-            font.units_per_em() as i16,
-            font.ascender(),
-            font.descender(),
-            font.height(),
-            font.line_gap(),
+            metrics.units_per_em as i16,
+            to_i16_clamped(metrics.ascent),
+            to_i16_clamped(metrics.descent),
+            to_i16_clamped(metrics.ascent - metrics.descent), // Height
+            to_i16_clamped(metrics.leading), // Line gap
             underline_position,
             underline_thickness,
             strikeout_position,
@@ -339,9 +344,9 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontGly
             return Err(CxtError::Null);
         }
         let font = &*(font_addr as usize as *const Font);
-        let name = font.face.glyph_name(GlyphId(glyph_id as u16));
+        let name = font.face.glyph_names().get(GlyphId::from(glyph_id as u32));
         Ok(match name {
-            Some(name) => env.new_string(name)?,
+            Some(name) => env.new_string(name.as_str())?,
             None => JString::default(),
         })
     };
@@ -422,14 +427,14 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_fontSha
             ),
         )?;
 
-        let buffer = rustybuzz::shape(&font.face, &[], buffer);
+        let buffer = font.shaper().shape(buffer, &[]);
 
         env.set_field(
             &mut result,
             "buffer",
             "Ljava/lang/String;",
             JValue::Object(
-                env.new_string(buffer.serialize(&font.face, SerializeFlags::default()))?
+                env.new_string(buffer.serialize(font.shaper(), SerializeFlags::default()))?
                     .deref(),
             ),
         )?;
@@ -532,7 +537,7 @@ pub unsafe extern "system" fn Java_xyz_flirora_caxton_dll_CaxtonInternal_shape<'
             let start = bidi_runs[4 * i] as usize;
             let end = bidi_runs[4 * i + 1] as usize;
             let level = bidi_runs[4 * i + 2];
-            let script = Script::from_iso15924_tag(Tag(bidi_runs[4 * i + 3] as u32));
+            let script = Script::from_iso15924_tag(Tag::from_u32(bidi_runs[4 * i + 3] as u32));
             let substring = &string[start..end];
             // This is not ideal – rustybuzz only exposes a UTF-8
             // `push_str` method for `UnicodeBuffer` and doesn’t expose

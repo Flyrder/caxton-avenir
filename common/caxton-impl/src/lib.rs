@@ -9,6 +9,10 @@ pub mod jni;
 pub mod shape;
 pub mod tlist;
 
+fn to_i16_clamped(x: f32) -> i16 {
+    x.clamp(i16::MIN as f32, i16::MAX as f32) as i16
+}
+
 #[cfg(test)]
 mod tests {
     use crate::extrude::Kernel;

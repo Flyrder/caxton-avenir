@@ -1,4 +1,5 @@
 use std::convert::AsRef;
+use std::mem::{self, MaybeUninit};
 use std::str::Chars;
 use std::{
     fs::{self, OpenOptions},
@@ -7,7 +8,7 @@ use std::{
 };
 
 use ab_glyph_rasterizer::{Point, Rasterizer};
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use base64::engine::general_purpose::URL_SAFE;
 use base64::Engine;
 use fdsm::bezier::scanline::FillRule;
@@ -16,15 +17,21 @@ use fdsm::generate::generate_mtsdf;
 use fdsm::render::correct_sign_mtsdf;
 use fdsm::shape::Shape;
 use fdsm::transform::Transform;
+use harfrust::{Shaper, ShaperData, ShaperInstance, Variation};
 use image::{Pixel, Rgba32FImage};
 use na::{Affine2, Similarity2, Vector2};
 use nanoserde::{DeJson, DeJsonErr, DeJsonErrReason, DeJsonState};
 use rayon::iter::{
     IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
 };
-use rustybuzz::Face;
 use sha2::{Digest, Sha256};
-use ttf_parser::{GlyphId, OutlineBuilder, Rect, Tag, Variation};
+use skrifa::instance::Location;
+use skrifa::metrics::BoundingBox;
+use skrifa::outline::{DrawError, DrawSettings, OutlinePen};
+use skrifa::prelude::Size;
+use skrifa::raw::TableProvider;
+use skrifa::setting::VariationSetting;
+use skrifa::{FontRef, GlyphId, MetadataProvider, Tag};
 
 use crate::extrude::Kernel;
 use crate::tlist::{TList, TListPendingEntry};
@@ -39,22 +46,18 @@ struct CxVariationFormat {
 
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone)]
-pub struct CxVariation(pub Variation);
+pub struct CxVariation(pub VariationSetting);
 
 impl DeJson for CxVariation {
     fn de_json(state: &mut DeJsonState, input: &mut Chars) -> Result<Self, DeJsonErr> {
         let format = CxVariationFormat::de_json(state, input)?;
-        let axis = if format.axis.len() == 4 {
-            Tag::from_bytes_lossy(format.axis.as_bytes())
-        } else {
-            return Err(DeJsonErr {
-                msg: DeJsonErrReason::CannotParse("axis name must have 4 characters".to_string()),
-                line: state.line,
-                col: state.col,
-            });
-        };
-        Ok(CxVariation(Variation {
-            axis,
+        let axis = Tag::new_checked(format.axis.as_bytes()).map_err(|e| DeJsonErr {
+            msg: DeJsonErrReason::CannotParse(e.to_string()),
+            line: state.line,
+            col: state.col,
+        })?;
+        Ok(CxVariation(VariationSetting {
+            selector: axis,
             value: format.value,
         }))
     }
@@ -124,7 +127,7 @@ impl FontOptions {
             },
         ));
         for var in &self.variations {
-            sha.update(format!(" {} {}", var.0.axis, var.0.value));
+            sha.update(format!(" {} {}", var.0.selector, var.0.value));
         }
         sha.update(SALT);
         sha.finalize().into()
@@ -148,12 +151,25 @@ impl Default for FontOptions {
 
 /// Font information used to render text by Caxton.
 pub struct Font<'a> {
-    pub face: Face<'a>,
+    pub face: FontRef<'a>,
     pub tlist: Vec<TList>,
     pub bboxes: Vec<u64>,
     pub num_glyphs: usize,
     pub num_tlist_locations: usize,
     pub bytes_per_pixel: usize,
+    pub axes: Location,
+    shaper_instance: Box<ShaperInstance>,
+    // Avoid the pain of self-referential structures
+    pub shaper: *mut (),
+}
+
+impl<'a> Drop for Font<'a> {
+    fn drop(&mut self) {
+        const {
+            assert!(!mem::needs_drop::<Shaper<'a>>());
+        }
+        unsafe { mem::drop(Box::from_raw(self.shaper as *mut Shaper<'a>)) }
+    }
 }
 
 impl<'a> Font<'a> {
@@ -171,22 +187,20 @@ impl<'a> Font<'a> {
         let mut this_cache = cache_dir.to_path_buf();
         this_cache.push(URL_SAFE.encode(sha) + ".zz");
 
-        let mut face =
-            Face::from_slice(contents, options.face_index).context("failed to parse font")?;
-        for var in &options.variations {
-            face.set_variation(var.0.axis, var.0.value)
-                .ok_or_else(|| anyhow!("axis {} not found", var.0.axis))?;
-        }
+        let face =
+            FontRef::from_index(contents, options.face_index).context("failed to parse font")?;
 
-        let num_glyphs = face.number_of_glyphs();
+        let axes = face
+            .axes()
+            .location(options.variations.iter().map(|var| var.0));
+
+        let num_glyphs = face.maxp()?.num_glyphs();
         let bboxes = (0..num_glyphs)
             .map(|i| {
-                let rect = face.glyph_bounding_box(GlyphId(i)).unwrap_or(Rect {
-                    x_min: 0,
-                    y_min: 0,
-                    x_max: 0,
-                    y_max: 0,
-                });
+                let rect = face
+                    .glyph_metrics(Size::unscaled(), &axes)
+                    .bounds(GlyphId::new(i as u32))
+                    .unwrap_or(BoundingBox::default());
                 let rect = adjust_bbox(rect, options);
                 (rect.x_min as u16 as u64)
                     | (rect.y_min as u16 as u64) << 16
@@ -209,7 +223,7 @@ impl<'a> Font<'a> {
 
             eprintln!("Building atlas for {num_glyphs} glyphs; this might take a while");
             let before_atlas_construction = Instant::now();
-            let tlist = create_atlas(&face, options)?;
+            let tlist = create_atlas(&face, &axes, options)?;
             let after_atlas_construction = Instant::now();
             eprintln!(
                 "Built atlas in {} ms! ^_^",
@@ -236,6 +250,20 @@ impl<'a> Font<'a> {
         // Hope and pray that all the tlists have the same number of locations
         let num_tlist_locations = tlist[0].locations().len();
 
+        let shaper_instance = Box::new(ShaperInstance::from_variations(
+            &face,
+            options.variations.iter().map(|var| Variation {
+                tag: var.0.selector,
+                value: var.0.value,
+            }),
+        ));
+        let shaper = Box::into_raw(Box::new(
+            ShaperData::new(&face)
+                .shaper(&face)
+                .instance(Some(&shaper_instance))
+                .build(),
+        )) as *mut ();
+
         Ok(Font {
             face,
             tlist,
@@ -243,18 +271,31 @@ impl<'a> Font<'a> {
             num_glyphs: num_glyphs as usize,
             num_tlist_locations,
             bytes_per_pixel: options.tech.bytes_per_pixel(),
+            axes,
+            shaper_instance,
+            shaper,
         })
     }
 
     pub fn num_mipmap_layers(&self) -> usize {
         self.tlist.len()
     }
+
+    pub fn shaper(&'a self) -> &'a Shaper<'a> {
+        unsafe { *self.shaper.cast() }
+    }
 }
 
-fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Vec<TList>> {
-    let glyph_indices_and_bboxes = (0..face.number_of_glyphs())
+fn create_atlas(
+    face: &FontRef,
+    axes: &Location,
+    options: &FontOptions,
+) -> anyhow::Result<Vec<TList>> {
+    let glyph_indices_and_bboxes = (0..face.maxp()?.num_glyphs())
         .map(|glyph_idx| {
-            let bbox = face.glyph_bounding_box(GlyphId(glyph_idx));
+            let bbox = face
+                .glyph_metrics(Size::unscaled(), axes)
+                .bounds(GlyphId::from(glyph_idx));
             let bbox = bbox.map(|bbox| adjust_bbox(bbox, options));
             (glyph_idx, bbox)
         })
@@ -278,8 +319,8 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Vec<TList>
                         .copied()
                         .zip_eq(pending_entries.into_par_iter())
                         .try_for_each(|((glyph_idx, bbox), mut pe)| -> anyhow::Result<()> {
-                            let glyph_id = GlyphId(glyph_idx);
-                            create_mtsdf(face, glyph_id, bbox, options, mipmap, &mut pe)?;
+                            let glyph_id = GlyphId::from(glyph_idx);
+                            create_mtsdf(face, glyph_id, bbox, options, mipmap, &mut pe, axes)?;
                             anyhow::Result::Ok(())
                         })?;
                 }
@@ -294,7 +335,7 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Vec<TList>
                         .zip_eq(pending_entries.into_par_iter())
                         .try_for_each(
                             |((glyph_idx, bbox), (mut pe, mut pe_outline))| -> anyhow::Result<()> {
-                                let glyph_id = GlyphId(glyph_idx);
+                                let glyph_id = GlyphId::from(glyph_idx);
                                 create_bitmap(
                                     face,
                                     glyph_id,
@@ -304,6 +345,7 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Vec<TList>
                                     &mut pe,
                                     &mut pe_outline,
                                     &kernel,
+                                    axes,
                                 )?;
                                 anyhow::Result::Ok(())
                             },
@@ -318,46 +360,45 @@ fn create_atlas(face: &Face, options: &FontOptions) -> anyhow::Result<Vec<TList>
 
 /// Adjust the bounds of the bounding box so that the baseline is aligned to
 /// 2^n pixels, where n is the maximum mipmap level.
-fn adjust_bbox(mut bounding_box: Rect, options: &FontOptions) -> Rect {
+fn adjust_bbox(mut bounding_box: BoundingBox, options: &FontOptions) -> BoundingBox {
     let max_shrink_factor = options.shrinkage * (options.max_mipmap as f64).exp2();
 
     // Fun fact: I accidentally put x_max instead of y_max here at first
     let y_max_in_max_mipmap_atlas_pixels = (bounding_box.y_max as f64) / max_shrink_factor;
     let whole_atlas_pixels_above_baseline = y_max_in_max_mipmap_atlas_pixels.ceil();
     let font_units_above_baseline = whole_atlas_pixels_above_baseline * max_shrink_factor;
-    bounding_box.y_max = font_units_above_baseline.clamp(i16::MIN as f64, i16::MAX as f64) as i16;
+    bounding_box.y_max = font_units_above_baseline as f32;
 
     let y_min_in_max_mipmap_atlas_pixels = (bounding_box.y_min as f64) / max_shrink_factor;
     let whole_atlas_pixels_below_baseline = y_min_in_max_mipmap_atlas_pixels.floor();
     let font_units_below_baseline = whole_atlas_pixels_below_baseline * max_shrink_factor;
-    bounding_box.y_min = font_units_below_baseline.clamp(i16::MIN as f64, i16::MAX as f64) as i16;
+    bounding_box.y_min = font_units_below_baseline as f32;
 
     bounding_box
 }
 
-fn dimensions_in_image(bounding_box: &Option<Rect>, options: &FontOptions) -> (u32, u32) {
+fn dimensions_in_image(bounding_box: &Option<BoundingBox>, options: &FontOptions) -> (u32, u32) {
     match bounding_box {
         None => (0, 0),
         Some(bounding_box) => {
             let margin = options.margin();
-            let width = (bounding_box.width().unsigned_abs() as f64 / options.shrinkage).ceil()
-                as u32
-                + 2 * margin;
-            let height = (bounding_box.height().unsigned_abs() as f64 / options.shrinkage).ceil()
-                as u32
-                + 2 * margin;
+            let raw_width = bounding_box.x_max - bounding_box.x_min;
+            let raw_height = bounding_box.y_max - bounding_box.y_min;
+            let width = (raw_width.abs() as f64 / options.shrinkage).ceil() as u32 + 2 * margin;
+            let height = (raw_height.abs() as f64 / options.shrinkage).ceil() as u32 + 2 * margin;
             (width, height)
         }
     }
 }
 
 fn create_mtsdf(
-    face: &Face,
+    face: &FontRef,
     glyph_id: GlyphId,
-    bounding_box: Option<Rect>,
+    bounding_box: Option<BoundingBox>,
     options: &FontOptions,
     mipmap: u32,
     pe: &mut TListPendingEntry,
+    axes: &Location,
 ) -> anyhow::Result<()> {
     let Some(bounding_box) = bounding_box else {
         return Ok(());
@@ -367,8 +408,8 @@ fn create_mtsdf(
     let width = adjust_dims(width, mipmap);
     let height = adjust_dims(height, mipmap);
 
-    let mut shape = fdsm_ttf_parser::load_shape_from_face(face.as_ref(), glyph_id)
-        .context("Glyph not found")?;
+    let (mut shape, _) =
+        fdsm_skrifa::load_shape_from_face(face, glyph_id, axes).context("Glyph not found")?;
     let framing: Affine2<f64> = framing(options, &bounding_box, mipmap);
     shape.transform(&framing);
     let shape = Shape::edge_coloring_simple(shape, 0.03, 69);
@@ -398,14 +439,15 @@ fn create_mtsdf(
 }
 
 fn create_bitmap(
-    face: &Face,
+    face: &FontRef,
     glyph_id: GlyphId,
-    bounding_box: Option<Rect>,
+    bounding_box: Option<BoundingBox>,
     options: &FontOptions,
     mipmap: u32,
     pe: &mut TListPendingEntry,
     pe_outline: &mut TListPendingEntry,
     kernel: &Kernel,
+    axes: &Location,
 ) -> anyhow::Result<()> {
     let Some(bounding_box) = bounding_box else {
         return Ok(());
@@ -414,8 +456,12 @@ fn create_bitmap(
     let width = adjust_dims(width, mipmap);
     let height = adjust_dims(height, mipmap);
     let mut rasterizer = Rasterizer::new(width as usize, height as usize);
-    face.outline_glyph(
-        glyph_id,
+    let glyph = face
+        .outline_glyphs()
+        .get(glyph_id)
+        .ok_or(DrawError::GlyphNotFound(glyph_id))?;
+    glyph.draw(
+        DrawSettings::unhinted(Size::unscaled(), axes),
         &mut AbOutlineBuilder {
             rasterizer: &mut rasterizer,
             open_point: None,
@@ -424,7 +470,7 @@ fn create_bitmap(
             options,
             scale: (-(mipmap as f64)).exp2(),
         },
-    );
+    )?;
     let slice = pe.as_slice_mut();
     rasterizer.for_each_pixel_2d(|x, y, alpha| {
         let index = (x as usize) + ((height - 1 - y) as usize) * (width as usize);
@@ -441,7 +487,7 @@ fn create_bitmap(
     Ok(())
 }
 
-fn framing(options: &FontOptions, bounding_box: &Rect, mipmap: u32) -> Affine2<f64> {
+fn framing(options: &FontOptions, bounding_box: &BoundingBox, mipmap: u32) -> Affine2<f64> {
     let mipmap_scale = (-(mipmap as f64)).exp2();
     let scale = mipmap_scale / options.shrinkage;
     nalgebra::convert::<_, Affine2<f64>>(Similarity2::new(
@@ -463,24 +509,24 @@ struct AbOutlineBuilder<'a> {
     rasterizer: &'a mut Rasterizer,
     open_point: Option<Point>,
     last_point: Option<Point>,
-    bbox: &'a Rect,
+    bbox: &'a BoundingBox,
     options: &'a FontOptions,
     scale: f64,
 }
 
 impl<'a> AbOutlineBuilder<'a> {
     fn point(&self, x: f32, y: f32) -> Point {
-        let xp = ((x - (self.bbox.x_min as f32)) as f64) / self.options.shrinkage
-            + self.options.margin() as f64;
-        let yp = ((y - (self.bbox.y_min as f32)) as f64) / self.options.shrinkage
-            + self.options.margin() as f64;
+        let xp =
+            ((x - self.bbox.x_min) as f64) / self.options.shrinkage + self.options.margin() as f64;
+        let yp =
+            ((y - self.bbox.y_min) as f64) / self.options.shrinkage + self.options.margin() as f64;
         let xp = (xp * self.scale) as f32;
         let yp = (yp * self.scale) as f32;
         (xp, yp).into()
     }
 }
 
-impl<'a> OutlineBuilder for AbOutlineBuilder<'a> {
+impl<'a> OutlinePen for AbOutlineBuilder<'a> {
     fn move_to(&mut self, x: f32, y: f32) {
         self.last_point = Some(self.point(x, y));
         self.open_point = self.last_point;

@@ -1,6 +1,6 @@
 use std::slice;
 
-use rustybuzz::GlyphBuffer;
+use harfrust::GlyphBuffer;
 
 #[repr(transparent)]
 pub struct ShapingResultEntry(pub [i32; 6]);
