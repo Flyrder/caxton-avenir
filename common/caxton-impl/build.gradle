@@ -56,7 +56,7 @@ def copyHostPlatformNative = tasks.register('copyHostPlatformNative', Copy) {
     def result = project.providers.exec {
         commandLine 'rustc', '--print', 'host-tuple'
     }
-    def hostTarget = result.standardOutput.toString().trim()
+    def hostTarget = result.standardOutput.asText.get().trim()
     println("Platform is $hostTarget")
     from(build.outputFiles) {
         rename(name -> "$hostTarget-" + name)
