@@ -129,7 +129,7 @@ public class CaxtonTextRenderLayers {
           false,
           pipeline,
           RenderLayer.MultiPhaseParameters.builder()
-              .texture(new RenderPhase.Texture(page.getId(), page.getNumMipmapLevels() > 1))
+              .texture(new RenderPhase.Texture(page.getId()))
               //                            .target(RenderPhase.TRANSLUCENT_TARGET)
               .lightmap(ENABLE_LIGHTMAP)
               .texturing(

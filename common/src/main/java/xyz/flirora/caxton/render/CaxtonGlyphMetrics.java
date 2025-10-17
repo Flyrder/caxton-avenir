@@ -4,15 +4,15 @@ package xyz.flirora.caxton.render;
 
 import net.minecraft.client.font.GlyphMetrics;
 
-public record CaxtonGlyphMetrics(float shadowOffset) implements GlyphMetrics {
+public record CaxtonGlyphMetrics(float shadowOffset, float advance) implements GlyphMetrics {
   @Override
   public float getAdvance() {
-    throw new UnsupportedOperationException();
+    return advance;
   }
 
   @Override
   public float getAdvance(boolean bold) {
-    throw new UnsupportedOperationException();
+    return advance;
   }
 
   @Override

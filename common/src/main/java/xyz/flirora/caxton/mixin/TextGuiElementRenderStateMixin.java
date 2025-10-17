@@ -7,7 +7,7 @@ import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.gui.render.state.TextGuiElementRenderState;
 import net.minecraft.text.OrderedText;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix3x2f;
+import org.joml.Matrix3x2fc;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -32,11 +32,13 @@ public class TextGuiElementRenderStateMixin {
 
   @Shadow @Final @Nullable public ScreenRect clipBounds;
 
-  @Shadow @Final public Matrix3x2f matrix;
+  @Shadow @Final public Matrix3x2fc matrix;
 
   @Shadow @Final public int backgroundColor;
 
   @Shadow @Final public boolean shadow;
+
+  @Shadow @Final private boolean trackSkeletons;
 
   @Inject(method = "prepare", at = @At("HEAD"))
   private void onPrepare(CallbackInfoReturnable<TextRenderer.GlyphDrawable> cir) {
@@ -61,6 +63,7 @@ public class TextGuiElementRenderStateMixin {
                 sneakyBoi.y(),
                 this.color,
                 this.shadow,
+                this.trackSkeletons,
                 this.backgroundColor,
                 sneakyBoi.firstCharacterIndex(),
                 sneakyBoi.maxWidth());

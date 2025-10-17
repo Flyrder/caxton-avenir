@@ -141,12 +141,13 @@ public class CaxtonTextRenderer {
                 0.0f,
                 effectiveOutlineColor,
                 false,
+                false,
                 Float.POSITIVE_INFINITY,
                 NO_THRESHOLD)
             .outlined();
     CaxtonTextDrawer centralDrawer =
         new CaxtonTextDrawer(
-            this, x, y, effectiveColor, false, Float.POSITIVE_INFINITY, NO_THRESHOLD);
+            this, x, y, effectiveColor, false, false, Float.POSITIVE_INFINITY, NO_THRESHOLD);
 
     for (RunGroup runGroup : runGroups.runGroups()) {
       ConfiguredCaxtonFont font = runGroup.getFont();
@@ -424,6 +425,7 @@ public class CaxtonTextRenderer {
       float y,
       int color,
       boolean shadow,
+      boolean trackSkeletons,
       int backgroundColor,
       int leftmostCodePoint,
       float maxWidth) {
@@ -438,6 +440,7 @@ public class CaxtonTextRenderer {
             color,
             backgroundColor,
             shadow,
+            trackSkeletons,
             x + maxWidth,
             new Threshold(leftmostCodePoint));
     for (RunGroup runGroup : text.runGroups()) {
@@ -483,12 +486,13 @@ public class CaxtonTextRenderer {
                 0.0f,
                 effectiveOutlineColor,
                 false,
+                false,
                 Float.POSITIVE_INFINITY,
                 NO_THRESHOLD)
             .outlined();
     CaxtonTextDrawer centralDrawer =
         new CaxtonTextDrawer(
-            this, x, y, effectiveColor, false, Float.POSITIVE_INFINITY, NO_THRESHOLD);
+            this, x, y, effectiveColor, false, false, Float.POSITIVE_INFINITY, NO_THRESHOLD);
 
     for (RunGroup runGroup : runGroups.runGroups()) {
       ConfiguredCaxtonFont font = runGroup.getFont();

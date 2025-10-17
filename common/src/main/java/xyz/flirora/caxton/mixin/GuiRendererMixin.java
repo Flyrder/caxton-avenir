@@ -24,7 +24,7 @@ public class GuiRendererMixin {
           @At(
               value = "INVOKE",
               target =
-                  "Lcom/mojang/blaze3d/systems/RenderPass;bindSampler(Ljava/lang/String;Lcom/mojang/blaze3d/textures/GpuTextureView;)V",
+                  "Lcom/mojang/blaze3d/systems/RenderPass;bindTexture(Ljava/lang/String;Lcom/mojang/blaze3d/textures/GpuTextureView;Lnet/minecraft/client/gl/GpuSampler;)V",
               ordinal = 0))
   private void onBindSampler0(
       GuiRenderer.Draw draw,

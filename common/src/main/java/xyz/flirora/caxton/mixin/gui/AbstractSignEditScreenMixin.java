@@ -129,8 +129,8 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
       at =
           @At(
               value = "INVOKE",
-              target = "Lnet/minecraft/client/gui/DrawContext;drawSelection(IIII)V"))
-  private void drawHighlights(DrawContext context, int x1, int y1, int x2, int y2) {
+              target = "Lnet/minecraft/client/gui/DrawContext;drawSelection(IIIIZ)V"))
+  private void drawHighlights(DrawContext context, int x1, int y1, int x2, int y2, boolean invert) {
     CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
     CaxtonTextHandler cth = ctr.getHandler();
 
@@ -146,7 +146,12 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
         Math.max(selectionStart, selectionEnd),
         (start, end) -> {
           Voepfxo.drawSelection(
-              context, start - x, lineY, end - x, lineY + this.blockEntity.getTextLineHeight());
+              context,
+              start - x,
+              lineY,
+              end - x,
+              lineY + this.blockEntity.getTextLineHeight(),
+              invert);
         });
   }
 }

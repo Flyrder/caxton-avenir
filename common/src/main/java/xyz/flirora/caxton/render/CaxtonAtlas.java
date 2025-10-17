@@ -290,8 +290,8 @@ public class CaxtonAtlas implements AutoCloseable {
               PAGE_SIZE,
               1,
               numMipmapLevels);
-      this.glTexture.setTextureFilter(
-          blur ? FilterMode.LINEAR : FilterMode.NEAREST, numMipmapLevels > 1);
+      this.sampler =
+          RenderSystem.getSamplerCache().get(blur ? FilterMode.LINEAR : FilterMode.NEAREST);
       this.glTextureView = device.createTextureView(this.glTexture);
       // Technically, the contents of this texture are undefined at this
       // point, which can pose a problem with the edges of any inserted

@@ -85,17 +85,17 @@ public class TextHandlerMixin implements TextHandlerExt {
     CaxtonModClient.onBrokenMethod();
   }
 
-  @Inject(at = @At("HEAD"), method = "getLimitedStringLength", cancellable = true)
+  @Inject(at = @At("HEAD"), method = "getEndingIndex", cancellable = true)
   private void onGetLimitedStringLength(
       String text, int maxWidth, Style style, CallbackInfoReturnable<Integer> cir) {
     cir.setReturnValue(caxtonTextHandler.getCharIndexAtXFormatted(text, maxWidth, style));
   }
 
-  @Inject(at = @At("HEAD"), method = "limitString")
-  private void onLimitString(
-      String text, int maxWidth, Style style, CallbackInfoReturnable<String> cir) {
-    CaxtonModClient.onBrokenMethod();
-  }
+  //    @Inject(at = @At("HEAD"), method = "limitString")
+  //    private void onLimitString(
+  //            String text, int maxWidth, Style style, CallbackInfoReturnable<String> cir) {
+  //        CaxtonModClient.onBrokenMethod();
+  //    }
 
   // Surprisingly, this method is never misused as egregiously as its String overload in Minecraft.
   // However, appending ellipses to the result will pose some problems.
@@ -115,21 +115,22 @@ public class TextHandlerMixin implements TextHandlerExt {
     cir.setReturnValue(caxtonTextHandler.trimToWidth(text, width, style));
   }
 
-  @Inject(
-      at = @At("HEAD"),
-      method = "getStyleAt(Lnet/minecraft/text/StringVisitable;I)Lnet/minecraft/text/Style;",
-      cancellable = true)
-  private void onGetStyleAt(StringVisitable text, int x, CallbackInfoReturnable<Style> cir) {
-    cir.setReturnValue(caxtonTextHandler.getStyleAt(text, x));
-  }
-
-  @Inject(
-      at = @At("HEAD"),
-      method = "getStyleAt(Lnet/minecraft/text/OrderedText;I)Lnet/minecraft/text/Style;",
-      cancellable = true)
-  private void onGetStyleAt(OrderedText text, int x, CallbackInfoReturnable<Style> cir) {
-    cir.setReturnValue(caxtonTextHandler.getStyleAt(text, x));
-  }
+  //    @Inject(
+  //            at = @At("HEAD"),
+  //            method =
+  // "getStyleAt(Lnet/minecraft/text/StringVisitable;I)Lnet/minecraft/text/Style;",
+  //            cancellable = true)
+  //    private void onGetStyleAt(StringVisitable text, int x, CallbackInfoReturnable<Style> cir) {
+  //        cir.setReturnValue(caxtonTextHandler.getStyleAt(text, x));
+  //    }
+  //
+  //    @Inject(
+  //            at = @At("HEAD"),
+  //            method = "getStyleAt(Lnet/minecraft/text/OrderedText;I)Lnet/minecraft/text/Style;",
+  //            cancellable = true)
+  //    private void onGetStyleAt(OrderedText text, int x, CallbackInfoReturnable<Style> cir) {
+  //        cir.setReturnValue(caxtonTextHandler.getStyleAt(text, x));
+  //    }
 
   @Inject(
       at = @At("HEAD"),

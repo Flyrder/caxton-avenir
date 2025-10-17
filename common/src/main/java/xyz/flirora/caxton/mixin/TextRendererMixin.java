@@ -100,6 +100,7 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
             y,
             color,
             shadow,
+            false,
             backgroundColor,
             -1,
             Float.POSITIVE_INFINITY));
@@ -108,7 +109,7 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
   @Inject(
       at = @At("HEAD"),
       method =
-          "prepare(Lnet/minecraft/text/OrderedText;FFIZI)Lnet/minecraft/client/font/TextRenderer$GlyphDrawable;",
+          "prepare(Lnet/minecraft/text/OrderedText;FFIZZI)Lnet/minecraft/client/font/TextRenderer$GlyphDrawable;",
       cancellable = true)
   private void onPrepareOrderedText(
       OrderedText text,
@@ -116,6 +117,7 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
       float y,
       int color,
       boolean shadow,
+      boolean trackSkeletons,
       int backgroundColor,
       CallbackInfoReturnable<TextRenderer.GlyphDrawable> cir) {
     cir.setReturnValue(
@@ -130,6 +132,7 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
             y,
             color,
             shadow,
+            trackSkeletons,
             backgroundColor,
             -1,
             Float.POSITIVE_INFINITY));

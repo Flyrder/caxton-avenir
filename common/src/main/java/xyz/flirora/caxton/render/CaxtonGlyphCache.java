@@ -141,7 +141,8 @@ public class CaxtonGlyphCache {
         CaxtonTextRenderLayers renderLayers,
         CaxtonGlyphCache cache,
         ConfiguredCaxtonFont configuredFont,
-        boolean outline) {
+        boolean outline,
+        float advance) {
       return this.entryBaked.computeIfAbsent(
           glyphId | (outline ? 0xF0000000 : 0),
           id -> {
@@ -171,7 +172,7 @@ public class CaxtonGlyphCache {
             float y1 = (float) ((shrink * margin) * scale);
             float x1 = (float) ((shrink * (atlasWidth - margin)) * scale);
             float y0 = (float) ((-shrink * (atlasHeight - margin)) * scale);
-            GlyphMetrics metrics = new CaxtonGlyphMetrics(configuredFont.shadowOffset());
+            GlyphMetrics metrics = new CaxtonGlyphMetrics(configuredFont.shadowOffset(), advance);
 
             return new BakedGlyphImpl(
                 metrics,

@@ -12,6 +12,7 @@
         "FontManagerResourceReloaderMixin",
         "FontProviderListMixin",
         "FontStorageMixin",
+        "GlyphGuiElementRenderStateMixin",
         "GuiRendererMixin",
         "InGameHudMixin",
         "LazyBakedGlyphAccessor",

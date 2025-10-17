@@ -92,6 +92,8 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
   @Shadow
   protected abstract OrderedText format(String string, int firstCharacterIndex);
 
+  @Shadow private boolean invert;
+
   @Override
   public void updateCaxtonText(boolean changed) {
     // Protect against mods that do things such as *gasp* registering
@@ -235,6 +237,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
           y,
           color,
           this.textShadow,
+          false,
           firstCharacterIndex,
           getInnerWidth());
       firstCharLocation =
@@ -416,6 +419,6 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     if (x1 < this.getX()) {
       x1 = this.getX();
     }
-    Voepfxo.drawSelection(context, x1, y1, x2, y2);
+    Voepfxo.drawSelection(context, x1, y1, x2, y2, this.invert);
   }
 }

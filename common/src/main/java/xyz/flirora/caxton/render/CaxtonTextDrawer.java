@@ -31,10 +31,12 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
   private final boolean shadow;
   private final int color;
   private final int backgroundColor;
+  private final boolean trackSkeletons;
   private float x;
   private float y;
-  private final List<TextDrawable> glyphs;
+  private final List<TextDrawable.DrawnGlyph> glyphs;
   @Nullable private List<TextDrawable> rectangles;
+  @Nullable private List<SkeletonGlyph> skeletonGlyphs;
   private final float xRight;
   private final Threshold threshold;
   private final Random random = Random.createLocal();
@@ -59,6 +61,7 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
       int color,
       int backgroundColor,
       boolean shadow,
+      boolean trackSkeletons,
       float xRight,
       Threshold threshold) {
     this.textRenderer = textRenderer;
@@ -70,6 +73,7 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
     this.glyphs = new ArrayList<>();
     this.xRight = xRight;
     this.threshold = threshold;
+    this.trackSkeletons = trackSkeletons;
   }
 
   public CaxtonTextDrawer(
@@ -78,9 +82,10 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
       float y,
       int color,
       boolean shadow,
+      boolean trackSkeletons,
       float xRight,
       Threshold threshold) {
-    this(textRenderer, x, y, color, 0, shadow, xRight, threshold);
+    this(textRenderer, x, y, color, 0, shadow, trackSkeletons, xRight, threshold);
   }
 
   public CaxtonTextDrawer outlined() {
@@ -122,7 +127,7 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
     }
   }
 
-  private void addGlyph(TextDrawable glyph) {
+  private void addGlyph(TextDrawable.DrawnGlyph glyph) {
     this.glyphs.add(glyph);
     this.updateTextBounds(
         glyph.getEffectiveMinX(),
@@ -141,6 +146,13 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
         rectangle.getEffectiveMinY(),
         rectangle.getEffectiveMaxX(),
         rectangle.getEffectiveMaxY());
+  }
+
+  private void addSkeletonGlyph(SkeletonGlyph glyph) {
+    if (this.skeletonGlyphs == null) {
+      this.skeletonGlyphs = new ArrayList<>();
+    }
+    this.skeletonGlyphs.add(glyph);
   }
 
   /**
@@ -173,10 +185,12 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
     float shadowOffset = glyphMetrics.getShadowOffset();
     float boldOffset = bold ? glyphMetrics.getBoldOffset() : 0.0f;
 
-    TextDrawable drawable =
+    TextDrawable.DrawnGlyph drawnGlyph =
         glyph.create(this.x, this.y, renderColor, shadowColor, style, boldOffset, shadowOffset);
-    if (drawable != null) {
-      this.addGlyph(drawable);
+    if (drawnGlyph != null) {
+      this.addGlyph(drawnGlyph);
+    } else if (this.trackSkeletons) {
+      this.addSkeletonGlyph(new SkeletonGlyph(this.x, this.y, advance, 7.0F, 9.0F, style));
     }
 
     this.updateBackgroundBounds(this.x, this.y, advance);
@@ -290,7 +304,8 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
 
       long atlasLoc = cacheForFont.getOrCreateAtlasLocation(glyphOffset + glyphId);
       BakedGlyph bakedGlyph =
-          cacheForFont.getBakedGlyph(glyphId, renderLayers, cache, configuredFont, this.outline);
+          cacheForFont.getBakedGlyph(
+              glyphId, renderLayers, cache, configuredFont, this.outline, advanceX * scale);
       if (bakedGlyph != null) {
         int atlasPageIndex = CaxtonAtlas.getPage(atlasLoc);
 
@@ -400,13 +415,19 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
                   0.0F));
     }
 
-    for (TextDrawable drawnGlyph : this.glyphs) {
+    for (TextDrawable.DrawnGlyph drawnGlyph : this.glyphs) {
       glyphDrawer.drawGlyph(drawnGlyph);
     }
 
     if (this.rectangles != null) {
       for (TextDrawable rectangle2 : this.rectangles) {
         glyphDrawer.drawRectangle(rectangle2);
+      }
+    }
+
+    if (this.skeletonGlyphs != null) {
+      for (SkeletonGlyph skeletonGlyph : this.skeletonGlyphs) {
+        glyphDrawer.addSkeleton(skeletonGlyph);
       }
     }
   }

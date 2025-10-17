@@ -38,6 +38,8 @@ public abstract class EditBoxWidgetMixin extends ScrollableTextFieldWidget {
 
   @Shadow @Final private int cursorColor;
 
+  @Shadow @Final private static int UNFOCUSED_BOX_TEXT_COLOR;
+
   public EditBoxWidgetMixin(int i, int j, int k, int l, Text text) {
     super(i, j, k, l, text);
   }
@@ -51,6 +53,19 @@ public abstract class EditBoxWidgetMixin extends ScrollableTextFieldWidget {
     CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) this.textRenderer).getCaxtonTextRenderer();
     CaxtonTextHandler cth = ctr.getHandler();
     String text = this.editBox.getText();
+
+    if (text.isEmpty() && !this.isFocused()) {
+      context.drawWrappedTextWithShadow(
+          this.textRenderer,
+          this.placeholder,
+          this.getTextX(),
+          this.getTextY(),
+          this.width - this.getPadding(),
+          UNFOCUSED_BOX_TEXT_COLOR);
+      ci.cancel();
+      return;
+    }
+
     int cursorPos = this.editBox.getCursor();
     boolean drawCursor =
         this.isFocused()
@@ -156,7 +171,12 @@ public abstract class EditBoxWidgetMixin extends ScrollableTextFieldWidget {
               Math.min(selection.endIndex(), line.endIndex()) - line.beginIndex(),
               (left, right) -> {
                 Voepfxo.drawSelection(
-                    context, selX + left, selY, selX + right, selY + this.textRenderer.fontHeight);
+                    context,
+                    selX + left,
+                    selY,
+                    selX + right,
+                    selY + this.textRenderer.fontHeight,
+                    true);
               });
         }
         y += this.textRenderer.fontHeight;

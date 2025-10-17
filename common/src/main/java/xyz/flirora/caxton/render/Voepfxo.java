@@ -84,14 +84,17 @@ public class Voepfxo {
                 ((DrawContextAccessor) context).getScissorStack().peekLast()));
   }
 
-  public static void drawSelection(DrawContext context, float x1, float y1, float x2, float y2) {
-    Voepfxo.fill(context, RenderPipelines.GUI_INVERT, x1, y1, x2, y2, 0xffffffff);
+  public static void drawSelection(
+      DrawContext context, float x1, float y1, float x2, float y2, boolean invert) {
+    if (invert) {
+      Voepfxo.fill(context, RenderPipelines.GUI_INVERT, x1, y1, x2, y2, 0xffffffff);
+    }
     Voepfxo.fill(context, RenderPipelines.GUI_TEXT_HIGHLIGHT, x1, y1, x2, y2, 0xff0000ff);
   }
 
   public static void drawTextWithShadow(
       DrawContext context, TextRenderer textRenderer, Text text, float x, float y, int color) {
-    Voepfxo.drawText(context, textRenderer, text, x, y, color, true);
+    Voepfxo.drawText(context, textRenderer, text, x, y, color, true, false);
   }
 
   public static void drawTextWithShadow(
@@ -107,11 +110,34 @@ public class Voepfxo {
   public static void drawText(
       DrawContext context,
       TextRenderer textRenderer,
-      @Nullable Text text,
+      String text,
       float x,
       float y,
       int color,
       boolean shadow) {
+    drawText(context, textRenderer, text, x, y, color, shadow, false);
+  }
+
+  public static void drawText(
+      DrawContext context,
+      TextRenderer textRenderer,
+      CaxtonText text,
+      float x,
+      float y,
+      int color,
+      boolean shadow) {
+    drawText(context, textRenderer, text, x, y, color, shadow, false);
+  }
+
+  public static void drawText(
+      DrawContext context,
+      TextRenderer textRenderer,
+      @Nullable Text text,
+      float x,
+      float y,
+      int color,
+      boolean shadow,
+      boolean trackSkeletons) {
     if (text == null) {
       return;
     }
@@ -122,7 +148,8 @@ public class Voepfxo {
         x,
         y,
         color,
-        shadow);
+        shadow,
+        trackSkeletons);
   }
 
   public static void drawText(
@@ -132,7 +159,8 @@ public class Voepfxo {
       float x,
       float y,
       int color,
-      boolean shadow) {
+      boolean shadow,
+      boolean trackSkeletons) {
     if (text == null) {
       return;
     }
@@ -145,18 +173,8 @@ public class Voepfxo {
         x,
         y,
         color,
-        shadow);
-  }
-
-  public static void drawText(
-      DrawContext context,
-      TextRenderer textRenderer,
-      @Nullable CaxtonText text,
-      float x,
-      float y,
-      int color,
-      boolean shadow) {
-    drawText(context, textRenderer, text, x, y, color, shadow, -1, Float.POSITIVE_INFINITY);
+        shadow,
+        trackSkeletons);
   }
 
   public static void drawText(
@@ -167,6 +185,29 @@ public class Voepfxo {
       float y,
       int color,
       boolean shadow,
+      boolean trackSkeletons) {
+    drawText(
+        context,
+        textRenderer,
+        text,
+        x,
+        y,
+        color,
+        shadow,
+        trackSkeletons,
+        -1,
+        Float.POSITIVE_INFINITY);
+  }
+
+  public static void drawText(
+      DrawContext context,
+      TextRenderer textRenderer,
+      @Nullable CaxtonText text,
+      float x,
+      float y,
+      int color,
+      boolean shadow,
+      boolean trackSkeletons,
       int firstCharacterIndex,
       float maxWidth) {
     if (text == null) {
@@ -185,6 +226,7 @@ public class Voepfxo {
                   color,
                   0,
                   shadow,
+                  trackSkeletons,
                   ((DrawContextAccessor) context).getScissorStack().peekLast()));
     }
   }
@@ -217,6 +259,7 @@ public class Voepfxo {
                 Math.round(y),
                 color,
                 0,
+                false,
                 false,
                 ((DrawContextAccessor) context).getScissorStack().peekLast()));
   }
