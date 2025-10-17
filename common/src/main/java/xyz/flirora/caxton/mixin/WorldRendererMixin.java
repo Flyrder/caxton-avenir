@@ -26,7 +26,7 @@ import xyz.flirora.caxton.render.WorldRendererVertexConsumerProvider;
 @Environment(EnvType.CLIENT)
 @Mixin(WorldRenderer.class)
 public class WorldRendererMixin {
-  @Unique private boolean warnOnNonWrvcp;
+  @Unique private boolean caxton$warnOnNonWrvcp;
 
   @Inject(method = "<init>", at = @At("RETURN"))
   private void initFields(
@@ -37,7 +37,7 @@ public class WorldRendererMixin {
       WorldRenderState entityRenderStates,
       RenderDispatcher entityRenderDispatcher,
       CallbackInfo ci) {
-    warnOnNonWrvcp = !CaxtonModClient.FORCE_DISABLE_BATCHING_HACK;
+    caxton$warnOnNonWrvcp = !CaxtonModClient.FORCE_DISABLE_BATCHING_HACK;
   }
 
   @Redirect(
@@ -59,10 +59,10 @@ public class WorldRendererMixin {
     immediate.draw(layer);
     if (immediate instanceof WorldRendererVertexConsumerProvider wrvcp) {
       wrvcp.drawCaxtonTextLayers();
-    } else if (warnOnNonWrvcp) {
+    } else if (caxton$warnOnNonWrvcp) {
       CaxtonModClient.LOGGER.warn(
           "World text batching hack was enabled but did not get a WorldRendererVertexConsumerProvider back. Assuming that another mod is batching world rendering.");
-      warnOnNonWrvcp = false;
+      caxton$warnOnNonWrvcp = false;
     }
   }
 }

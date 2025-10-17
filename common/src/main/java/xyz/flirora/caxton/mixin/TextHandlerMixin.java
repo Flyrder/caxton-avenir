@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin;
 
-import com.mojang.logging.LogUtils;
 import java.util.function.BiConsumer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -10,7 +9,6 @@ import net.minecraft.client.font.TextHandler;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.StringVisitable;
 import net.minecraft.text.Style;
-import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -24,17 +22,16 @@ import xyz.flirora.caxton.layout.TextHandlerExt;
 @Environment(EnvType.CLIENT)
 @Mixin(TextHandler.class)
 public class TextHandlerMixin implements TextHandlerExt {
-  @Unique private static final Logger LOGGER = LogUtils.getLogger();
-  @Unique private CaxtonTextHandler caxtonTextHandler;
+  @Unique private CaxtonTextHandler caxton$textHander;
 
   @Override
   public CaxtonTextHandler getCaxtonTextHandler() {
-    return caxtonTextHandler;
+    return caxton$textHander;
   }
 
   @Override
   public void setCaxtonTextHandler(CaxtonTextHandler handler) {
-    this.caxtonTextHandler = handler;
+    this.caxton$textHander = handler;
   }
 
   @Inject(at = @At("TAIL"), method = "<init>")
@@ -46,7 +43,7 @@ public class TextHandlerMixin implements TextHandlerExt {
 
   @Inject(at = @At("HEAD"), method = "getWidth(Ljava/lang/String;)F", cancellable = true)
   private void onGetWidth(String text, CallbackInfoReturnable<Float> cir) {
-    cir.setReturnValue(caxtonTextHandler.getWidth(text));
+    cir.setReturnValue(caxton$textHander.getWidth(text));
   }
 
   @Inject(
@@ -54,7 +51,7 @@ public class TextHandlerMixin implements TextHandlerExt {
       method = "getWidth(Lnet/minecraft/text/StringVisitable;)F",
       cancellable = true)
   private void onGetWidth(StringVisitable text, CallbackInfoReturnable<Float> cir) {
-    cir.setReturnValue(caxtonTextHandler.getWidth(text));
+    cir.setReturnValue(caxton$textHander.getWidth(text));
   }
 
   @Inject(
@@ -62,13 +59,13 @@ public class TextHandlerMixin implements TextHandlerExt {
       method = "getWidth(Lnet/minecraft/text/OrderedText;)F",
       cancellable = true)
   private void onGetWidth(OrderedText text, CallbackInfoReturnable<Float> cir) {
-    cir.setReturnValue(caxtonTextHandler.getWidth(text));
+    cir.setReturnValue(caxton$textHander.getWidth(text));
   }
 
   @Inject(at = @At("HEAD"), method = "getTrimmedLength", cancellable = true)
   private void onGetTrimmedLength(
       String text, int maxWidth, Style style, CallbackInfoReturnable<Integer> cir) {
-    cir.setReturnValue(caxtonTextHandler.getCharIndexAtX(text, maxWidth, style));
+    cir.setReturnValue(caxton$textHander.getCharIndexAtX(text, maxWidth, style));
   }
 
   @Inject(
@@ -88,7 +85,7 @@ public class TextHandlerMixin implements TextHandlerExt {
   @Inject(at = @At("HEAD"), method = "getEndingIndex", cancellable = true)
   private void onGetLimitedStringLength(
       String text, int maxWidth, Style style, CallbackInfoReturnable<Integer> cir) {
-    cir.setReturnValue(caxtonTextHandler.getCharIndexAtXFormatted(text, maxWidth, style));
+    cir.setReturnValue(caxton$textHander.getCharIndexAtXFormatted(text, maxWidth, style));
   }
 
   //    @Inject(at = @At("HEAD"), method = "limitString")
@@ -112,7 +109,7 @@ public class TextHandlerMixin implements TextHandlerExt {
       cancellable = true)
   private void onTrimToWidth(
       StringVisitable text, int width, Style style, CallbackInfoReturnable<StringVisitable> cir) {
-    cir.setReturnValue(caxtonTextHandler.trimToWidth(text, width, style));
+    cir.setReturnValue(caxton$textHander.trimToWidth(text, width, style));
   }
 
   //    @Inject(
@@ -143,7 +140,7 @@ public class TextHandlerMixin implements TextHandlerExt {
       Style style,
       BiConsumer<StringVisitable, Boolean> lineConsumer,
       CallbackInfo ci) {
-    caxtonTextHandler.wrapLines(text, maxWidth, style, lineConsumer);
+    caxton$textHander.wrapLines(text, maxWidth, style, lineConsumer);
     ci.cancel();
   }
 
@@ -159,7 +156,7 @@ public class TextHandlerMixin implements TextHandlerExt {
       boolean retainTrailingWordSplit,
       TextHandler.LineWrappingConsumer consumer,
       CallbackInfo ci) {
-    caxtonTextHandler.wrapLines(text, maxWidth, style, retainTrailingWordSplit, consumer);
+    caxton$textHander.wrapLines(text, maxWidth, style, retainTrailingWordSplit, consumer);
     ci.cancel();
   }
 }

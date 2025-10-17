@@ -19,7 +19,6 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4f;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -41,8 +40,7 @@ import xyz.flirora.caxton.render.Voepfxo;
 @Mixin(TextFieldWidget.class)
 public abstract class TextFieldWidgetMixin extends ClickableWidget
     implements Drawable, Element, TextFieldWidgetExt {
-  private static final Style SUGGESTION = Style.EMPTY.withColor(0xFF808080);
-  @Unique private static final Matrix4f IDENTITY = new Matrix4f();
+  @Unique private static final Style caxton$SUGGESTION = Style.EMPTY.withColor(0xFF808080);
   @Shadow @Final private static String HORIZONTAL_CURSOR;
   @Shadow @Final private TextRenderer textRenderer;
   @Shadow private String text;
@@ -51,13 +49,13 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
   @Shadow private int uneditableColor;
   @Shadow private boolean drawsBackground;
   @Shadow private int firstCharacterIndex;
-  @Unique private CaxtonText caxtonText;
+  @Unique private CaxtonText caxton$text;
   @Shadow private int selectionStart;
   @Shadow private int selectionEnd;
   @Shadow private @Nullable String suggestion;
   @Shadow private @Nullable Text placeholder;
   @Shadow private @Nullable Consumer<String> changedListener;
-  @Unique private boolean updatingCaxtonText = false;
+  @Unique private boolean caxton$updatingText = false;
 
   public TextFieldWidgetMixin(int x, int y, int width, int height, Text message) {
     super(x, y, width, height, message);
@@ -68,9 +66,6 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
 
   @Shadow
   protected abstract int getMaxLength();
-
-  @Shadow
-  public abstract void setCursor(int cursor, boolean shiftKeyPressed);
 
   @Shadow
   public abstract void setSelectionStart(int cursor);
@@ -102,8 +97,8 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     // + updatingCaxtonText + ") with text " + this.text);
     //        System.err.println("firstCharacterIndex = " + firstCharacterIndex + ", selection = " +
     // selectionStart + ".." + selectionEnd);
-    if (updatingCaxtonText) return;
-    updatingCaxtonText = true;
+    if (caxton$updatingText) return;
+    caxton$updatingText = true;
 
     if (changed && this.changedListener != null) {
       this.changedListener.accept(text);
@@ -118,17 +113,17 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
       if (!hideSuggestion && suggestion != null) {
         text =
             OrderedText.concat(
-                text, OrderedText.styledForwardsVisitedString(suggestion, SUGGESTION));
+                text, OrderedText.styledForwardsVisitedString(suggestion, caxton$SUGGESTION));
       }
 
       if (textRenderer == null) return;
       CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
-      this.caxtonText =
+      this.caxton$text =
           CaxtonText.from(
               text, ctr.getFontStorageAccessor(), true, false, ctr.getHandler().getCache());
       //        System.err.println("caxtonText = " + this.caxtonText);
     } finally {
-      updatingCaxtonText = false;
+      caxton$updatingText = false;
       this.updateTextPosition();
     }
   }
@@ -228,11 +223,11 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
 
     float firstCharLocation = 0, selectionStartLocation = 0;
 
-    if (caxtonText != null) {
+    if (caxton$text != null) {
       Voepfxo.drawText(
           context,
           textRenderer,
-          caxtonText,
+          caxton$text,
           x,
           y,
           color,
@@ -242,9 +237,9 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
           getInnerWidth());
       firstCharLocation =
           ctr.getHandler()
-              .getOffsetAtIndex(caxtonText, firstCharacterIndex, DirectionSetting.FORCE_LTR);
+              .getOffsetAtIndex(caxton$text, firstCharacterIndex, DirectionSetting.FORCE_LTR);
       selectionStartLocation =
-          ctr.getHandler().getOffsetAtIndex(caxtonText, selectionStart, DirectionSetting.AUTO);
+          ctr.getHandler().getOffsetAtIndex(caxton$text, selectionStart, DirectionSetting.AUTO);
     }
 
     boolean cursorIsVertical = selectionStart < text.length() || text.length() >= getMaxLength();
@@ -281,7 +276,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
       float finalFirstCharLocation = firstCharLocation;
       ctr.getHandler()
           .getHighlightRanges(
-              caxtonText,
+              caxton$text,
               Math.min(selectionStart, selectionEnd),
               Math.max(selectionStart, selectionEnd),
               (x0, x1) ->
@@ -305,7 +300,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
       method = "calculateCursorPos",
       cancellable = true)
   private void overrideCursorPosition(Click click, CallbackInfoReturnable<Integer> cir) {
-    if (caxtonText == null) {
+    if (caxton$text == null) {
       updateCaxtonText(false);
     }
 
@@ -313,7 +308,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
 
     float xOffset = Math.min((float) (click.x() - this.textX), this.getInnerWidth());
 
-    int index = ctr.getHandler().getCharIndexAtX(caxtonText, xOffset, firstCharacterIndex);
+    int index = ctr.getHandler().getCharIndexAtX(caxton$text, xOffset, firstCharacterIndex);
 
     cir.setReturnValue(index);
   }
@@ -322,7 +317,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
   private void onUpdateFirstCharacterIndex(int cursor, CallbackInfo ci) {
     int length = this.text.length();
 
-    if (this.textRenderer != null && this.caxtonText != null) {
+    if (this.textRenderer != null && this.caxton$text != null) {
       if (this.firstCharacterIndex > length) {
         this.firstCharacterIndex = length;
       }
@@ -333,9 +328,9 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
 
       float firstCharLocation =
           ctr.getHandler()
-              .getOffsetAtIndex(caxtonText, firstCharacterIndex, DirectionSetting.FORCE_LTR);
+              .getOffsetAtIndex(caxton$text, firstCharacterIndex, DirectionSetting.FORCE_LTR);
       float cursorLocation =
-          ctr.getHandler().getOffsetAtIndex(caxtonText, cursor, DirectionSetting.AUTO);
+          ctr.getHandler().getOffsetAtIndex(caxton$text, cursor, DirectionSetting.AUTO);
       //            System.err.println("updateFirstCharacterIndex: text = " + this.text);
       //            System.err.println("firstCharacterIndex = " + firstCharacterIndex + ", cursor =
       // " + cursor);
@@ -347,17 +342,17 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
         // Be compatible with mods that set the text of a text field before its width.
         // See #47 and #48
         this.firstCharacterIndex =
-            ctr.getHandler().getCharIndexAtX(caxtonText, cursorLocation - width, -1);
+            ctr.getHandler().getCharIndexAtX(caxton$text, cursorLocation - width, -1);
       } else if (cursorLocation < firstCharLocation) {
         // Update firstCharacterIndex to point to a char farther to the left
         this.firstCharacterIndex =
             ctr.getHandler()
                 .getCharIndexAtX(
-                    caxtonText, Math.min(firstCharLocation - width, cursorLocation), -1);
+                    caxton$text, Math.min(firstCharLocation - width, cursorLocation), -1);
       } else if (cursorLocation >= firstCharLocation + width) {
         // Update firstCharacterIndex to point to a char farther to the right
         this.firstCharacterIndex =
-            ctr.getHandler().getCharIndexAfterX(caxtonText, cursorLocation - width, -1);
+            ctr.getHandler().getCharIndexAfterX(caxton$text, cursorLocation - width, -1);
       }
 
       this.firstCharacterIndex = MathHelper.clamp(this.firstCharacterIndex, 0, length);
@@ -369,20 +364,20 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
   private void onUpdateTextPosition(CallbackInfo ci) {
     if (this.textRenderer != null) {
       if (this.isCentered()) {
-        if (this.caxtonText == null) {
+        if (this.caxton$text == null) {
           this.textX = this.getX() + (this.getWidth() / 2);
         } else {
           CaxtonTextHandler handler =
               ((HasCaxtonTextRenderer) this.textRenderer).getCaxtonTextRenderer().getHandler();
           int i =
               handler.getCharIndexAtX(
-                  this.caxtonText, this.getInnerWidth(), this.firstCharacterIndex, true);
+                  this.caxton$text, this.getInnerWidth(), this.firstCharacterIndex, true);
           this.textX =
               Math.round(
                   this.getX()
                       + (this.getWidth()
                               - handler.getOffsetAtIndex(
-                                  this.caxtonText, i, DirectionSetting.FORCE_LTR))
+                                  this.caxton$text, i, DirectionSetting.FORCE_LTR))
                           / 2);
         }
       } else {

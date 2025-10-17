@@ -31,7 +31,7 @@ import xyz.flirora.caxton.font.CaxtonTypeface;
 @Environment(EnvType.CLIENT)
 @Mixin(FontStorage.class)
 public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStorage {
-  @Unique private Int2ObjectMap<CaxtonGlyphPair>[] caxtonGlyphCache = null;
+  @Unique private Int2ObjectMap<CaxtonGlyphPair>[] caxton$glyphCache = null;
   @Shadow private List<Font> availableFonts;
 
   @Shadow @Final private Supplier<BakedGlyph> blankGlyphSupplier;
@@ -44,16 +44,16 @@ public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStora
   @Inject(at = @At(value = "TAIL"), method = "<init>")
   @SuppressWarnings("unchecked")
   private void init(CallbackInfo ci) {
-    caxtonGlyphCache = new Int2ObjectMap[4];
+    caxton$glyphCache = new Int2ObjectMap[4];
     for (int i = 0; i < 4; ++i) {
-      caxtonGlyphCache[i] = new Int2ObjectOpenHashMap<>();
+      caxton$glyphCache[i] = new Int2ObjectOpenHashMap<>();
     }
   }
 
   @Inject(at = @At(value = "HEAD"), method = "setFonts(Ljava/util/List;Ljava/util/Set;)V")
   private void onSetFonts(
       List<Font.FontFilterPair> allFonts, Set<FontFilterType> activeFilters, CallbackInfo ci) {
-    for (Int2ObjectMap<CaxtonGlyphPair> cacheEntry : caxtonGlyphCache) {
+    for (Int2ObjectMap<CaxtonGlyphPair> cacheEntry : caxton$glyphCache) {
       synchronized (cacheEntry) {
         cacheEntry.clear();
       }
@@ -61,7 +61,7 @@ public abstract class FontStorageMixin implements AutoCloseable, CaxtonFontStora
   }
 
   @Unique private Int2ObjectMap<CaxtonGlyphPair> getCacheForStyle(Style style) {
-    return caxtonGlyphCache[(style.isBold() ? 2 : 0) | (style.isItalic() ? 1 : 0)];
+    return caxton$glyphCache[(style.isBold() ? 2 : 0) | (style.isItalic() ? 1 : 0)];
   }
 
   // Always retain Caxton fonts in the set of used fonts.

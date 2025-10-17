@@ -38,7 +38,7 @@ public class TextGuiElementRenderStateMixin {
 
   @Shadow @Final public boolean shadow;
 
-  @Shadow @Final private boolean trackSkeletons;
+  @Shadow @Final boolean trackSkeletons;
 
   @Inject(method = "prepare", at = @At("HEAD"))
   private void onPrepare(CallbackInfoReturnable<TextRenderer.GlyphDrawable> cir) {

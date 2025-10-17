@@ -19,7 +19,7 @@ import xyz.flirora.caxton.render.HasCaxtonTextRenderer;
 @Mixin(EditBox.class)
 public abstract class EditBoxMixin {
   @Shadow private int cursor;
-  @Unique private int ttwLength;
+  @Unique private int caxton$ttwLength;
 
   @Shadow
   protected abstract EditBox.Substring getCurrentLine();
@@ -71,7 +71,8 @@ public abstract class EditBoxMixin {
                   "Lnet/minecraft/client/font/TextRenderer;trimToWidth(Ljava/lang/String;I)Ljava/lang/String;"))
   private String redirectTrimToWidthL(TextRenderer textRenderer, String text, int maxWidth) {
     // reinterpreted to be getCharIndexAtX
-    this.ttwLength = textRenderer.getTextHandler().getTrimmedLength(text, maxWidth, Style.EMPTY);
+    this.caxton$ttwLength =
+        textRenderer.getTextHandler().getTrimmedLength(text, maxWidth, Style.EMPTY);
     return null;
   }
 
@@ -79,7 +80,7 @@ public abstract class EditBoxMixin {
       method = "moveCursorLine",
       at = @At(value = "INVOKE", target = "Ljava/lang/String;length()I"))
   private int redirectTrimmedStringLengthL(String s) {
-    return ttwLength;
+    return caxton$ttwLength;
   }
 
   @Redirect(
@@ -91,7 +92,8 @@ public abstract class EditBoxMixin {
                   "Lnet/minecraft/client/font/TextRenderer;trimToWidth(Ljava/lang/String;I)Ljava/lang/String;"))
   private String redirectTrimToWidthXy(TextRenderer textRenderer, String text, int maxWidth) {
     // reinterpreted to be getCharIndexAtX
-    this.ttwLength = textRenderer.getTextHandler().getTrimmedLength(text, maxWidth, Style.EMPTY);
+    this.caxton$ttwLength =
+        textRenderer.getTextHandler().getTrimmedLength(text, maxWidth, Style.EMPTY);
     return null;
   }
 
@@ -99,6 +101,6 @@ public abstract class EditBoxMixin {
       method = "moveCursor(DD)V",
       at = @At(value = "INVOKE", target = "Ljava/lang/String;length()I"))
   private int redirectTrimmedStringLengthXy(String s) {
-    return ttwLength;
+    return caxton$ttwLength;
   }
 }

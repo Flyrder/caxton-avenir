@@ -36,15 +36,16 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
 
   // Would like to put this in a FontManager mixin, but it doesn’t pass itself to TextRenderer’s
   // constructor.
-  @Unique private static final Supplier<CaxtonGlyphCache> CACHE =
+  @Unique private static final Supplier<CaxtonGlyphCache> caxton$CACHE =
       Suppliers.memoize(
           () -> new CaxtonGlyphCache(MinecraftClient.getInstance().getTextureManager()));
 
-  @Unique private CaxtonTextRenderer caxtonRenderer;
+  @Unique private CaxtonTextRenderer caxton$renderer;
 
   @Inject(at = @At("TAIL"), method = "<init>")
   private void onInit(TextRenderer.GlyphsProvider fonts, CallbackInfo ci) {
-    this.caxtonRenderer = new CaxtonTextRenderer((TextRenderer) (Object) this, handler, CACHE);
+    this.caxton$renderer =
+        new CaxtonTextRenderer((TextRenderer) (Object) this, handler, caxton$CACHE);
   }
 
   // Stub out TextRenderer#mirror call; we will call this on each
@@ -54,7 +55,7 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
   // for more details.
   @Inject(method = "mirror", at = @At("HEAD"), cancellable = true)
   private void onMirror(String text, CallbackInfoReturnable<String> cir) {
-    caxtonRenderer.rtl = true;
+    caxton$renderer.rtl = true;
     cir.setReturnValue(text);
   }
 
@@ -69,7 +70,7 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
       VertexConsumerProvider vertexConsumers,
       int light,
       CallbackInfo ci) {
-    caxtonRenderer.drawWithOutline(
+    caxton$renderer.drawWithOutline(
         text, x, y, color, outlineColor, matrix, vertexConsumers, light, true);
     ci.cancel();
   }
@@ -88,14 +89,14 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
       int backgroundColor,
       CallbackInfoReturnable<TextRenderer.GlyphDrawable> cir) {
     cir.setReturnValue(
-        caxtonRenderer.prepare(
+        caxton$renderer.prepare(
             CaxtonText.fromFormatted(
                 text,
-                caxtonRenderer.getFontStorageAccessor(),
+                caxton$renderer.getFontStorageAccessor(),
                 Style.EMPTY,
-                caxtonRenderer.validatesAdvance(),
+                caxton$renderer.validatesAdvance(),
                 this.isRightToLeft(),
-                caxtonRenderer.getHandler().getCache()),
+                caxton$renderer.getHandler().getCache()),
             x,
             y,
             color,
@@ -121,13 +122,13 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
       int backgroundColor,
       CallbackInfoReturnable<TextRenderer.GlyphDrawable> cir) {
     cir.setReturnValue(
-        caxtonRenderer.prepare(
+        caxton$renderer.prepare(
             CaxtonText.from(
                 text,
-                caxtonRenderer.getFontStorageAccessor(),
-                caxtonRenderer.validatesAdvance(),
+                caxton$renderer.getFontStorageAccessor(),
+                caxton$renderer.validatesAdvance(),
                 this.isRightToLeft(),
-                caxtonRenderer.getHandler().getCache()),
+                caxton$renderer.getHandler().getCache()),
             x,
             y,
             color,
@@ -140,6 +141,6 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
 
   @Override
   public CaxtonTextRenderer getCaxtonTextRenderer() {
-    return caxtonRenderer;
+    return caxton$renderer;
   }
 }

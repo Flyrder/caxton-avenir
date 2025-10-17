@@ -28,12 +28,12 @@ import xyz.flirora.caxton.render.Voepfxo;
 @Environment(EnvType.CLIENT)
 @Mixin(AbstractSignEditScreen.class)
 public abstract class AbstractSignEditScreenMixin extends Screen {
-  @Shadow @Final private SignBlockEntity blockEntity;
+  @Shadow @Final protected SignBlockEntity blockEntity;
   @Shadow @Final private String[] messages;
   @Shadow private SelectionManager selectionManager;
   @Shadow private int currentRow;
-  @Unique private CaxtonText rowText;
-  @Unique private CaxtonText currentRowText;
+  @Unique private CaxtonText caxton$rowText;
+  @Unique private CaxtonText caxton$currentRowText;
 
   protected AbstractSignEditScreenMixin(Text title) {
     super(title);
@@ -58,7 +58,7 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
       boolean shadow) {
     CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
     CaxtonTextHandler cth = ctr.getHandler();
-    this.rowText =
+    this.caxton$rowText =
         CaxtonText.fromFormatted(
             currentLine,
             ctr.getFontStorageAccessor(),
@@ -68,9 +68,15 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
             cth.getCache());
     // The use of `==` is intentional; this check will pass if we are
     // indeed on the current row.
-    if (currentLine == this.messages[this.currentRow]) this.currentRowText = rowText;
+    if (currentLine == this.messages[this.currentRow]) this.caxton$currentRowText = caxton$rowText;
     Voepfxo.drawText(
-        instance, textRenderer, this.rowText, -cth.getWidth(rowText) / 2.0f, y, color, false);
+        instance,
+        textRenderer,
+        this.caxton$rowText,
+        -cth.getWidth(caxton$rowText) / 2.0f,
+        y,
+        color,
+        false);
   }
 
   // Use the more precise CaxtonTextHandler.getWidth instead of TextHandler.getWidth
@@ -92,7 +98,7 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
       boolean shadow) {
     CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
     CaxtonTextHandler cth = ctr.getHandler();
-    Voepfxo.drawText(instance, textRenderer, "_", cth.getWidth(rowText) / 2.0f, y, color);
+    Voepfxo.drawText(instance, textRenderer, "_", cth.getWidth(caxton$rowText) / 2.0f, y, color);
   }
 
   @Redirect(
@@ -110,10 +116,12 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
     int yAdj = 4 * this.blockEntity.getTextLineHeight() / 2;
     int lineY = currentRow * this.blockEntity.getTextLineHeight() - yAdj;
 
-    float x = cth.getWidth(currentRowText) / 2;
+    float x = cth.getWidth(caxton$currentRowText) / 2;
     float cursorOffset =
         cth.getOffsetAtIndex(
-            currentRowText, Math.min(selectionStart, currentLine.length()), DirectionSetting.AUTO);
+            caxton$currentRowText,
+            Math.min(selectionStart, currentLine.length()),
+            DirectionSetting.AUTO);
     float cursorX = cursorOffset - x;
     Voepfxo.fill(
         instance,
@@ -136,12 +144,12 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
 
     int selectionStart = selectionManager.getSelectionStart();
     int selectionEnd = selectionManager.getSelectionEnd();
-    float x = cth.getWidth(this.currentRowText) / 2;
+    float x = cth.getWidth(this.caxton$currentRowText) / 2;
     int yAdj = 4 * this.blockEntity.getTextLineHeight() / 2;
     int lineY = currentRow * this.blockEntity.getTextLineHeight() - yAdj;
 
     cth.getHighlightRanges(
-        currentRowText,
+        caxton$currentRowText,
         Math.min(selectionStart, selectionEnd),
         Math.max(selectionStart, selectionEnd),
         (start, end) -> {
