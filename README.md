@@ -2,7 +2,8 @@
 
 **Caxton**, named after [William Caxton], is a Minecraft mod that adds TrueType and OpenType font support.
 
-Available on [Modrinth](https://modrinth.com/mod/caxton)!
+Available on [Modrinth](https://modrinth.com/mod/caxton)
+and [CurseForge](https://www.curseforge.com/minecraft/mc-mods/caxton)!
 
 ## Features
 
