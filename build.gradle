@@ -102,7 +102,7 @@ spotless {
 }
 
 publishMods {
-    changelog = Files.readString(java.nio.file.Path.of("CHANGELOG.md"))
+    changelog = providers.fileContents(layout.projectDirectory.file("CHANGELOG.md")).asText
     type = STABLE
 
     def cfOptions = curseforgeOptions {
@@ -138,14 +138,14 @@ publishMods {
         displayName = "Caxton " + "${rootProject.mod_version}+${rootProject.minecraft_version}-FABRIC"
     }
 
-    // Forge specific options for CurseForge
-    curseforge("curseforgeNeoforge") {
-        from cfOptions
-        file project(":neoforge")
-        modLoaders.add("neoforge")
-        version = "${rootProject.mod_version}+${rootProject.minecraft_version}-NEOFORGE"
-        displayName = "Caxton " + "${rootProject.mod_version}+${rootProject.minecraft_version}-NEOFORGE"
-    }
+//    // Forge specific options for CurseForge
+//    curseforge("curseforgeNeoforge") {
+//        from cfOptions
+//        file project(":neoforge")
+//        modLoaders.add("neoforge")
+//        version = "${rootProject.mod_version}+${rootProject.minecraft_version}-NEOFORGE"
+//        displayName = "Caxton " + "${rootProject.mod_version}+${rootProject.minecraft_version}-NEOFORGE"
+//    }
 
     // Fabric specific options for Modrinth
     modrinth("modrinthFabric") {
@@ -159,12 +159,12 @@ publishMods {
         displayName = "Caxton " + "${rootProject.mod_version}+${rootProject.minecraft_version}-FABRIC"
     }
 
-    // Forge specific options for Modrinth
-    modrinth("modrinthNeoforge") {
-        from mrOptions
-        file project(":neoforge")
-        modLoaders.add("neoforge")
-        version = "${rootProject.mod_version}+${rootProject.minecraft_version}-NEOFORGE"
-        displayName = "Caxton " + "${rootProject.mod_version}+${rootProject.minecraft_version}-NEOFORGE"
-    }
+//    // Forge specific options for Modrinth
+//    modrinth("modrinthNeoforge") {
+//        from mrOptions
+//        file project(":neoforge")
+//        modLoaders.add("neoforge")
+//        version = "${rootProject.mod_version}+${rootProject.minecraft_version}-NEOFORGE"
+//        displayName = "Caxton " + "${rootProject.mod_version}+${rootProject.minecraft_version}-NEOFORGE"
+//    }
 }

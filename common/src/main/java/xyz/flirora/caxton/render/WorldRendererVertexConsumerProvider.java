@@ -13,7 +13,7 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.BufferAllocator;
-import xyz.flirora.caxton.mixin.RenderPhaseAccessor;
+import xyz.flirora.caxton.mixin.RenderLayerAccessor;
 
 /** A version of {@link VertexConsumerProvider.Immediate} that retains all Caxton text layers. */
 @Environment(EnvType.CLIENT)
@@ -34,7 +34,7 @@ public class WorldRendererVertexConsumerProvider extends VertexConsumerProvider.
   }
 
   private static boolean isCaxtonTextLayer(RenderLayer layer) {
-    return CAXTON_TEXT_RENDER_LAYER_NAMES.contains(((RenderPhaseAccessor) layer).getName());
+    return CAXTON_TEXT_RENDER_LAYER_NAMES.contains(((RenderLayerAccessor) layer).getName());
   }
 
   // Well done, Mojang. You truly have yfucked Caxton over in 1.21.

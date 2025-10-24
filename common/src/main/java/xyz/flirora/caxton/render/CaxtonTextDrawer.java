@@ -31,12 +31,12 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
   private final boolean shadow;
   private final int color;
   private final int backgroundColor;
-  private final boolean trackSkeletons;
+  private final boolean trackEmpty;
   private float x;
   private float y;
-  private final List<TextDrawable.DrawnGlyph> glyphs;
+  private final List<TextDrawable.DrawnGlyphRect> glyphs;
   @Nullable private List<TextDrawable> rectangles;
-  @Nullable private List<SkeletonGlyph> skeletonGlyphs;
+  @Nullable private List<EmptyGlyphRect> emptyGlyphRects;
   private final float xRight;
   private final Threshold threshold;
   private final Random random = Random.createLocal();
@@ -61,7 +61,7 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
       int color,
       int backgroundColor,
       boolean shadow,
-      boolean trackSkeletons,
+      boolean trackEmpty,
       float xRight,
       Threshold threshold) {
     this.textRenderer = textRenderer;
@@ -73,7 +73,7 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
     this.glyphs = new ArrayList<>();
     this.xRight = xRight;
     this.threshold = threshold;
-    this.trackSkeletons = trackSkeletons;
+    this.trackEmpty = trackEmpty;
   }
 
   public CaxtonTextDrawer(
@@ -82,10 +82,10 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
       float y,
       int color,
       boolean shadow,
-      boolean trackSkeletons,
+      boolean trackEmpty,
       float xRight,
       Threshold threshold) {
-    this(textRenderer, x, y, color, 0, shadow, trackSkeletons, xRight, threshold);
+    this(textRenderer, x, y, color, 0, shadow, trackEmpty, xRight, threshold);
   }
 
   public CaxtonTextDrawer outlined() {
@@ -127,7 +127,7 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
     }
   }
 
-  private void addGlyph(TextDrawable.DrawnGlyph glyph) {
+  private void addGlyph(TextDrawable.DrawnGlyphRect glyph) {
     this.glyphs.add(glyph);
     this.updateTextBounds(
         glyph.getEffectiveMinX(),
@@ -148,11 +148,11 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
         rectangle.getEffectiveMaxY());
   }
 
-  private void addSkeletonGlyph(SkeletonGlyph glyph) {
-    if (this.skeletonGlyphs == null) {
-      this.skeletonGlyphs = new ArrayList<>();
+  private void addEmptyGlyphRect(EmptyGlyphRect glyph) {
+    if (this.emptyGlyphRects == null) {
+      this.emptyGlyphRects = new ArrayList<>();
     }
-    this.skeletonGlyphs.add(glyph);
+    this.emptyGlyphRects.add(glyph);
   }
 
   /**
@@ -185,12 +185,12 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
     float shadowOffset = glyphMetrics.getShadowOffset();
     float boldOffset = bold ? glyphMetrics.getBoldOffset() : 0.0f;
 
-    TextDrawable.DrawnGlyph drawnGlyph =
+    TextDrawable.DrawnGlyphRect drawnGlyph =
         glyph.create(this.x, this.y, renderColor, shadowColor, style, boldOffset, shadowOffset);
     if (drawnGlyph != null) {
       this.addGlyph(drawnGlyph);
-    } else if (this.trackSkeletons) {
-      this.addSkeletonGlyph(new SkeletonGlyph(this.x, this.y, advance, 7.0F, 9.0F, style));
+    } else if (this.trackEmpty) {
+      this.addEmptyGlyphRect(new EmptyGlyphRect(this.x, this.y, advance, 7.0F, 9.0F, style));
     }
 
     this.updateBackgroundBounds(this.x, this.y, advance);
@@ -415,7 +415,7 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
                   0.0F));
     }
 
-    for (TextDrawable.DrawnGlyph drawnGlyph : this.glyphs) {
+    for (TextDrawable.DrawnGlyphRect drawnGlyph : this.glyphs) {
       glyphDrawer.drawGlyph(drawnGlyph);
     }
 
@@ -425,9 +425,9 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
       }
     }
 
-    if (this.skeletonGlyphs != null) {
-      for (SkeletonGlyph skeletonGlyph : this.skeletonGlyphs) {
-        glyphDrawer.addSkeleton(skeletonGlyph);
+    if (this.emptyGlyphRects != null) {
+      for (EmptyGlyphRect emptyGlyphRect : this.emptyGlyphRects) {
+        glyphDrawer.drawEmptyGlyphRect(emptyGlyphRect);
       }
     }
   }

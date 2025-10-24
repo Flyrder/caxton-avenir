@@ -11,6 +11,8 @@ import net.minecraft.client.font.TextRenderLayerSet;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.render.*;
 import xyz.flirora.caxton.font.FontTech;
+import xyz.flirora.caxton.layout.RenderSetupExt;
+import xyz.flirora.caxton.mixin.RenderLayerAccessor;
 
 @Environment(EnvType.CLIENT)
 public class CaxtonTextRenderLayers {
@@ -108,43 +110,19 @@ public class CaxtonTextRenderLayers {
     }
   }
 
-  private abstract static class RenderLayerFunctions extends RenderLayer {
-    // not used; only here because I’m lazy
-    public RenderLayerFunctions(
-        String name,
-        int size,
-        boolean hasCrumbling,
-        boolean translucent,
-        Runnable begin,
-        Runnable end) {
-      super(name, size, hasCrumbling, translucent, begin, end);
-    }
-
+  private abstract static class RenderLayerFunctions {
     private static RenderLayer make(
         String name, RenderPipeline pipeline, CaxtonAtlas.Page page, boolean rasterized) {
-      return RenderLayer.of(
-          name,
-          786432,
-          false,
-          false,
-          pipeline,
-          RenderLayer.MultiPhaseParameters.builder()
-              .texture(new RenderPhase.Texture(page.getId()))
-              //                            .target(RenderPhase.TRANSLUCENT_TARGET)
-              .lightmap(ENABLE_LIGHTMAP)
-              .texturing(
-                  rasterized
-                      ? RenderPhase.DEFAULT_TEXTURING
-                      // Hope this hackery becomes unnecessary in a later version.
-                      : new Texturing(
-                          "set_unit_range",
-                          () -> {
-                            CaxtonShaders.currentUnitRangeBuffer = page.getUnitRangeBuffer();
-                          },
-                          () -> {
-                            CaxtonShaders.currentUnitRangeBuffer = null;
-                          }))
-              .build(false));
+      RenderSetup setup =
+          RenderSetup.builder(pipeline)
+              .expectedBufferSize(0xc0000)
+              .texture("Sampler0", page.getId())
+              .useLightmap()
+              .build();
+      if (!rasterized) {
+        ((RenderSetupExt) (Object) setup).caxton$setUnitRange(page.getUnitRangeBuffer());
+      }
+      return RenderLayerAccessor.construct(name, setup);
     }
 
     private static RenderLayer ofText(CaxtonAtlas.Page page) {

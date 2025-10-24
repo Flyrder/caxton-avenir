@@ -425,7 +425,7 @@ public class CaxtonTextRenderer {
       float y,
       int color,
       boolean shadow,
-      boolean trackSkeletons,
+      boolean trackEmpty,
       int backgroundColor,
       int leftmostCodePoint,
       float maxWidth) {
@@ -440,7 +440,7 @@ public class CaxtonTextRenderer {
             color,
             backgroundColor,
             shadow,
-            trackSkeletons,
+            trackEmpty,
             x + maxWidth,
             new Threshold(leftmostCodePoint));
     for (RunGroup runGroup : text.runGroups()) {

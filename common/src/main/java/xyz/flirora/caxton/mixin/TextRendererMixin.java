@@ -118,7 +118,7 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
       float y,
       int color,
       boolean shadow,
-      boolean trackSkeletons,
+      boolean trackEmpty,
       int backgroundColor,
       CallbackInfoReturnable<TextRenderer.GlyphDrawable> cir) {
     cir.setReturnValue(
@@ -133,7 +133,7 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
             y,
             color,
             shadow,
-            trackSkeletons,
+            trackEmpty,
             backgroundColor,
             -1,
             Float.POSITIVE_INFINITY));

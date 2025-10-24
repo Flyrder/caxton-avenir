@@ -87,7 +87,7 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
   @Shadow
   protected abstract OrderedText format(String string, int firstCharacterIndex);
 
-  @Shadow private boolean invert;
+  @Shadow private boolean invertSelectionBackground;
 
   @Override
   public void updateCaxtonText(boolean changed) {
@@ -414,6 +414,6 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     if (x1 < this.getX()) {
       x1 = this.getX();
     }
-    Voepfxo.drawSelection(context, x1, y1, x2, y2, this.invert);
+    Voepfxo.drawSelection(context, x1, y1, x2, y2, this.invertSelectionBackground);
   }
 }

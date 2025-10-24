@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.render;
 
-import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
@@ -64,7 +63,4 @@ public class CaxtonShaders {
           .withUniform("UnitRangeU", UniformType.UNIFORM_BUFFER)
           .withBlend(BlendFunction.TRANSLUCENT)
           .build();
-
-  // Hacky shit to deal with Mojang fuckage
-  public static GpuBuffer currentUnitRangeBuffer = null;
 }

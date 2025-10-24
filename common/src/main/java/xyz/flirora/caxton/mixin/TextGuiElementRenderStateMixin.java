@@ -38,7 +38,7 @@ public class TextGuiElementRenderStateMixin {
 
   @Shadow @Final public boolean shadow;
 
-  @Shadow @Final boolean trackSkeletons;
+  @Shadow @Final boolean trackEmpty;
 
   @Inject(method = "prepare", at = @At("HEAD"))
   private void onPrepare(CallbackInfoReturnable<TextRenderer.GlyphDrawable> cir) {
@@ -63,7 +63,7 @@ public class TextGuiElementRenderStateMixin {
                 sneakyBoi.y(),
                 this.color,
                 this.shadow,
-                this.trackSkeletons,
+                this.trackEmpty,
                 this.backgroundColor,
                 sneakyBoi.firstCharacterIndex(),
                 sneakyBoi.maxWidth());
