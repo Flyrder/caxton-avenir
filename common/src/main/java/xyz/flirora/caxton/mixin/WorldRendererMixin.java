@@ -54,7 +54,7 @@ public class WorldRendererMixin {
                   @At(
                       value = "INVOKE",
                       target =
-                          "Lnet/minecraft/client/render/RenderLayer;getWaterMask()Lnet/minecraft/client/render/RenderLayer;")))
+                          "Lnet/minecraft/client/render/RenderLayers;waterMask()Lnet/minecraft/client/render/RenderLayer;")))
   private void addTranslucentDraws(VertexConsumerProvider.Immediate immediate, RenderLayer layer) {
     immediate.draw(layer);
     if (immediate instanceof WorldRendererVertexConsumerProvider wrvcp) {
