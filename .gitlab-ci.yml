@@ -35,7 +35,7 @@ build:
       optional: true
   artifacts:
     paths:
-      - forge/build/libs/
+      - neoforge/build/libs/
       - fabric/build/libs/
 
 #test:
