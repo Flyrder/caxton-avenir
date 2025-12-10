@@ -1,6 +1,6 @@
 // (C) 2023-2024 +merlan #flirora.
 // SPDX-License-Identifier: MIT
-package xyz.flirora.caxton.forge;
+package xyz.flirora.caxton.neoforge;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
@@ -13,7 +13,7 @@ import xyz.flirora.caxton.command.ClientCommand;
 import xyz.flirora.caxton.command.ClientCommandRegistrar;
 import xyz.flirora.caxton.command.GenericArgumentBuilderFactory;
 
-public record ClientCommandRegistrarResourceLocationFlavor(
+public record ClientCommandRegistrarCodepointMapFlavor(
     CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess)
     implements ClientCommandRegistrar {
   @Override
@@ -23,7 +23,7 @@ public record ClientCommandRegistrarResourceLocationFlavor(
         builder.create(
             context ->
                 command.run(
-                    context, new ClientCommandSourceResourceLocationEdition(context.getSource())),
+                    context, new ClientCommandSourceCodepointMapFlavor(context.getSource())),
             this.registryAccess));
   }
 

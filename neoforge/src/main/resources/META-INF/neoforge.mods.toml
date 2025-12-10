@@ -16,14 +16,14 @@ logoFile = "assets/caxton/icon.png"
 [[dependencies.caxton]]
 modId = "neoforge"
 type = "required"
-versionRange = "[21.9.0-beta,)"
+versionRange = "[21.11.0-beta,)"
 ordering = "NONE"
 side = "CLIENT"
 
 [[dependencies.caxton]]
 modId = "minecraft"
 type = "required"
-versionRange = "[1.21.9,)"
+versionRange = "[1.21.11,)"
 ordering = "NONE"
 side = "CLIENT"
 
@@ -51,4 +51,4 @@ reason = "Emojiful replaces the text renderer, ignoring Caxton’s changes"
 [[mixins]]
 config = "caxton.mixins.json"
 [[mixins]]
-config = "caxton.forge.mixins.json"
+config = "caxton.neoforge.mixins.json"

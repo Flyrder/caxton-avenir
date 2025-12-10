@@ -1,7 +1,7 @@
 {
     "mixins": [],
     "minVersion": "0.8",
-    "package": "xyz.flirora.caxton.forge.mixin",
+    "package": "xyz.flirora.caxton.neoforge.mixin",
     "injectors": {"defaultRequire": 1},
     "compatibilityLevel": "JAVA_17",
     "client": ["FontTypeMixin"],

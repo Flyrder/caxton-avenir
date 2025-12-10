@@ -1,6 +1,6 @@
 // (C) 2023 +merlan #flirora.
 // SPDX-License-Identifier: MIT
-package xyz.flirora.caxton.forge;
+package xyz.flirora.caxton.neoforge;
 
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -8,7 +8,7 @@ import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import xyz.flirora.caxton.PlatformHooks;
 
-public class PlatformHooksResourceLocationFlavor implements PlatformHooks {
+public class PlatformHooksCodepointMapFlavor implements PlatformHooks {
   @Override
   public boolean isModLoaded(String modId) {
     return ModList.get().isLoaded(modId);

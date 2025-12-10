@@ -13,17 +13,17 @@ import net.minecraft.util.Identifier;
 import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.command.CaxtonCommands;
 
-public class CaxtonModIdentifierFlavor implements ClientModInitializer {
+public class CaxtonModGlyphContainerFlavor implements ClientModInitializer {
   @Override
   public void onInitializeClient() {
-    CaxtonModClient.init(new PlatformHooksIdentifierFlavor());
+    CaxtonModClient.init(new PlatformHooksGlyphContainerFlavor());
 
     ModContainer modContainer =
         FabricLoader.getInstance().getModContainer(CaxtonModClient.MOD_ID).get();
     ClientCommandRegistrationCallback.EVENT.register(
         (dispatcher, registryAccess) -> {
           CaxtonCommands.register(
-              new ClientCommandRegistrarIdentifierFlavor(dispatcher, registryAccess));
+              new ClientCommandRegistrarGlyphContainerFlavor(dispatcher, registryAccess));
         });
     CaxtonModClient.LOGGER.info("Registering built-in resource packs");
     for (String id : CaxtonModClient.BUILTIN_PACKS) {

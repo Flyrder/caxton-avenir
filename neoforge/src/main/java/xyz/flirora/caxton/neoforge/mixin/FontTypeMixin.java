@@ -1,6 +1,6 @@
 // (C) 2023 +merlan #flirora.
 // SPDX-License-Identifier: MIT
-package xyz.flirora.caxton.forge.mixin;
+package xyz.flirora.caxton.neoforge.mixin;
 
 import com.mojang.serialization.MapCodec;
 import java.util.ArrayList;

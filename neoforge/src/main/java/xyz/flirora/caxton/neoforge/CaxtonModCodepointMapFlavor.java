@@ -1,6 +1,6 @@
 // (C) 2023-2024 +merlan #flirora.
 // SPDX-License-Identifier: MIT
-package xyz.flirora.caxton.forge;
+package xyz.flirora.caxton.neoforge;
 
 import net.minecraft.resource.*;
 import net.minecraft.text.Text;
@@ -15,15 +15,15 @@ import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.command.CaxtonCommands;
 
 @Mod(CaxtonModClient.MOD_ID)
-public class CaxtonModResourceLocationFlavor {
-  public CaxtonModResourceLocationFlavor(IEventBus modBus) {
+public class CaxtonModCodepointMapFlavor {
+  public CaxtonModCodepointMapFlavor(IEventBus modBus) {
     modBus.addListener(this::initCaxtonMod);
-    NeoForge.EVENT_BUS.addListener(CaxtonModResourceLocationFlavor::registerCommands);
+    NeoForge.EVENT_BUS.addListener(CaxtonModCodepointMapFlavor::registerCommands);
     modBus.addListener(this::addPackFinders);
   }
 
   private void initCaxtonMod(AddClientReloadListenersEvent event) {
-    CaxtonModClient.init(new PlatformHooksResourceLocationFlavor());
+    CaxtonModClient.init(new PlatformHooksCodepointMapFlavor());
   }
 
   private void addPackFinders(AddPackFindersEvent event) {
@@ -43,7 +43,7 @@ public class CaxtonModResourceLocationFlavor {
 
   private static void registerCommands(RegisterClientCommandsEvent event) {
     CaxtonCommands.register(
-        new ClientCommandRegistrarResourceLocationFlavor(
+        new ClientCommandRegistrarCodepointMapFlavor(
             event.getDispatcher(), event.getBuildContext()));
   }
 }

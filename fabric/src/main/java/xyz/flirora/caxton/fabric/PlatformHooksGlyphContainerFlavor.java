@@ -7,7 +7,7 @@ import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
 import xyz.flirora.caxton.PlatformHooks;
 
-public class PlatformHooksIdentifierFlavor implements PlatformHooks {
+public class PlatformHooksGlyphContainerFlavor implements PlatformHooks {
   @Override
   public boolean isModLoaded(String modId) {
     return FabricLoader.getInstance().isModLoaded(modId);

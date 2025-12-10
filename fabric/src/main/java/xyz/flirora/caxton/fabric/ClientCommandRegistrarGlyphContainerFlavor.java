@@ -12,7 +12,7 @@ import xyz.flirora.caxton.command.ClientCommand;
 import xyz.flirora.caxton.command.ClientCommandRegistrar;
 import xyz.flirora.caxton.command.GenericArgumentBuilderFactory;
 
-public record ClientCommandRegistrarIdentifierFlavor(
+public record ClientCommandRegistrarGlyphContainerFlavor(
     CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess)
     implements ClientCommandRegistrar {
   @Override
@@ -20,7 +20,8 @@ public record ClientCommandRegistrarIdentifierFlavor(
     dispatcher.register(
         builder.create(
             context ->
-                command.run(context, new ClientCommandSourceIdentifierEdition(context.getSource())),
+                command.run(
+                    context, new ClientCommandSourceGlyphContainerFlavor(context.getSource())),
             this.registryAccess));
   }
 

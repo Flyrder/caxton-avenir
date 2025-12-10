@@ -1,18 +1,18 @@
 // (C) 2023 +merlan #flirora.
 // SPDX-License-Identifier: MIT
-package xyz.flirora.caxton.fabric;
+package xyz.flirora.caxton.neoforge;
 
 import java.util.function.Supplier;
-import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 import xyz.flirora.caxton.command.ClientCommandSource;
 
-public record ClientCommandSourceIdentifierEdition(FabricClientCommandSource underlying)
+public record ClientCommandSourceCodepointMapFlavor(ServerCommandSource underlying)
     implements ClientCommandSource {
   @Override
   public void sendFeedback(Supplier<Text> message) {
-    underlying.sendFeedback(message.get());
+    underlying.sendFeedback(message, false);
   }
 
   @Override
@@ -22,6 +22,7 @@ public record ClientCommandSourceIdentifierEdition(FabricClientCommandSource und
 
   @Override
   public MinecraftClient getClient() {
-    return underlying.getClient();
+    // Best we can do. :shrug:
+    return MinecraftClient.getInstance();
   }
 }
