@@ -1,3 +1,3 @@
-## 0.8.0
+## 0.9.0-alpha.1
 
-Initial release to CurseForge.
+Update to 1.21.11 (only Fabric for now)
