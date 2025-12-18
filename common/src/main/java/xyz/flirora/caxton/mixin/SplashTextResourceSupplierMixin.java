@@ -25,7 +25,7 @@ import xyz.flirora.caxton.render.Voepfxo;
 @Environment(EnvType.CLIENT)
 @Mixin(SplashTextResourceSupplier.class)
 public abstract class SplashTextResourceSupplierMixin
-    extends SinglePreparationResourceReloader<List<String>> {
+    extends SinglePreparationResourceReloader<List<Text>> {
   @Unique private static final Text[] caxton$TEXTS = {
     Text.literal("lena aaxa leev axel lana en laap axel var tuus salt sein, non ladia tu."),
     Text.literal("non ter vil le fai le miyut velt a faar."),
