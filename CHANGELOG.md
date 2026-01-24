@@ -1,3 +1,3 @@
-## 0.9.0-alpha.1
+## 0.9.0-alpha.2
 
-Update to 1.21.11 (now on NeoForge!)
+* Fix rendering bugs with text outlines in raster fonts

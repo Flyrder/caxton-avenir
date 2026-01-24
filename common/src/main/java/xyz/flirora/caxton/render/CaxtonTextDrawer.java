@@ -305,10 +305,14 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
       long atlasLoc = cacheForFont.getOrCreateAtlasLocation(glyphOffset + glyphId);
       BakedGlyph bakedGlyph =
           cacheForFont.getBakedGlyph(
-              glyphId, renderLayers, cache, configuredFont, this.outline, advanceX * scale);
+              glyphId,
+              renderLayers,
+              cache,
+              configuredFont,
+              this.outline,
+              advanceX * scale,
+              glyphOffset);
       if (bakedGlyph != null) {
-        int atlasPageIndex = CaxtonAtlas.getPage(atlasLoc);
-
         long glyphBbox = font.getBbox(glyphId);
         short bbXMin = (short) glyphBbox;
         short bbYMin = (short) (glyphBbox >> 16);
@@ -398,7 +402,6 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
 
   @Override
   public void draw(TextRenderer.GlyphDrawer glyphDrawer) {
-    BakedGlyph bakedGlyph = null;
     if (ColorHelper.getAlpha(this.backgroundColor) != 0) {
       glyphDrawer.drawRectangle(
           textRenderer

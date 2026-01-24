@@ -23,7 +23,10 @@ public class WorldRendererVertexConsumerProvider extends VertexConsumerProvider.
           "caxton_text",
           "caxton_text_see_through",
           "caxton_text_outline",
-          "caxton_text_polygon_offset");
+          "caxton_text_polygon_offset",
+          "caxton_text_raster",
+          "caxton_text_see_through_raster",
+          "caxton_text_polygon_offset_raster");
 
   private final Map<RenderLayer, BufferAllocator> caxtonTextLayerAllocators = new HashMap<>();
   private final Map<RenderLayer, BufferBuilder> caxtonTextLayerBuilders = new HashMap<>();

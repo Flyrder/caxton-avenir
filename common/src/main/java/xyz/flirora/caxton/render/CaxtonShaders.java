@@ -63,4 +63,13 @@ public class CaxtonShaders {
           .withUniform("UnitRangeU", UniformType.UNIFORM_BUFFER)
           .withBlend(BlendFunction.TRANSLUCENT)
           .build();
+  public static final RenderPipeline TEXT_OUTLINE_RASTER =
+      RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
+          .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text_outline_raster"))
+          .withVertexShader("core/rendertype_text_intensity")
+          .withFragmentShader("core/rendertype_text_intensity")
+          .withSampler("Sampler0")
+          .withSampler("Sampler2")
+          .withBlend(BlendFunction.TRANSLUCENT)
+          .build();
 }

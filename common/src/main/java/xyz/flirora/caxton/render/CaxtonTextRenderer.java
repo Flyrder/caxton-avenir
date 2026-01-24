@@ -535,8 +535,6 @@ public class CaxtonTextRenderer {
                 ? font.font().getGlyphCount()
                 : 0;
 
-        // FIXME (hard): underlines and strikethroughs don’t render
-        // properly with this strategy
         for (int i = 0; i < shapingResults.length; i++) {
           ShapingResult shapingResult = shapingResults[i];
           centralDrawer.acceptShapedRun(

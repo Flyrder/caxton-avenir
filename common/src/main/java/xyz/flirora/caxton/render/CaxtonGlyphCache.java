@@ -142,11 +142,12 @@ public class CaxtonGlyphCache {
         CaxtonGlyphCache cache,
         ConfiguredCaxtonFont configuredFont,
         boolean outline,
-        float advance) {
+        float advance,
+        int glyphOffset) {
       return this.entryBaked.computeIfAbsent(
-          glyphId | (outline ? 0xF0000000 : 0),
+          glyphId | (outline ? 0x80000000 : 0),
           id -> {
-            long atlasLoc = this.getOrCreateAtlasLocation(glyphId);
+            long atlasLoc = this.getOrCreateAtlasLocation(glyphId + glyphOffset);
             if (atlasLoc == 0) {
               return null;
             }

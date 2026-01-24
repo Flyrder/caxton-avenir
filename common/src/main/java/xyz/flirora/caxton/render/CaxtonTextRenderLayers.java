@@ -22,14 +22,16 @@ public class CaxtonTextRenderLayers {
           RenderLayerFunctions::ofTextSeeThrough,
           RenderLayerFunctions::ofTextOffset,
           RenderLayerFunctions::ofTextOutline,
-          CaxtonShaders.TEXT);
+          CaxtonShaders.TEXT,
+          CaxtonShaders.TEXT_OUTLINE);
   private final Group raster =
       new Group(
           RenderLayerFunctions::ofTextR,
           RenderLayerFunctions::ofTextSeeThroughR,
           RenderLayerFunctions::ofTextOffsetR,
           RenderLayerFunctions::ofTextR,
-          RenderPipelines.RENDERTYPE_TEXT_INTENSITY);
+          RenderPipelines.RENDERTYPE_TEXT_INTENSITY,
+          CaxtonShaders.TEXT_OUTLINE_RASTER);
 
   public void clear() {
     msdf.clear();
@@ -62,19 +64,21 @@ public class CaxtonTextRenderLayers {
         ofTextSeeThrough,
         ofTextOffset,
         ofTextOutline;
-    private final RenderPipeline pipeline;
+    private final RenderPipeline pipeline, outlinePipeline;
 
     public Group(
         Function<CaxtonAtlas.Page, RenderLayer> ofText,
         Function<CaxtonAtlas.Page, RenderLayer> ofTextSeeThrough,
         Function<CaxtonAtlas.Page, RenderLayer> ofTextOffset,
         Function<CaxtonAtlas.Page, RenderLayer> ofTextOutline,
-        RenderPipeline pipeline) {
+        RenderPipeline pipeline,
+        RenderPipeline outlinePipeline) {
       this.ofText = ofText;
       this.ofTextSeeThrough = ofTextSeeThrough;
       this.ofTextOffset = ofTextOffset;
       this.ofTextOutline = ofTextOutline;
       this.pipeline = pipeline;
+      this.outlinePipeline = outlinePipeline;
     }
 
     public void clear() {
@@ -99,7 +103,7 @@ public class CaxtonTextRenderLayers {
             textOutline.computeIfAbsent(page, this.ofTextOutline),
             textSeeThrough.computeIfAbsent(page, this.ofTextSeeThrough),
             textOffset.computeIfAbsent(page, this.ofTextOffset),
-            CaxtonShaders.TEXT_OUTLINE);
+            this.outlinePipeline);
       } else {
         return new TextRenderLayerSet(
             text.computeIfAbsent(page, this.ofText),
@@ -155,7 +159,10 @@ public class CaxtonTextRenderLayers {
 
     private static RenderLayer ofTextOffsetR(CaxtonAtlas.Page page) {
       return make(
-          "caxton_text_outline_raster", RenderPipelines.RENDERTYPE_TEXT_INTENSITY, page, true);
+          "caxton_text_polygon_offset_raster",
+          RenderPipelines.RENDERTYPE_TEXT_INTENSITY,
+          page,
+          true);
     }
 
     //        public static class Shayder extends RenderPhase.ShaderProgram {
