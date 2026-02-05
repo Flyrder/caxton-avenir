@@ -27,19 +27,23 @@ import xyz.flirora.caxton.render.Voepfxo;
 public abstract class SplashTextResourceSupplierMixin
     extends SinglePreparationResourceReloader<List<Text>> {
   @Unique private static final Text[] caxton$TEXTS = {
-    Text.literal("lena aaxa leev axel lana en laap axel var tuus salt sein, non ladia tu."),
-    Text.literal("non ter vil le fai le miyut velt a faar."),
-    Text.literal("drołecþe ašir eslasos anasos vonat ħara; cere fose."),
-    Text.literal("pevescþasos ašir łirlen anasos vonat ħara; mena fose."),
-    Text.literal("naðesos anor jonas łorcþit ħare; jorniłirþ cercli mevas’ce menat pentu se."),
-    Text.literal("ênsêna orgit noldeþa inora; cajoþ il cerþel mêven tełaverþ."),
-    Text.literal(
-        "feljan racriþ narviłos roc lê gcjani nêrge; aspoþ’pe mîr’moc c·erifos roc cþere."),
-    Text.literal("eti crešit cfjoþelt mjonelþa meðałes nîs mivełen cenvat nevla."),
-    Text.literal("telmaðirþ cehit geðates aline ar sêrnime mitrit denestâs tal!"),
+    create("lena aaxa leev axel lana en laap axel var tuus salt sein, non ladia tu."),
+    create("non ter vil le fai le miyut velt a faar."),
+    create("drołecþe ašir eslasos anasos vonat ħara; cere fose."),
+    create("pevescþasos ašir łirlen anasos vonat ħara; mena fose."),
+    create("naðesos anor jonas łorcþit ħare; jorniłirþ cercli mevas’ce menat pentu se."),
+    create("ênsêna orgit noldeþa inora; cajoþ il cerþel mêven tełaverþ."),
+    create("feljan racriþ narviłos roc lê gcjani nêrge; aspoþ’pe mîr’moc c·erifos roc cþere."),
+    create("eti crešit cfjoþelt mjonelþa meðałes nîs mivełen cenvat nevla."),
+    create("telmaðirþ cehit geðates aline ar sêrnime mitrit denestâs tal!"),
   };
 
   @Shadow @Final private static Random RANDOM;
+
+  @Shadow
+  private static Text create(String text) {
+    return null;
+  }
 
   @Inject(method = "get", at = @At("HEAD"), cancellable = true)
   private void onGet(CallbackInfoReturnable<SplashTextRenderer> cir) {
@@ -59,7 +63,7 @@ public abstract class SplashTextResourceSupplierMixin
       Text text = ((SplashTextRendererAccessor) cir.getReturnValue()).getText();
       String s;
       if ((s = text.getLiteralString()) != null) {
-        text = Text.literal(Voepfxo.shingetsuGaShirokuMarukuKagayaiteIruYoruNi(s));
+        text = create(Voepfxo.shingetsuGaShirokuMarukuKagayaiteIruYoruNi(s));
         cir.setReturnValue(new SplashTextRenderer(text));
       }
     }

@@ -1,3 +1,3 @@
-## 0.9.0-alpha.2
+## 0.9.0-alpha.3
 
-* Fix rendering bugs with text outlines in raster fonts
+* Fix color of easter egg splash texts
