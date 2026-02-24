@@ -6,17 +6,39 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import xyz.flirora.caxton.font.CaxtonFont;
 
-/*
-0 | glyph id, plus (1 << 16) if unsafe_to_break
-1 | cluster index
-2 | x advance
-3 | y advance
-4 | x offset
-5 | y offset
-
-note to self: glyphs are returned in visual order!
-This means that the codepoint indices will be returned in descending order for RTL text.
-*/
+/**
+ * A result of shaping a run of text. Typically, a separate instance is returned for each bidi run.
+ *
+ * <p>This is returned by the native method {@link xyz.flirora.caxton.dll.CaxtonInternal#shape(long,
+ * char[], int[])}.
+ *
+ * <p>The {@link #data} field is laid out as an interleaved array, with each glyph represented by 6
+ * {@code int}s:
+ *
+ * <table>
+ *     <thead><tr><th>Offset</th><th>Use</th></tr></thead>
+ *     <tbody>
+ *         <tr><td>0</td><td><a href="https://docs.rs/harfrust/latest/harfrust/struct.GlyphInfo.html#structfield.glyph_id">Glyph ID</a>, plus {@code 1 << 24} if this glyph is marked as <a href="https://docs.rs/harfrust/latest/harfrust/struct.GlyphInfo.html#method.unsafe_to_break">unsafe to break</a>. (Bits 16 to 23 are unused for <a href="https://github.com/harfbuzz/boring-expansion-spec/blob/main/beyond-64k.md">potential future extensions to glyph limits</a>.)</td></tr>
+ *         <tr><td>1</td><td><a href="https://docs.rs/harfrust/latest/harfrust/struct.GlyphInfo.html#structfield.cluster">Cluster index</a></td></tr>
+ *         <tr><td>2</td><td><var>x</var>-advance, in font units</td></tr>
+ *         <tr><td>3</td><td><var>y</var>-advance, in font units</td></tr>
+ *         <tr><td>4</td><td><var>x</var>-offset, in font units</td></tr>
+ *         <tr><td>5</td><td><var>y</var>-offset, in font units</td></tr>
+ *     </tbody>
+ * </table>
+ *
+ * <p><strong>Glyphs are always returned in visual order.</strong>
+ *
+ * @param data An array holding <a
+ *     href="https://docs.rs/harfrust/latest/harfrust/struct.GlyphInfo.html">glyph</a> and <a
+ *     href="https://docs.rs/harfrust/latest/harfrust/struct.GlyphPosition.html">position</a> data
+ *     (see impl note)
+ * @param totalWidth The sum of the <var>x</var>-advances for the glyphs
+ * @param totalLength The length of the string that was laid out, in UTF-16 code units
+ * @implNote The unsafe-to-break flag is unused, as Caxton does not yet support reusing shaping
+ *     results after line breaking. The <var>y</var>-advance data is also unused, since Caxton does
+ *     not support vertical layout.
+ */
 @Environment(EnvType.CLIENT)
 public record ShapingResult(int[] data, int totalWidth, int totalLength) {
   public ShapingResult {

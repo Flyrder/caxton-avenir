@@ -478,6 +478,7 @@ public class CaxtonTextHandler {
             int r0 = runGroup.getCharOffset() + start + shapingResult.clusterIndex(i);
             int r1 = runGroup.getCharOffset() + start + shapingResult.clusterLimit(i);
             if (r0 <= textIndex && textIndex < r1) {
+              // TODO: Use GDEF ligature caret list (see #75).
               float frac = ((float) (textIndex - r0)) / (r1 - r0);
               if (direction.treatAsRtl(level % 2 != 0)) { // RTL correction
                 frac = 1 - frac;
@@ -859,13 +860,26 @@ public class CaxtonTextHandler {
     void accept(StringVisitable line, boolean continuation, boolean rtl);
   }
 
+  /** Helper class for computing text selection ranges. */
   private static class Highlighter {
     private final int startIndex, endIndex;
     private final HighlightConsumer callback;
     private boolean wasRtl = false;
-    private float offset = 0.0f;
-    private float leftBound = Float.NaN;
 
+    /** Current cumulative offset. Uses {@code double} to mitigate precision errors. */
+    private double offset = 0.0f;
+
+    /** Left edge of current selection, or {@code Double.NaN} if there is none */
+    private double leftBound = Double.NaN;
+
+    /**
+     * Creates a new {@linkplain Highlighter}.
+     *
+     * @param startIndex The startward index of the selection, in UTF-16 code units.
+     * @param endIndex The endward index of the selection, in UTF-16 code units.
+     * @param callback The {@link HighlightConsumer} to which the individual highlight ranges should
+     *     be passed.
+     */
     private Highlighter(int startIndex, int endIndex, HighlightConsumer callback) {
       this.startIndex = startIndex;
       this.endIndex = endIndex;
@@ -873,50 +887,78 @@ public class CaxtonTextHandler {
       //            System.out.printf("Highlighter(%d, %d)\n", startIndex, endIndex);
     }
 
+    /**
+     * Accepts a glyph range, possibly producing a highlight range.
+     *
+     * @param r0 The code unit index corresponding to the left edge of the glyph
+     * @param r1 The code unit index corresponding to the right edge of the glyph
+     * @param rtl Whether this glyph is in a right-to-left run
+     * @param glyphWidth The width of the glyph, in scaled units
+     */
     public void accept(int r0, int r1, boolean rtl, float glyphWidth) {
-      //            System.out.printf("accept(%d, %d, %b, %f) with leftBound = %f, offset = %f\n",
+      //            System.out.printf("accept(%d, %d, %b, %f) with leftBound = %d, offset = %d\n",
       // r0, r1, rtl, glyphWidth, leftBound, offset);
       if (r1 <= r0) {
         return;
       }
-      if (!Float.isNaN(leftBound)) {
-        float rightBound = Float.NaN;
+
+      // Try to continue the current selection to the left edge of this glyph
+      if (!Double.isNaN(leftBound)) {
+        double rightBound = Double.NaN;
         if (rtl != wasRtl) {
+          // If we switched directionality, then end the range at the directionality boundary.
           rightBound = offset;
-        } else if (rtl && r1 >= startIndex && startIndex > r0) {
-          float frac = ((float) startIndex - r1) / (r0 - r1);
-          rightBound = offset + frac * glyphWidth;
-        } else if (!rtl && r0 <= endIndex && endIndex < r1) {
-          float frac = ((float) endIndex - r0) / (r1 - r0);
-          rightBound = offset + frac * glyphWidth;
         } else if (r1 < startIndex || endIndex < r0) {
           rightBound = offset;
         }
-        if (!Float.isNaN(rightBound)) {
-          callback.accept(leftBound, rightBound);
-          leftBound = Float.NaN;
+        if (!Double.isNaN(rightBound)) {
+          endRange(rightBound);
         }
       }
-      if (Float.isNaN(leftBound)) {
+
+      // Try to start a new selection from the left edge of this glyph
+      if (Double.isNaN(leftBound)) {
+        // TODO: Use GDEF ligature caret list (see #75).
         if (rtl && r1 >= endIndex && endIndex > r0) {
-          float frac = ((float) endIndex - r1) / (r0 - r1);
+          double frac = ((double) (endIndex - r1)) / (r0 - r1);
           leftBound = offset + frac * glyphWidth;
         } else if (!rtl && r0 <= startIndex && startIndex < r1) {
-          float frac = ((float) startIndex - r0) / (r1 - r0);
+          double frac = ((double) (startIndex - r0)) / (r1 - r0);
           leftBound = offset + frac * glyphWidth;
         } else if (startIndex <= r0 && r1 <= endIndex) {
           leftBound = offset;
         }
       }
+
+      // Try to continue the current selection to the right edge of this glyph
+      if (!Double.isNaN(leftBound)) {
+        double rightBound = Double.NaN;
+        // TODO: Use GDEF ligature caret list (see #75).
+        if (rtl && r1 >= startIndex && startIndex > r0) {
+          double frac = ((double) (startIndex - r1)) / (r0 - r1);
+          rightBound = offset + frac * glyphWidth;
+        } else if (!rtl && r0 <= endIndex && endIndex < r1) {
+          double frac = ((double) (endIndex - r0)) / (r1 - r0);
+          rightBound = offset + frac * glyphWidth;
+        }
+        if (!Double.isNaN(rightBound)) {
+          endRange(rightBound);
+        }
+      }
+
       offset += glyphWidth;
       wasRtl = rtl;
     }
 
     public void finish() {
-      if (!Float.isNaN(leftBound)) {
-        callback.accept(leftBound, offset);
-        leftBound = Float.NaN;
+      if (!Double.isNaN(leftBound)) {
+        endRange(offset);
       }
+    }
+
+    private void endRange(double rightBound) {
+      callback.accept((float) leftBound, (float) rightBound);
+      leftBound = Double.NaN;
     }
   }
 }
