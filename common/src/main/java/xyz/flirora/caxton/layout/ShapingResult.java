@@ -33,7 +33,7 @@ import xyz.flirora.caxton.font.CaxtonFont;
  *     href="https://docs.rs/harfrust/latest/harfrust/struct.GlyphInfo.html">glyph</a> and <a
  *     href="https://docs.rs/harfrust/latest/harfrust/struct.GlyphPosition.html">position</a> data
  *     (see impl note)
- * @param totalWidth The sum of the <var>x</var>-advances for the glyphs
+ * @param totalWidth The sum of the <var>x</var>-advances for the glyphs, in font units
  * @param totalLength The length of the string that was laid out, in UTF-16 code units
  * @implNote The unsafe-to-break flag is unused, as Caxton does not yet support reusing shaping
  *     results after line breaking. The <var>y</var>-advance data is also unused, since Caxton does

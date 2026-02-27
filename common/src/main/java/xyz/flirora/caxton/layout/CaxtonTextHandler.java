@@ -81,6 +81,16 @@ public class CaxtonTextHandler {
     return cache;
   }
 
+  /**
+   * Returns the width of a glyph in a legacy font.
+   *
+   * <p><strong>This should be used for legacy font handling only.</strong> It does not and cannot
+   * give a meaningful result for Caxton fonts.
+   *
+   * @param codePoint the code point of the glyph to get
+   * @param style the {@link Style} to use
+   * @return the width in scaled units
+   */
   public float getWidth(int codePoint, Style style) {
     return ((TextHandlerAccessor) vanillaHandler).getWidthRetriever().getWidth(codePoint, style);
   }
@@ -515,11 +525,15 @@ public class CaxtonTextHandler {
     Highlighter highlighter = new Highlighter(startIndex, endIndex, callback);
 
     for (RunGroup runGroup : text.runGroups()) {
+      int charOffset = runGroup.getCharOffset();
+      // TODO: It might be possible to skip over entire run groups, but we would have to store the
+      // width of each run group in this case.
+
       ConfiguredCaxtonFont font = runGroup.getFont();
       if (font == null) {
         runGroup.acceptRender(
             (index, style, codePoint, rtl) -> {
-              int index2 = index + runGroup.getCharOffset();
+              int index2 = index + charOffset;
               highlighter.accept(index2, index2 + 1, rtl, getWidth(codePoint, style));
               return true;
             });
@@ -528,16 +542,26 @@ public class CaxtonTextHandler {
         ShapingResult[] shapingResults = runGroup.getShapingResults();
         int[] bidiRuns = runGroup.getBidiRuns();
 
-        int runIndex = 0;
-        for (ShapingResult shapingResult : shapingResults) {
+        for (int runIndex = 0; runIndex < shapingResults.length; runIndex++) {
+          ShapingResult shapingResult = shapingResults[runIndex];
           int start = bidiRuns[SHAPING_RUN_STRIDE * runIndex + SHAPING_RUN_OFF_START];
+          int end = bidiRuns[SHAPING_RUN_STRIDE * runIndex + SHAPING_RUN_OFF_END];
           boolean rtl = bidiRuns[SHAPING_RUN_STRIDE * runIndex + SHAPING_RUN_OFF_LEVEL] % 2 != 0;
+
+          // Is the bidi run entirely outside (or inside) the highlight range?
+          if (areIntervalsDisjoint(startIndex, endIndex, charOffset + start, charOffset + end)) {
+            highlighter.pass(scale * shapingResult.totalWidth(), rtl);
+            continue;
+          } else if (intervalEncloses(startIndex, endIndex, charOffset + start, charOffset + end)) {
+            highlighter.permeate(scale * shapingResult.totalWidth(), rtl);
+            continue;
+          }
+
           for (int i = 0; i < shapingResult.numGlyphs(); ++i) {
-            int r0 = runGroup.getCharOffset() + start + shapingResult.clusterIndex(i);
-            int r1 = runGroup.getCharOffset() + start + shapingResult.clusterLimit(i);
+            int r0 = charOffset + start + shapingResult.clusterIndex(i);
+            int r1 = charOffset + start + shapingResult.clusterLimit(i);
             highlighter.accept(r0, r1, rtl, scale * shapingResult.advanceX(i));
           }
-          ++runIndex;
         }
       }
     }
@@ -950,6 +974,22 @@ public class CaxtonTextHandler {
       wasRtl = rtl;
     }
 
+    public void pass(float runWidth, boolean rtl) {
+      if (!Double.isNaN(leftBound)) {
+        endRange(offset);
+      }
+      offset += runWidth;
+      wasRtl = rtl;
+    }
+
+    public void permeate(float runWidth, boolean rtl) {
+      if (Double.isNaN(leftBound)) {
+        leftBound = offset;
+      }
+      offset += runWidth;
+      wasRtl = rtl;
+    }
+
     public void finish() {
       if (!Double.isNaN(leftBound)) {
         endRange(offset);
@@ -960,5 +1000,19 @@ public class CaxtonTextHandler {
       callback.accept((float) leftBound, (float) rightBound);
       leftBound = Double.NaN;
     }
+  }
+
+  /**
+   * @return whether the intervals {@code [x1, x2)} and {@code [y1, y2)} are disjoint
+   */
+  private boolean areIntervalsDisjoint(int x1, int x2, int y1, int y2) {
+    return x1 >= y2 || y1 >= x2;
+  }
+
+  /**
+   * @return whether the interval {@code [x1, x2)} is a superset of {@code [y1, y2)}
+   */
+  private boolean intervalEncloses(int x1, int x2, int y1, int y2) {
+    return y1 >= x1 && y2 <= x2;
   }
 }
