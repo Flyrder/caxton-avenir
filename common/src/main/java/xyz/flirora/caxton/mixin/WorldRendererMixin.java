@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin;
 
+import com.llamalad7.mixinextras.injector.ModifyReceiver;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.BufferBuilderStorage;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.render.block.entity.BlockEntityRenderManager;
@@ -17,7 +17,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xyz.flirora.caxton.CaxtonModClient;
@@ -40,13 +39,12 @@ public class WorldRendererMixin {
     caxton$warnOnNonWrvcp = !CaxtonModClient.FORCE_DISABLE_BATCHING_HACK;
   }
 
-  @Redirect(
+  @ModifyReceiver(
       method = {"method_62214", "lambda$addMainPass$1"}, // Lambda in renderMain
       at =
           @At(
               value = "INVOKE",
-              target =
-                  "Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;draw(Lnet/minecraft/client/render/RenderLayer;)V",
+              target = "Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;draw()V",
               ordinal = 0),
       slice =
           @Slice(
@@ -54,9 +52,9 @@ public class WorldRendererMixin {
                   @At(
                       value = "INVOKE",
                       target =
-                          "Lnet/minecraft/client/render/RenderLayers;waterMask()Lnet/minecraft/client/render/RenderLayer;")))
-  private void addTranslucentDraws(VertexConsumerProvider.Immediate immediate, RenderLayer layer) {
-    immediate.draw(layer);
+                          "Lnet/minecraft/client/render/command/RenderDispatcher;renderTranslucent()V")))
+  private VertexConsumerProvider.Immediate addTranslucentDraws(
+      VertexConsumerProvider.Immediate immediate) {
     if (immediate instanceof WorldRendererVertexConsumerProvider wrvcp) {
       wrvcp.drawCaxtonTextLayers();
     } else if (caxton$warnOnNonWrvcp) {
@@ -64,5 +62,6 @@ public class WorldRendererMixin {
           "World text batching hack was enabled but did not get a WorldRendererVertexConsumerProvider back. Assuming that another mod is batching world rendering.");
       caxton$warnOnNonWrvcp = false;
     }
+    return immediate;
   }
 }

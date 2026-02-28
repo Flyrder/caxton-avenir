@@ -32,11 +32,7 @@ tasks.named('compileJava', JavaCompile) {
 
 processResources {
     dependsOn(configurations.commonResources)
-    from(configurations.commonResources) {
-        eachFile {
-            println(path)
-        }
-    }
+    from(configurations.commonResources)
 }
 
 tasks.named('javadoc', Javadoc).configure {

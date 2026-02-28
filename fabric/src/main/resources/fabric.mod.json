@@ -10,6 +10,7 @@
         "java": ">=${java_version}",
         "fabricloader": ">=${fabric_loader_version}"
     },
+    "accessWidener": "${mod_id}.accesswidener",
     "icon": "assets/${mod_id}/icon.png",
     "description": "${description}",
     "version": "${version}",

@@ -9,7 +9,8 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.TextRenderLayerSet;
 import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.render.*;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.RenderSetup;
 import xyz.flirora.caxton.font.FontTech;
 import xyz.flirora.caxton.layout.RenderSetupExt;
 import xyz.flirora.caxton.mixin.RenderLayerAccessor;
@@ -22,7 +23,7 @@ public class CaxtonTextRenderLayers {
           RenderLayerFunctions::ofTextSeeThrough,
           RenderLayerFunctions::ofTextOffset,
           RenderLayerFunctions::ofTextOutline,
-          CaxtonShaders.TEXT,
+          CaxtonShaders.GUI_TEXT,
           CaxtonShaders.TEXT_OUTLINE);
   private final Group raster =
       new Group(
@@ -30,7 +31,7 @@ public class CaxtonTextRenderLayers {
           RenderLayerFunctions::ofTextSeeThroughR,
           RenderLayerFunctions::ofTextOffsetR,
           RenderLayerFunctions::ofTextR,
-          RenderPipelines.RENDERTYPE_TEXT_INTENSITY,
+          RenderPipelines.GUI_TEXT_INTENSITY,
           CaxtonShaders.TEXT_OUTLINE_RASTER);
 
   public void clear() {

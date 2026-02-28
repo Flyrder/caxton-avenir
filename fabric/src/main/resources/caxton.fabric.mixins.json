@@ -6,6 +6,5 @@
     "injectors": {"defaultRequire": 1},
     "compatibilityLevel": "JAVA_25",
     "client": [],
-    "required": true,
-    "refmap": "${mod_id}.refmap.json"
+    "required": true
 }

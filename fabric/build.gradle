@@ -29,10 +29,6 @@ loom {
     if (aw.exists()) {
         accessWidenerPath.set(aw)
     }
-    mixin {
-        useLegacyMixinAp = true
-        defaultRefmapName.set("${mod_id}.refmap.json")
-    }
     runs {
         client {
             client()
@@ -46,11 +42,20 @@ loom {
             ideConfigGenerated(true)
             runDir('runs/server')
         }
+        create("clientWithRenderdoc") {
+            client()
+            configName = "Fabric/RenderDoc"
+            appendProjectPathToConfigName = false
+            ideConfigGenerated(true)
+            runDir("run")
+            environmentVariable("LD_PRELOAD", "/usr/lib/librenderdoc.so")
+            programArg("--renderDebugLabels")
+        }
     }
 }
 
 test {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }
 
 // Implement mcgradleconventions loader attribute
@@ -63,7 +68,7 @@ def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', Strin
     }
 }
 sourceSets.configureEach {
-    [it.compileClasspathConfigurationName, it.runtimeClasspathConfigurationName].each { variant->
+    [it.compileClasspathConfigurationName, it.runtimeClasspathConfigurationName].each { variant ->
         configurations.named("$variant") {
             attributes {
                 attribute(loaderAttribute, 'fabric')

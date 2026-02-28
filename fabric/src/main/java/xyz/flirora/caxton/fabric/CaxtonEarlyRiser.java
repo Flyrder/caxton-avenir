@@ -18,7 +18,9 @@ public class CaxtonEarlyRiser implements Runnable {
   public void run() {
     MappingResolver remapper = FabricLoader.getInstance().getMappingResolver();
 
-    String fontType = remapper.mapClassName("intermediary", "net.minecraft.class_394");
+    String fontType =
+        remapper.mapClassName(
+            "official", "net.minecraft.client.gui.font.providers.GlyphProviderType");
     ClassTinkerers.enumBuilder(fontType, String.class, "Lcom/mojang/serialization/MapCodec;")
         .addEnum("CAXTON", () -> new Object[] {"caxton", CaxtonFontLoader.CODEC})
         .build();

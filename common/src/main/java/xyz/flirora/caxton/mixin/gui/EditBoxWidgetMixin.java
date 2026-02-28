@@ -29,7 +29,6 @@ import xyz.flirora.caxton.render.Voepfxo;
 
 @Mixin(EditBoxWidget.class)
 public abstract class EditBoxWidgetMixin extends ScrollableTextFieldWidget {
-  @Shadow @Final private static String UNDERSCORE;
   @Shadow @Final private EditBox editBox;
   @Shadow @Final private TextRenderer textRenderer;
   @Shadow @Final private Text placeholder;
