@@ -9,8 +9,6 @@ repositories {
 
 import ai.arcblroth.cargo.CargoExtension
 import ai.arcblroth.cargo.CargoTask
-import com.google.common.collect.ImmutableMap
-import com.google.common.collect.ImmutableSet
 
 import java.nio.file.DirectoryStream
 import java.nio.file.Files
@@ -39,10 +37,10 @@ Map.Entry<String, TaskProvider<? extends Task>> registerCrossBuildTask(String ta
     Map.entry(targetName, copyTask)
 }
 
-def cargoCrossBuildTasks = ImmutableMap.copyOf([
+def cargoCrossBuildTasks = Map.ofEntries(
         registerCrossBuildTask('compileWindowsLibrary', 'x86_64-pc-windows-gnu', 'caxton_impl.dll'),
         registerCrossBuildTask('compileLinuxLibrary', 'x86_64-unknown-linux-gnu', 'libcaxton_impl.so'),
-])
+)
 
 cargo {
     cargoCommand = 'cargo'
@@ -82,7 +80,7 @@ def createFileDigests = tasks.register('createFileDigests') {
 
 afterEvaluate {
     def additionalTargetsStr = System.getProperty("xyz.flirora.caxton.additionalTargets");
-    Set<String> additionalTargets = ImmutableSet.of()
+    Set<String> additionalTargets = Set.of()
     if (additionalTargetsStr != null) {
         additionalTargets = new HashSet<>(Arrays.asList(additionalTargetsStr.split(",")))
     }

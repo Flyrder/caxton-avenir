@@ -1,27 +1,23 @@
 plugins {
-    id "architectury-plugin" version "3.4-SNAPSHOT"
-    id "dev.architectury.loom" version "1.13-SNAPSHOT" apply false
+    id 'org.relativitymc.neo-loom-remap' version '1.15-SNAPSHOT' apply false
     id 'maven-publish'
-    id "com.diffplug.spotless" version "6.25.0"
+    id "com.diffplug.spotless" version "8.2.1"
     id "me.modmuss50.mod-publish-plugin" version "1.0.0"
 }
 
-architectury {
-    minecraft = rootProject.minecraft_version
+repositories {
+    mavenCentral()
+    maven {
+        url = "https://repo.codemc.io/repository/relativitymc/"
+    }
 }
 
 subprojects {
     if (project.name != "caxton-impl") {
-        apply plugin: "dev.architectury.loom"
+        apply plugin: "org.relativitymc.neo-loom-remap"
 
         dependencies {
-            minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
-            // Forge adds an Explosion#getPosition() method, which conflicts
-            // with method_55109, which is named getPosition in Yarn and
-            // something else in Mojmap.
-            // NeoForge has fixed this issue: https://github.com/neoforged/NeoForge/pull/339
-            // TODO: remove this workaround if/when we drop Forge support or Forge fixes this issue
-            // Thanks to embeddedt for the solution.
+            minecraft "com.mojang:minecraft:${minecraft_version}"
             mappings loom.layered() {
                 it.mappings("net.fabricmc:yarn:${project.yarn_mappings}:v2")
                 it.mappings file("../mappings/yarnpatch.tiny")
@@ -30,61 +26,18 @@ subprojects {
 
         javadoc {
             options {
-                overview = 'src/main/java/overview.html'
                 tags(
-                        'apiNote:a:API Note:',
-                        'implSpec:a:Implementation Requirements:',
-                        'implNote:a:Implementation Note:'
+                    'apiNote:a:API Note:',
+                    'implSpec:a:Implementation Requirements:',
+                    'implNote:a:Implementation Note:'
                 )
             }
         }
     }
 }
 
-allprojects {
-    if (project.name != "caxton-impl") {
-        apply plugin: "java"
-        apply plugin: "architectury-plugin"
-        apply plugin: "maven-publish"
-
-        base {
-            archivesName = rootProject.archives_base_name
-        }
-        version = "${rootProject.mod_version}+${rootProject.minecraft_version}-${project.name.toUpperCase()}"
-        group = rootProject.maven_group
-
-        repositories {
-            // Add repositories to retrieve artifacts from in here.
-            // You should only use this when depending on other mods because
-            // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-            // See https://docs.gradle.org/current/userguide/declaring_repositories.html
-            // for more information about repositories.
-            mavenCentral()
-            maven { url "https://jitpack.io" }
-            maven { url "https://maven.terraformersmc.com" }
-            maven { url "https://api.modrinth.com/maven" }
-            maven { url "https://maven.neoforged.net/releases/" }
-        }
-
-        tasks.withType(JavaCompile) {
-            options.encoding = "UTF-8"
-            options.release = 21
-        }
-
-        java {
-            withSourcesJar()
-        }
-    }
-}
-
 base {
     archivesName = project.archives_base_name
-}
-
-configurations.all {
-    resolutionStrategy {
-        force("net.fabricmc:fabric-loader:$fabric_loader_version")
-    }
 }
 
 spotless {
@@ -143,18 +96,18 @@ publishMods {
         requires {
             slug = "fabric-api"
         }
-        version = "${rootProject.mod_version}+${rootProject.minecraft_version}-FABRIC"
-        displayName = "Caxton " + "${rootProject.mod_version}+${rootProject.minecraft_version}-FABRIC"
+        version = "${rootProject.version}+${rootProject.minecraft_version}-FABRIC"
+        displayName = "Caxton " + "${rootProject.version}+${rootProject.minecraft_version}-FABRIC"
     }
 
-    // Forge specific options for CurseForge
-    curseforge("curseforgeNeoforge") {
-        from cfOptions
-        file project(":neoforge")
-        modLoaders.add("neoforge")
-        version = "${rootProject.mod_version}+${rootProject.minecraft_version}-NEOFORGE"
-        displayName = "Caxton " + "${rootProject.mod_version}+${rootProject.minecraft_version}-NEOFORGE"
-    }
+//    // NeoForge specific options for CurseForge
+//    curseforge("curseforgeNeoforge") {
+//        from cfOptions
+//        file project(":neoforge")
+//        modLoaders.add("neoforge")
+//        version = "${rootProject.version}+${rootProject.minecraft_version}-NEOFORGE"
+//        displayName = "Caxton " + "${rootProject.version}+${rootProject.minecraft_version}-NEOFORGE"
+//    }
 
     // Fabric specific options for Modrinth
     modrinth("modrinthFabric") {
@@ -164,16 +117,16 @@ publishMods {
         requires {
             slug = "fabric-api"
         }
-        version = "${rootProject.mod_version}+${rootProject.minecraft_version}-FABRIC"
-        displayName = "Caxton " + "${rootProject.mod_version}+${rootProject.minecraft_version}-FABRIC"
+        version = "${rootProject.version}+${rootProject.minecraft_version}-FABRIC"
+        displayName = "Caxton " + "${rootProject.version}+${rootProject.minecraft_version}-FABRIC"
     }
 
-    // Forge specific options for Modrinth
-    modrinth("modrinthNeoforge") {
-        from mrOptions
-        file project(":neoforge")
-        modLoaders.add("neoforge")
-        version = "${rootProject.mod_version}+${rootProject.minecraft_version}-NEOFORGE"
-        displayName = "Caxton " + "${rootProject.mod_version}+${rootProject.minecraft_version}-NEOFORGE"
-    }
+//    // NeoForge specific options for Modrinth
+//    modrinth("modrinthNeoforge") {
+//        from mrOptions
+//        file project(":neoforge")
+//        modLoaders.add("neoforge")
+//        version = "${rootProject.version}+${rootProject.minecraft_version}-NEOFORGE"
+//        displayName = "Caxton " + "${rootProject.version}+${rootProject.minecraft_version}-NEOFORGE"
+//    }
 }

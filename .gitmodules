@@ -1,3 +1,0 @@
-[submodule "caxton-impl/msdf-rs/msdf-sys/msdfgen"]
-	path = caxton-impl/msdf-rs/msdf-sys/msdfgen
-	url = https://github.com/Chlumsky/msdfgen.git

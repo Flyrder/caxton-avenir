@@ -3,7 +3,7 @@
     "minVersion": "0.8",
     "package": "xyz.flirora.caxton.mixin",
     "injectors": {"defaultRequire": 1},
-    "compatibilityLevel": "JAVA_17",
+    "compatibilityLevel": "JAVA_25",
     "client": [
         "BufferBuilderStorageMixin",
         "CommandContextAccessor",

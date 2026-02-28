@@ -1,75 +1,35 @@
-import java.util.regex.Pattern
-
-architectury {
-    injectInjectables = false
-    common(rootProject.enabled_platforms.split(","))
+plugins {
+    id 'multiloader-common'
+    id 'org.relativitymc.neo-loom-remap'
 }
 
-loom {
-    accessWidenerPath = file("src/main/resources/caxton.accesswidener")
-}
-
-configurations {
-    backend {
-        canBeConsumed false
-        canBeResolved true
-    }
+repositories {
+    maven { url "https://api.modrinth.com/maven" }
 }
 
 dependencies {
-    // We depend on fabric loader here to use the fabric @Environment annotations and get the mixin dependencies
-    // Do NOT use other classes from fabric loader
-    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
-    // Remove the next line if you don't want to depend on the API
-    // modApi "dev.architectury:architectury:${rootProject.architectury_version}"
-
-    // Used for more precise mixins (e.g. for registering new shaders).
-    annotationProcessor(implementation("io.github.llamalad7:mixinextras-common:${mixinextras_version}"))
-
-//    modLocalRuntime "com.terraformersmc:modmenu:6.1.0-beta.3"
-    // Known to break Caxton in the past (#37).
-    // modLocalRuntime "dev.emi:emi:0.7.0+1.19.3"
-
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+    compileOnly group: 'org.spongepowered', name: 'mixin', version: '0.8.5'
+    // fabric and neoforge both bundle mixinextras, so it is safe to use it in common
+    compileOnly group: 'io.github.llamalad7', name: 'mixinextras-common', version: '0.3.5'
+    annotationProcessor group: 'io.github.llamalad7', name: 'mixinextras-common', version: '0.3.5'
+    
     // Used for caching layout results
     implementation('com.github.ben-manes.caffeine:caffeine:3.1.2')
 
     // ImmediatelyFast API for compatibility – use only in ImmediatelyFastBatchingAccess class!
     modCompileOnly("maven.modrinth:immediatelyfast:${rootProject.immediatelyfast_version}-fabric")
-
-    backend(project('caxton-impl'))
 }
 
-def identifyHostRustcPlatform = tasks.register("identifyHostRustcPlatform", Exec) {
-    commandLine 'rustc', '--print', 'host-tuple'
-
-    standardOutput = new ByteArrayOutputStream()
-
-    ext.output = {
-        def output = standardOutput.toString()
-        def platform = output.trim()
-        println("Platform is $platform")
-        platform
+configurations {
+    commonJava {
+        canBeResolved = false
+        canBeConsumed = true
     }
-}
-
-processResources {
-    dependsOn identifyHostRustcPlatform
-
-    inputs.property "version", project.version
-    filteringCharset "UTF-8"
-
-    filesMatching("fabric.mod.json") {
-        expand "version": project.version
-    }
-
-    from(configurations.backend) {
-        eachFile {
-            if (!name.contains("-") && !name.contains("checksum")) {
-                // Exclude the artifact from the default Cargo task
-                exclude()
-            }
-            path = "natives/" + path
-        }
+    commonResources {
+        canBeResolved = false
+        canBeConsumed = true
     }
 }
 
@@ -79,7 +39,10 @@ loom {
             environmentVariable("RUST_BACKTRACE", "1")
         }
     }
-    accessWidenerPath = file("src/main/resources/caxton.accesswidener")
+    def aw = project(':common').file("src/main/resources/${mod_id}.accesswidener")
+    if (aw.exists()) {
+        accessWidenerPath.set(aw)
+    }
 }
 
 publishing {
@@ -105,6 +68,27 @@ publishing {
     }
 }
 
-javadoc {
-    options.overview = 'src/main/java/overview.html'
+artifacts {
+println(sourceSets.main.resources.getClass())
+    commonJava sourceSets.main.java.sourceDirectories.singleFile
+    commonResources sourceSets.main.resources.sourceDirectories.singleFile
+}
+
+// Implement mcgradleconventions loader attribute
+def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+['apiElements', 'runtimeElements', 'sourcesElements', 'javadocElements'].each { variant ->
+    configurations.named("$variant") {
+        attributes {
+            attribute(loaderAttribute, 'common')
+        }
+    }
+}
+sourceSets.configureEach {
+    [it.compileClasspathConfigurationName, it.runtimeClasspathConfigurationName].each { variant->
+        configurations.named("$variant") {
+            attributes {
+                attribute(loaderAttribute, 'common')
+            }
+        }
+    }
 }
