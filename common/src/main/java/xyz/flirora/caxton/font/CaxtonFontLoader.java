@@ -115,7 +115,7 @@ public class CaxtonFontLoader implements FontLoader {
                     }
                   }
                 }
-                try (InputStream input = manager.open(fontId)) {
+                try (InputStream input = manager.getResourceOrThrow(fontId).getInputStream()) {
                   return new CaxtonFont(input, id1, optionsJson);
                 }
               } catch (IOException e) {

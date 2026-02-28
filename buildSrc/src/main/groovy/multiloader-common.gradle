@@ -1,3 +1,6 @@
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
 plugins {
     id 'java-library'
     id 'maven-publish'
@@ -106,12 +109,22 @@ def identifyHostRustcPlatform = tasks.register("identifyHostRustcPlatform", Exec
     }
 }
 
+static String convertMcVersionToFmjFormat(String version) {
+    final Pattern SNAPSHOT_PATTERN = Pattern.compile("(\\d+\\.\\d+)-snapshot-(\\d+)");
+    Matcher m = SNAPSHOT_PATTERN.matcher(version);
+    if (m.matches()) {
+        return m.group(1) + "-alpha." + m.group(2);
+    }
+    return version;
+}
+
 processResources {
     var expandProps = [
             'archives_base_name'           : archives_base_name,
             'version'                      : version,
             'group'                        : project.group, //Else we target the task's group.
             'minecraft_version'            : minecraft_version,
+            'minecraft_version_fmj'        : convertMcVersionToFmjFormat(minecraft_version),
             'minecraft_version_range'      : minecraft_version_range,
             'fabric_version'               : fabric_version,
             'fabric_loader_version'        : fabric_loader_version,
@@ -122,8 +135,8 @@ processResources {
             'description'                  : project.description,
             'neoforge_version'             : neoforge_version,
             'neoforge_loader_version_range': neoforge_loader_version_range,
-            "forge_version": forge_version,
-            "forge_loader_version_range": forge_loader_version_range,
+            "forge_version"                : forge_version,
+            "forge_loader_version_range"   : forge_loader_version_range,
             'credits'                      : credits,
             'java_version'                 : java_version,
             'yarn_mappings'                : yarn_mappings,
@@ -143,7 +156,7 @@ processResources {
     }
 
     inputs.properties(expandProps)
-    
+
     dependsOn identifyHostRustcPlatform
 
     from(configurations.backend) {
@@ -156,7 +169,6 @@ processResources {
         }
     }
 }
-
 
 
 publishing {

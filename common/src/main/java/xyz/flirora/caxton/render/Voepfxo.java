@@ -9,7 +9,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.gui.render.state.SimpleGuiElementRenderState;
 import net.minecraft.client.gui.render.state.TextGuiElementRenderState;
-import net.minecraft.client.render.*;
+import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.texture.TextureSetup;
 import net.minecraft.text.CharacterVisitor;
 import net.minecraft.text.OrderedText;
@@ -30,6 +30,16 @@ public class Voepfxo {
     'u', 'v', 'm', 'c', 'y', 'g', 'w', 'l', 'e', 'x', 'j', 'd', 'p', 'r', 'a', 'f', 'k', 'h', 'n',
     's', 'i', 'q', 'b', 'z', 'o', 't'
   };
+
+  public static void drawMedialCursor(
+      DrawContext context, float x, float y, int color, float height) {
+    Voepfxo.fill(context, x, y - 1, x + 1, y + height, color);
+  }
+
+  public static void drawTrailingCursor(
+      DrawContext context, TextRenderer textRenderer, float x, float y, int color, boolean shadow) {
+    Voepfxo.drawText(context, textRenderer, "_", x, y, color, shadow);
+  }
 
   public static void fill(DrawContext context, float x1, float y1, float x2, float y2, int color) {
     Voepfxo.fill(context, RenderPipelines.GUI, x1, y1, x2, y2, color);

@@ -86,19 +86,13 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/gui/DrawContext;drawText(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;IIIZ)V",
-              ordinal = 1))
+                  "Lnet/minecraft/client/gui/TextCursors;drawTrailingCursor(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/font/TextRenderer;IIIZ)V"))
   private void drawEndCursorProxy(
-      DrawContext instance,
-      TextRenderer textRenderer,
-      String text,
-      int x,
-      int y,
-      int color,
-      boolean shadow) {
+      DrawContext instance, TextRenderer textRenderer, int x, int y, int color, boolean shadow) {
     CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
     CaxtonTextHandler cth = ctr.getHandler();
-    Voepfxo.drawText(instance, textRenderer, "_", cth.getWidth(caxton$rowText) / 2.0f, y, color);
+    Voepfxo.drawTrailingCursor(
+        instance, textRenderer, cth.getWidth(caxton$rowText) / 2.0f, y, color, shadow);
   }
 
   @Redirect(
@@ -106,9 +100,10 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
       at =
           @At(
               value = "INVOKE",
-              target = "Lnet/minecraft/client/gui/DrawContext;fill(IIIII)V",
+              target =
+                  "Lnet/minecraft/client/gui/TextCursors;drawMedialCursor(Lnet/minecraft/client/gui/DrawContext;IIII)V",
               ordinal = 0))
-  private void drawVerticalCursor(DrawContext instance, int x1, int y1, int x2, int y2, int color) {
+  private void drawVerticalCursor(DrawContext instance, int x_, int y, int color, int height) {
     CaxtonTextRenderer ctr = ((HasCaxtonTextRenderer) textRenderer).getCaxtonTextRenderer();
     CaxtonTextHandler cth = ctr.getHandler();
     String currentLine = this.messages[this.currentRow];
@@ -123,13 +118,7 @@ public abstract class AbstractSignEditScreenMixin extends Screen {
             Math.min(selectionStart, currentLine.length()),
             DirectionSetting.AUTO);
     float cursorX = cursorOffset - x;
-    Voepfxo.fill(
-        instance,
-        cursorX,
-        lineY - 1,
-        cursorX + 1,
-        lineY + this.blockEntity.getTextLineHeight(),
-        0xFF000000 | color);
+    Voepfxo.drawMedialCursor(instance, cursorX, lineY, color, this.blockEntity.getTextLineHeight());
   }
 
   @Redirect(

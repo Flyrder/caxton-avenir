@@ -7,11 +7,10 @@ import java.util.function.Consumer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Drawable;
-import net.minecraft.client.gui.Element;
+import net.minecraft.client.gui.*;
+import net.minecraft.client.gui.cursor.StandardCursors;
 import net.minecraft.client.gui.widget.ClickableWidget;
+import net.minecraft.client.gui.widget.ImePreEditWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
@@ -41,7 +40,6 @@ import xyz.flirora.caxton.render.Voepfxo;
 public abstract class TextFieldWidgetMixin extends ClickableWidget
     implements Drawable, Element, TextFieldWidgetExt {
   @Unique private static final Style caxton$SUGGESTION = Style.EMPTY.withColor(0xFF808080);
-  @Shadow @Final private static String HORIZONTAL_CURSOR;
   @Shadow @Final private TextRenderer textRenderer;
   @Shadow private String text;
   @Shadow private boolean editable;
@@ -88,6 +86,11 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
   protected abstract OrderedText format(String string, int firstCharacterIndex);
 
   @Shadow private boolean invertSelectionBackground;
+
+  @Shadow
+  protected abstract boolean isEditable();
+
+  @Shadow private @org.jspecify.annotations.Nullable ImePreEditWidget preEditWidget;
 
   @Override
   public void updateCaxtonText(boolean changed) {
@@ -163,13 +166,13 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
   }
 
   @Inject(
-      method = "setCursor",
+      method = "setMaxLength",
       at =
           @At(
               value = "INVOKE",
               target =
                   "Lnet/minecraft/client/gui/widget/TextFieldWidget;onChanged(Ljava/lang/String;)V"))
-  private void onSetCursor(int cursor, boolean shiftKeyPressed, CallbackInfo ci) {
+  private void onSetMaxLength(int maxLength, CallbackInfo ci) {
     updateCaxtonText(false);
   }
 
@@ -249,7 +252,8 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
     boolean cursorInBounds = 0 <= cursorLocation && cursorLocation < getInnerWidth();
     boolean showCursor =
         this.isFocused()
-            && (Util.getMeasuringTimeMs() - this.lastSwitchFocusTime) / 300L % 2L == 0L
+            && TextCursors.shouldShowMedialCursor(
+                Util.getMeasuringTimeMs() - this.lastSwitchFocusTime)
             && cursorInBounds;
 
     float cursorX = Math.round(x + cursorLocation);
@@ -260,16 +264,6 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
 
     if (this.placeholder != null && text.isEmpty() && !this.isFocused()) {
       Voepfxo.drawTextWithShadow(context, this.textRenderer, this.placeholder, cursorX, y, color);
-    }
-
-    if (showCursor) {
-      if (cursorIsVertical) {
-        Voepfxo.fill(
-            context, cursorX, y - 1, cursorX + 1, y + 1 + this.textRenderer.fontHeight, 0xFFD0D0D0);
-      } else {
-        Voepfxo.drawText(
-            context, this.textRenderer, HORIZONTAL_CURSOR, cursorX, y, color, this.textShadow);
-      }
     }
 
     if (selectionStart != selectionEnd) {
@@ -286,6 +280,23 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
                       y - 1,
                       x + x1 - finalFirstCharLocation,
                       y + 1 + textRenderer.fontHeight));
+    }
+
+    if (showCursor) {
+      if (cursorIsVertical) {
+        Voepfxo.drawMedialCursor(context, cursorX, y, color, this.textRenderer.fontHeight + 1);
+      } else {
+        Voepfxo.drawTrailingCursor(context, this.textRenderer, cursorX, y, color, this.textShadow);
+      }
+    }
+
+    if (this.isHovered()) {
+      context.setCursor(this.isEditable() ? StandardCursors.IBEAM : StandardCursors.NOT_ALLOWED);
+    }
+
+    if (this.preEditWidget != null) {
+      this.preEditWidget.setPosition((int) cursorX, this.textY);
+      context.setPreEditWidget(this.preEditWidget);
     }
 
     // Ḋo.

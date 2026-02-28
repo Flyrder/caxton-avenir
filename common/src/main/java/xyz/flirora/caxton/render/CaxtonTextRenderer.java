@@ -17,7 +17,7 @@ import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.Window;
+import net.minecraft.client.window.Window;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.text.StyleSpriteSource;

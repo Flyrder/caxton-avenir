@@ -5,11 +5,15 @@ package xyz.flirora.caxton.mixin.gui;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.EditBox;
+import net.minecraft.client.gui.TextCursors;
+import net.minecraft.client.gui.cursor.StandardCursors;
 import net.minecraft.client.gui.widget.EditBoxWidget;
+import net.minecraft.client.gui.widget.ImePreEditWidget;
 import net.minecraft.client.gui.widget.ScrollableTextFieldWidget;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Util;
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -40,8 +44,11 @@ public abstract class EditBoxWidgetMixin extends ScrollableTextFieldWidget {
 
   @Shadow @Final private static int UNFOCUSED_BOX_TEXT_COLOR;
 
-  public EditBoxWidgetMixin(int i, int j, int k, int l, Text text) {
-    super(i, j, k, l, text);
+  @Shadow private @Nullable ImePreEditWidget preEditWidget;
+
+  public EditBoxWidgetMixin(
+      int x, int y, int width, int height, Text narration, Scrollbar scrollbarSettings) {
+    super(x, y, width, height, narration, scrollbarSettings);
   }
 
   @Inject(
@@ -69,28 +76,32 @@ public abstract class EditBoxWidgetMixin extends ScrollableTextFieldWidget {
     int cursorPos = this.editBox.getCursor();
     boolean drawCursor =
         this.isFocused()
-            && (Util.getMeasuringTimeMs() - this.lastSwitchFocusTime) / 300L % 2L == 0L;
+            && TextCursors.shouldShowMedialCursor(
+                Util.getMeasuringTimeMs() - this.lastSwitchFocusTime);
+    boolean needsValidCursorPos = this.preEditWidget != null;
     boolean cursorVertical = cursorPos < text.length();
 
     float cursorX = 0;
-    int endY = 0;
-    int y = this.getTextY();
+    int cursorY = 0;
+    int textY = this.getTextY();
+    int textX = this.getTextX();
+    boolean hasDrawnCursor = false;
     for (EditBox.Substring line : this.editBox.getLines()) {
-      boolean lineVisible = this.isVisible(y, y + this.textRenderer.fontHeight);
-      String lineStr = text.substring(line.beginIndex(), line.endIndex());
-      int textX = this.getTextX();
-      if (drawCursor
+      boolean lineVisible = this.isVisible(textY, textY + this.textRenderer.fontHeight);
+      if (!hasDrawnCursor
+          && (needsValidCursorPos || drawCursor)
           && cursorVertical
           && cursorPos >= line.beginIndex()
           && cursorPos <= line.endIndex()) {
         if (lineVisible) {
+          String lineStr = text.substring(line.beginIndex(), line.endIndex());
           // Draw vertical cursor for this line
           Voepfxo.drawText(
               context,
               this.textRenderer,
               lineStr,
               (float) textX,
-              (float) y,
+              (float) textY,
               this.textColor,
               this.textShadow);
           cursorX =
@@ -105,58 +116,52 @@ public abstract class EditBoxWidgetMixin extends ScrollableTextFieldWidget {
                           cth.getCache()),
                       cursorPos - line.beginIndex(),
                       DirectionSetting.AUTO);
-          Voepfxo.fill(
-              context,
-              cursorX,
-              y - 1,
-              cursorX + 1,
-              y + 1 + this.textRenderer.fontHeight,
-              this.cursorColor);
+          cursorY = textY;
+          if (drawCursor) {
+            Voepfxo.drawMedialCursor(
+                context, cursorX, textY, this.cursorColor, this.textRenderer.fontHeight + 1);
+          }
+          hasDrawnCursor = true;
         }
-      } else {
-        if (lineVisible) {
-          Voepfxo.drawText(
-              context,
-              this.textRenderer,
-              lineStr,
-              (float) textX,
-              (float) y,
-              this.textColor,
-              this.textShadow);
+      } else if (lineVisible) {
+        String lineStr = text.substring(line.beginIndex(), line.endIndex());
+        Voepfxo.drawText(
+            context,
+            this.textRenderer,
+            lineStr,
+            (float) textX,
+            (float) textY,
+            this.textColor,
+            this.textShadow);
+        if ((needsValidCursorPos || drawCursor) && !cursorVertical) {
           cursorX = textX + cth.getWidth(lineStr);
+          cursorY = textY;
         }
-        endY = y;
       }
-      y += this.textRenderer.fontHeight;
+      textY += this.textRenderer.fontHeight;
     }
     if (drawCursor
         && !cursorVertical
-        && this.isVisible(endY, endY + this.textRenderer.fontHeight)) {
-      Voepfxo.drawText(
-          context,
-          this.textRenderer,
-          UNDERSCORE,
-          cursorX,
-          (float) endY,
-          this.cursorColor,
-          this.textShadow);
+        && this.isVisible(cursorY, cursorY + this.textRenderer.fontHeight)) {
+      Voepfxo.drawTrailingCursor(
+          context, this.textRenderer, cursorX, (float) cursorY, this.cursorColor, this.textShadow);
     }
 
     if (this.editBox.hasSelection()) {
       EditBox.Substring selection = this.editBox.getSelection();
       int selX = this.getTextX();
-      y = this.getTextY();
+      textY = this.getTextY();
       for (EditBox.Substring line : this.editBox.getLines()) {
         if (selection.beginIndex() > line.endIndex()) {
           // Selection not yet reached
-          y += this.textRenderer.fontHeight;
+          textY += this.textRenderer.fontHeight;
           continue;
         }
         // Passed end of selection?
         if (line.beginIndex() > selection.endIndex()) break;
 
-        if (this.isVisible(y, y + this.textRenderer.fontHeight)) {
-          float selY = y;
+        if (this.isVisible(textY, textY + this.textRenderer.fontHeight)) {
+          float selY = textY;
           CaxtonText caxtonLine =
               CaxtonText.fromForwards(
                   text.substring(line.beginIndex(), line.endIndex()),
@@ -179,8 +184,17 @@ public abstract class EditBoxWidgetMixin extends ScrollableTextFieldWidget {
                     true);
               });
         }
-        y += this.textRenderer.fontHeight;
+        textY += this.textRenderer.fontHeight;
       }
+    }
+
+    if (this.isHovered()) {
+      context.setCursor(StandardCursors.IBEAM);
+    }
+
+    if (this.preEditWidget != null) {
+      this.preEditWidget.setPosition((int) cursorX, cursorY);
+      context.setPreEditWidget(this.preEditWidget);
     }
 
     ci.cancel(); // Ḋo.

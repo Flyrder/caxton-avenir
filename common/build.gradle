@@ -9,17 +9,16 @@ repositories {
 
 dependencies {
     modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
     compileOnly group: 'org.spongepowered', name: 'mixin', version: '0.8.5'
     // fabric and neoforge both bundle mixinextras, so it is safe to use it in common
     compileOnly group: 'io.github.llamalad7', name: 'mixinextras-common', version: '0.3.5'
     annotationProcessor group: 'io.github.llamalad7', name: 'mixinextras-common', version: '0.3.5'
-    
+
     // Used for caching layout results
     implementation('com.github.ben-manes.caffeine:caffeine:3.1.2')
 
     // ImmediatelyFast API for compatibility – use only in ImmediatelyFastBatchingAccess class!
-    modCompileOnly("maven.modrinth:immediatelyfast:${rootProject.immediatelyfast_version}-fabric")
+//    modCompileOnly("maven.modrinth:immediatelyfast:${rootProject.immediatelyfast_version}-fabric")
 }
 
 configurations {
@@ -69,7 +68,7 @@ publishing {
 }
 
 artifacts {
-println(sourceSets.main.resources.getClass())
+    println(sourceSets.main.resources.getClass())
     commonJava sourceSets.main.java.sourceDirectories.singleFile
     commonResources sourceSets.main.resources.sourceDirectories.singleFile
 }
@@ -84,7 +83,7 @@ def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', Strin
     }
 }
 sourceSets.configureEach {
-    [it.compileClasspathConfigurationName, it.runtimeClasspathConfigurationName].each { variant->
+    [it.compileClasspathConfigurationName, it.runtimeClasspathConfigurationName].each { variant ->
         configurations.named("$variant") {
             attributes {
                 attribute(loaderAttribute, 'common')

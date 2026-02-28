@@ -16,20 +16,31 @@ subprojects {
     if (project.name != "caxton-impl") {
         apply plugin: "org.relativitymc.neo-loom-remap"
 
+        repositories {
+            maven {
+                url = "https://repo.codemc.io/repository/relativitymc/"
+            }
+        }
+
         dependencies {
             minecraft "com.mojang:minecraft:${minecraft_version}"
             mappings loom.layered() {
-                it.mappings("net.fabricmc:yarn:${project.yarn_mappings}:v2")
+                it.mappings("org.relativitymc:modern-yarn:${project.yarn_mappings}:v2")
                 it.mappings file("../mappings/yarnpatch.tiny")
             }
+        }
+
+        loom {
+            useIntermediateMappings = true
+            intermediaryUrl = 'https://repo.codemc.io/repository/relativitymc/org/relativitymc/intermediary/%1$s/intermediary-%1$s-v2.jar'
         }
 
         javadoc {
             options {
                 tags(
-                    'apiNote:a:API Note:',
-                    'implSpec:a:Implementation Requirements:',
-                    'implNote:a:Implementation Note:'
+                        'apiNote:a:API Note:',
+                        'implSpec:a:Implementation Requirements:',
+                        'implNote:a:Implementation Note:'
                 )
             }
         }
