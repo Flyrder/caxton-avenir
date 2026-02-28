@@ -33,9 +33,9 @@ import xyz.flirora.caxton.mixin.TextHandlerAccessor;
  * methods in this class handle both legacy and Caxton text correctly.
  *
  * <p>A few methods remain unsupported, as they cannot be made to work in the presence of complex
- * text layout. These are {@link TextHandler#trimToWidth(String, int, Style)}, {@link
- * TextHandler#trimToWidthBackwards(String, int, Style)}, and {@link TextHandler#limitString(String,
- * int, Style)}. Some others have a different interpretation in Caxton than in vanilla Minecraft.
+ * text layout. These are {@link TextHandler#trimToWidth(String, int, Style)} and {@link
+ * TextHandler#trimToWidthBackwards(String, int, Style)}. Some others have a different
+ * interpretation in Caxton than in vanilla Minecraft.
  */
 @Environment(EnvType.CLIENT)
 public class CaxtonTextHandler {
@@ -195,8 +195,6 @@ public class CaxtonTextHandler {
   /**
    * Computes the character index of the glyph at a given <var>x</var>-position.
    *
-   * <p>This replaces {@link TextHandler#getLimitedStringLength(String, int, Style)}.
-   *
    * @param text The {@link String} to get the information from. Formatting codes are applied.
    * @param maxWidth The <var>x</var>-position of the glyph requested.
    * @param style The style in which to interpret {@code text}.
@@ -345,8 +343,6 @@ public class CaxtonTextHandler {
   /**
    * Gets the style at a given <var>x</var>-offset.
    *
-   * <p>This replaces {@link TextHandler#getStyleAt(StringVisitable, int)}.
-   *
    * @param text The {@link StringVisitable} to get the information from. Formatting codes are
    *     applied.
    * @param x The <var>x</var>-offset to get the style from.
@@ -361,8 +357,6 @@ public class CaxtonTextHandler {
 
   /**
    * Gets the style at a given <var>x</var>-offset.
-   *
-   * <p>This replaces {@link TextHandler#getStyleAt(OrderedText, int)}.
    *
    * @param text The {@link OrderedText} to get the information from.
    * @param x The <var>x</var>-offset to get the style from.

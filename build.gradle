@@ -27,6 +27,17 @@ subprojects {
                 it.mappings file("../mappings/yarnpatch.tiny")
             }
         }
+
+        javadoc {
+            options {
+                overview = 'src/main/java/overview.html'
+                tags(
+                        'apiNote:a:API Note:',
+                        'implSpec:a:Implementation Requirements:',
+                        'implNote:a:Implementation Note:'
+                )
+            }
+        }
     }
 }
 

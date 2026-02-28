@@ -16,6 +16,7 @@ import xyz.flirora.caxton.font.CaxtonFont;
  * {@code int}s:
  *
  * <table>
+ *     <caption>Offsets for each field in {@link #data}.</caption>
  *     <thead><tr><th>Offset</th><th>Use</th></tr></thead>
  *     <tbody>
  *         <tr><td>0</td><td><a href="https://docs.rs/harfrust/latest/harfrust/struct.GlyphInfo.html#structfield.glyph_id">Glyph ID</a>, plus {@code 1 << 24} if this glyph is marked as <a href="https://docs.rs/harfrust/latest/harfrust/struct.GlyphInfo.html#method.unsafe_to_break">unsafe to break</a>. (Bits 16 to 23 are unused for <a href="https://github.com/harfbuzz/boring-expansion-spec/blob/main/beyond-64k.md">potential future extensions to glyph limits</a>.)</td></tr>
