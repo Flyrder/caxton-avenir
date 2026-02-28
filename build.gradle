@@ -26,6 +26,7 @@ subprojects {
             minecraft "com.mojang:minecraft:${minecraft_version}"
             mappings loom.layered() {
                 it.mappings("org.relativitymc:modern-yarn:${project.yarn_mappings}:v2")
+                it.mappings("org.relativitymc:modern-yarn-mappings-patch-neoforge:${project.yarn_mappings_patch}")
                 it.mappings file("../mappings/yarnpatch.tiny")
             }
         }

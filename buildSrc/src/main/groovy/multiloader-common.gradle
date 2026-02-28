@@ -140,6 +140,7 @@ processResources {
             'credits'                      : credits,
             'java_version'                 : java_version,
             'yarn_mappings'                : yarn_mappings,
+            'yarn_mappings_patch'          : yarn_mappings_patch,
             'immediatelyfast_version'      : immediatelyfast_version
     ]
 
