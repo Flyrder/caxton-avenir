@@ -8,6 +8,7 @@ accessible method net/minecraft/client/font/FontManager$Providers  <init> (Ljava
 accessible field net/minecraft/client/gl/RenderPipelines TEXT_SNIPPET Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;
 accessible field net/minecraft/client/gl/RenderPipelines GUI_TEXT_SNIPPET Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;
 accessible field net/minecraft/client/gl/RenderPipelines FOG_SNIPPET Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;
+accessible method net/minecraft/client/gl/RenderPipelines register (Lcom/mojang/blaze3d/pipeline/RenderPipeline;)Lcom/mojang/blaze3d/pipeline/RenderPipeline;
 
 accessible class net/minecraft/client/gui/DrawContext$ScissorStack
 accessible class net/minecraft/client/gui/render/GuiRenderer$Draw
