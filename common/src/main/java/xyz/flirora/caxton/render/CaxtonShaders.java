@@ -4,7 +4,9 @@ package xyz.flirora.caxton.render;
 
 import static net.minecraft.client.gl.RenderPipelines.register;
 
-import com.mojang.blaze3d.pipeline.*;
+import com.mojang.blaze3d.pipeline.DepthStencilState;
+import com.mojang.blaze3d.pipeline.DepthTest;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gl.RenderPipelines;
@@ -30,7 +32,6 @@ public class CaxtonShaders {
               .withSampler("Sampler0")
               .withSampler("Sampler2")
               .withUniform("UnitRangeU", UniformType.UNIFORM_BUFFER)
-              .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
               .build());
 
   public static final RenderPipeline GUI_TEXT =
@@ -42,7 +43,6 @@ public class CaxtonShaders {
               .withSampler("Sampler0")
               .withSampler("Sampler2")
               .withUniform("UnitRangeU", UniformType.UNIFORM_BUFFER)
-              .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
               .build());
 
   public static final RenderPipeline TEXT_OFFSET =
@@ -56,7 +56,6 @@ public class CaxtonShaders {
               .withDepthStencilState(
                   new DepthStencilState(DepthTest.LESS_THAN_OR_EQUAL, true, -1.0f, -10.0f))
               .withUniform("UnitRangeU", UniformType.UNIFORM_BUFFER)
-              .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
               .build());
 
   public static final RenderPipeline TEXT_SEE_THROUGH =
@@ -69,7 +68,6 @@ public class CaxtonShaders {
               //                    .withDepthWrite(false)
               //                    .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
               .withUniform("UnitRangeU", UniformType.UNIFORM_BUFFER)
-              .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
               .build());
 
   public static final RenderPipeline TEXT_OUTLINE =
@@ -81,7 +79,6 @@ public class CaxtonShaders {
               .withSampler("Sampler0")
               .withSampler("Sampler2")
               .withUniform("UnitRangeU", UniformType.UNIFORM_BUFFER)
-              .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
               .build());
   public static final RenderPipeline TEXT_OUTLINE_RASTER =
       register(
@@ -91,6 +88,5 @@ public class CaxtonShaders {
               .withFragmentShader("core/rendertype_text_intensity")
               .withSampler("Sampler0")
               .withSampler("Sampler2")
-              .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
               .build());
 }
