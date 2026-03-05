@@ -40,7 +40,7 @@ public class WorldRendererMixin {
   }
 
   @ModifyReceiver(
-      method = {"method_62214", "lambda$addMainPass$1"}, // Lambda in renderMain
+      method = {"method_62214", "lambda$addMainPass$0"}, // Lambda in renderMain
       at =
           @At(
               value = "INVOKE",

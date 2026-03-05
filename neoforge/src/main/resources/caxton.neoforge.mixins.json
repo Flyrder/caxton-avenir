@@ -2,9 +2,9 @@
     "server": [],
     "mixins": [],
     "minVersion": "0.8",
-    "package": "com.example.examplemod.mixin",
+    "package": "xyz.flirora.caxton.neoforge.mixin",
     "injectors": {"defaultRequire": 1},
     "compatibilityLevel": "JAVA_21",
-    "client": ["MixinTitleScreen"],
+    "client": ["FontTypeMixin"],
     "required": true
 }
