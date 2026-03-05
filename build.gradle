@@ -2,7 +2,7 @@ plugins {
     id 'org.relativitymc.neo-loom-remap' version '1.15.12' apply false
     id 'maven-publish'
     id "com.diffplug.spotless" version "8.2.1"
-    id "me.modmuss50.mod-publish-plugin" version "1.0.0"
+    id "me.modmuss50.mod-publish-plugin" version "1.1.0"
 }
 
 repositories {
@@ -59,7 +59,7 @@ spotless {
 
         // define the steps to apply to those files
         trimTrailingWhitespace()
-        indentWithSpaces()
+        leadingTabsToSpaces(2)
         endWithNewline()
     }
     java {
@@ -83,7 +83,7 @@ publishMods {
         accessToken = providers.environmentVariable("CURSE_TOKEN")
         projectId = "1320863"
         minecraftVersions.add("" + rootProject.minecraft_version)
-        javaVersions.add(JavaVersion.VERSION_21)
+        javaVersions.add(JavaVersion.VERSION_25)
         clientRequired = true
         serverRequired = false
         projectSlug = "caxton"
