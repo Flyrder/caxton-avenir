@@ -67,7 +67,7 @@ public class CaxtonShaders {
           .build();
 
   public static final RenderPipeline TEXT_OUTLINE =
-      RenderPipeline.builder(RenderPipelines.GUI_TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
+      RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
           .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text_outline"))
           .withVertexShader(TEXT_OUTLINE_ID)
           .withFragmentShader(TEXT_OUTLINE_ID)
@@ -77,7 +77,7 @@ public class CaxtonShaders {
           .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
           .build();
   public static final RenderPipeline TEXT_OUTLINE_RASTER =
-      RenderPipeline.builder(RenderPipelines.GUI_TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
+      RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET, RenderPipelines.FOG_SNIPPET)
           .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text_outline_raster"))
           .withVertexShader("core/rendertype_text_intensity")
           .withFragmentShader("core/rendertype_text_intensity")
