@@ -53,7 +53,7 @@ public class CaxtonFont implements AutoCloseable {
   private long fontPtr;
   // CaxtonFont.{cloneReference, close} are called infrequently, so it wouldn’t
   // hurt much to protect them against race conditions.
-  private AtomicInteger refCount = new AtomicInteger(1);
+  private final AtomicInteger refCount = new AtomicInteger(1);
   private final List<ChangeEntry> changes;
 
   /**
@@ -155,6 +155,14 @@ public class CaxtonFont implements AutoCloseable {
     }
   }
 
+  public boolean isClosed() {
+    return this.fontData != null;
+  }
+
+  private void assertAvailable() {
+    if (this.isClosed()) throw new IllegalStateException();
+  }
+
   public String toString() {
     return "CaxtonFont[" + id + "@" + Long.toHexString(fontPtr) + "]";
   }
@@ -166,6 +174,7 @@ public class CaxtonFont implements AutoCloseable {
    * @return {@code true} if this font supports this code point
    */
   public boolean supportsCodePoint(int codePoint) {
+    this.assertAvailable();
     return CaxtonInternal.fontGlyphIndex(fontPtr, codePoint) != -1;
   }
 
@@ -204,10 +213,12 @@ public class CaxtonFont implements AutoCloseable {
    * @return the address of the pointer to the font in native memory
    */
   public long getFontPtr() {
+    this.assertAvailable();
     return fontPtr;
   }
 
   public int getNumMipmapLevels() {
+    this.assertAvailable();
     return this.tlistLocations.length;
   }
 
@@ -231,6 +242,7 @@ public class CaxtonFont implements AutoCloseable {
    * @return a packed atlas location value
    */
   public long getTlistLocation(int glyphId, int mipmap) {
+    this.assertAvailable();
     if (glyphId < 0 || glyphId >= tlistEntryCount) {
       throw new IndexOutOfBoundsException(
           "i must be in [0, " + tlistEntryCount + ") (got " + glyphId + ")");
@@ -258,6 +270,7 @@ public class CaxtonFont implements AutoCloseable {
    * @return a packed bounding box for the glyph
    */
   public long getBbox(int glyphId) {
+    this.assertAvailable();
     if (glyphId < 0 || glyphId >= glyphCount) {
       throw new IndexOutOfBoundsException(
           "i must be in [0, " + glyphCount + ") (got " + glyphId + ")");
@@ -272,6 +285,7 @@ public class CaxtonFont implements AutoCloseable {
    * @return the pointer to the pixel data.
    */
   public long getPixelData(int mipmap) {
+    this.assertAvailable();
     return this.pixelData[mipmap];
   }
 
@@ -292,6 +306,7 @@ public class CaxtonFont implements AutoCloseable {
   }
 
   public @Nullable String getGlyphName(int id) {
+    this.assertAvailable();
     return CaxtonInternal.fontGlyphName(this.fontPtr, id);
   }
 
@@ -315,10 +330,11 @@ public class CaxtonFont implements AutoCloseable {
   }
 
   public DebugShapeInfo shapeForDebug(String s) {
+    this.assertAvailable();
     return CaxtonInternal.fontShapeForDebug(this.fontPtr, s);
   }
 
-  private String getCacheDir() {
+  private static String getCacheDir() {
     if (cacheDir == null) {
       var dir = new File(MinecraftClient.getInstance().runDirectory, "caxton_cache");
       try {
@@ -337,6 +353,7 @@ public class CaxtonFont implements AutoCloseable {
    * @return the receiver
    */
   public CaxtonFont cloneReference() {
+    this.assertAvailable();
     if (this.changes != null) {
       this.changes.add(ChangeEntry.capture(true));
     }
