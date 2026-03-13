@@ -156,11 +156,11 @@ public class CaxtonFont implements AutoCloseable {
   }
 
   public boolean isClosed() {
-    return this.fontData != null;
+    return this.fontData == null;
   }
 
   private void assertAvailable() {
-    if (this.isClosed()) throw new IllegalStateException();
+    if (this.isClosed()) throw new IllegalStateException("Font already closed");
   }
 
   public String toString() {

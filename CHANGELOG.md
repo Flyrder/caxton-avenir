@@ -1,3 +1,3 @@
-## 0.10.0-alpha.2
+## 0.10.0-alpha.3
 
-* Add checks for font validity to turn JVM crashes into exceptions
+* Fix Caxton fonts failing to load… at all
