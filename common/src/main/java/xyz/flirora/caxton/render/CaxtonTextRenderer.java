@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.render;
 
-import static xyz.flirora.caxton.layout.Interleaving.*;
+import static xyz.flirora.caxton.layout.Interleaving.SHAPING_RUN_OFF_START;
+import static xyz.flirora.caxton.layout.Interleaving.SHAPING_RUN_STRIDE;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.logging.LogUtils;
@@ -26,7 +27,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.random.Random;
 import org.apache.commons.lang3.mutable.MutableFloat;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
 import xyz.flirora.caxton.font.CaxtonFont;
@@ -84,7 +85,7 @@ public class CaxtonTextRenderer {
     return argb;
   }
 
-  private static float getMinThickness(Matrix4f modelView) {
+  private static float getMinThickness(Matrix4fc modelView) {
     // I don’t want to have to deal with computing this for every underlined
     // character
     if (modelView.isAffine()) {
@@ -122,7 +123,7 @@ public class CaxtonTextRenderer {
       float y,
       int color,
       int outlineColor,
-      Matrix4f matrix,
+      Matrix4fc matrix,
       VertexConsumerProvider vertexConsumers,
       int light,
       boolean addCorners) {
@@ -246,7 +247,7 @@ public class CaxtonTextRenderer {
       float x,
       float y,
       boolean shadow,
-      Matrix4f matrix,
+      Matrix4fc matrix,
       VertexConsumerProvider vertexConsumers,
       CaxtonTextLayerType layerType,
       int light,

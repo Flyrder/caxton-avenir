@@ -274,12 +274,13 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget
               Math.min(selectionStart, selectionEnd),
               Math.max(selectionStart, selectionEnd),
               (x0, x1) ->
-                  myDrawSelectionHighlight(
+                  Voepfxo.drawSelection(
                       context,
                       x + x0 - finalFirstCharLocation,
                       y - 1,
                       x + x1 - finalFirstCharLocation,
-                      y + 1 + textRenderer.fontHeight));
+                      y + 1 + textRenderer.fontHeight,
+                      this.invertSelectionBackground));
     }
 
     if (showCursor) {

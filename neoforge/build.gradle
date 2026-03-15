@@ -29,7 +29,7 @@ loom {
             client()
             setConfigName('NeoForge Client')
             ideConfigGenerated(true)
-            runDir('runs/client')
+            runDir('../fabric/run')
         }
     }
     mods {

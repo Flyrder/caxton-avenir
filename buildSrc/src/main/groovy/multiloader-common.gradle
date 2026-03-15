@@ -110,10 +110,13 @@ def identifyHostRustcPlatform = tasks.register("identifyHostRustcPlatform", Exec
 }
 
 static String convertMcVersionToFmjFormat(String version) {
-    final Pattern SNAPSHOT_PATTERN = Pattern.compile("(\\d+\\.\\d+)-snapshot-(\\d+)");
+    final Pattern SNAPSHOT_PATTERN = Pattern.compile("(\\d+\\.\\d+)-(\\p{Lower}+)-(\\d+)");
     Matcher m = SNAPSHOT_PATTERN.matcher(version);
     if (m.matches()) {
-        return m.group(1) + "-alpha." + m.group(2);
+        String label = m.group(2);
+        String translatedLabel = label == "snapshot" ? "alpha" :
+                label;
+        return m.group(1) + "-" + translatedLabel + "." + m.group(3);
     }
     return version;
 }

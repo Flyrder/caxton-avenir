@@ -34,7 +34,7 @@ loom {
             client()
             setConfigName('Fabric Client')
             ideConfigGenerated(true)
-            runDir('runs/client')
+            runDir('run')
         }
         create("clientWithRenderdoc") {
             client()

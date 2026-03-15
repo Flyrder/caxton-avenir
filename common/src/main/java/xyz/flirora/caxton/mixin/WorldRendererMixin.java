@@ -7,12 +7,12 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.BufferBuilderStorage;
+import net.minecraft.client.render.GameRenderState;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.render.block.entity.BlockEntityRenderManager;
 import net.minecraft.client.render.command.RenderDispatcher;
 import net.minecraft.client.render.entity.EntityRenderManager;
-import net.minecraft.client.render.state.WorldRenderState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -33,7 +33,7 @@ public class WorldRendererMixin {
       EntityRenderManager entityRenderManager,
       BlockEntityRenderManager blockEntityRenderManager,
       BufferBuilderStorage bufferBuilders,
-      WorldRenderState entityRenderStates,
+      GameRenderState gameRenderState,
       RenderDispatcher entityRenderDispatcher,
       CallbackInfo ci) {
     caxton$warnOnNonWrvcp = !CaxtonModClient.FORCE_DISABLE_BATCHING_HACK;
