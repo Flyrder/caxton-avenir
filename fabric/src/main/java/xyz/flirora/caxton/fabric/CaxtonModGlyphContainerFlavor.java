@@ -4,8 +4,8 @@ package xyz.flirora.caxton.fabric;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
+import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
+import net.fabricmc.fabric.api.resource.v1.pack.PackActivationType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.text.Text;
@@ -27,11 +27,11 @@ public class CaxtonModGlyphContainerFlavor implements ClientModInitializer {
         });
     CaxtonModClient.LOGGER.info("Registering built-in resource packs");
     for (String id : CaxtonModClient.BUILTIN_PACKS) {
-      ResourceManagerHelper.registerBuiltinResourcePack(
+      ResourceLoader.registerBuiltinPack(
           Identifier.of(CaxtonModClient.MOD_ID, id),
           modContainer,
           Text.translatable("caxton.resourcePack." + id),
-          ResourcePackActivationType.NORMAL);
+          PackActivationType.NORMAL);
     }
     CaxtonModClient.LOGGER.info("Registering core shaders");
   }
