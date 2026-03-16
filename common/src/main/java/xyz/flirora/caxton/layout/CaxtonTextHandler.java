@@ -403,7 +403,7 @@ public class CaxtonTextHandler {
                   return true;
                 });
         if (!completed) {
-          return styleBox.getValue();
+          return styleBox.get();
         }
         x = cumulWidth.floatValue();
       } else {

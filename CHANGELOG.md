@@ -1,4 +1,4 @@
-## 0.10.0-alpha.3
+## 0.10.0-alpha.4
 
-* Fix Caxton fonts failing to load… at all
-* Repair font files in bundled resource packs, which would previously cause a crash in earlier 0.10.0-alpha versions
+* Fabric: move to Resource API v1
+* Replace deprecated method call in `CaxtonTextHandler`
