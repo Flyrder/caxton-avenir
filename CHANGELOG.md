@@ -1,4 +1,3 @@
-## 0.10.0-alpha.4
+## 0.10.0-beta.1
 
-* Fabric: move to Resource API v1
-* Replace deprecated method call in `CaxtonTextHandler`
+Update to 26.1
