@@ -60,6 +60,6 @@ plugins {
 rootProject.name = 'caxton'
 include('common')
 include('fabric')
-//include('neoforge')
+include('neoforge')
 //include('forge')
 include("common:caxton-impl")
