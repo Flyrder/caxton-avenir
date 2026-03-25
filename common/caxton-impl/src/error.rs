@@ -72,9 +72,9 @@ impl CxtError {
 
     pub fn get_class(&self) -> &'static CStr {
         match self {
-            CxtError::Mine(error) => c"xyz/flirora/caxton/dll/CaxtonNativeException",
-            CxtError::Jni(error) => c"java/lang/RuntimeException",
-            CxtError::Char(utf8_error) => c"java/nio/charset/CharacterCodingException",
+            CxtError::Mine(_) => c"xyz/flirora/caxton/dll/CaxtonNativeException",
+            CxtError::Jni(_) => c"java/lang/RuntimeException",
+            CxtError::Char(_) => c"java/nio/charset/CharacterCodingException",
             CxtError::Null => c"java/lang/NullPointerException",
         }
     }
