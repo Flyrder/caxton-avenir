@@ -1,3 +1,5 @@
+#![deprecated(since = "1.0.0-alpha.1", note = "Replaced with FFM API")]
+
 use std::{mem, ops::Deref, path::PathBuf, ptr, slice};
 
 use anyhow::Context;

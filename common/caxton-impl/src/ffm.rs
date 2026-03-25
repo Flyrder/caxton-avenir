@@ -7,13 +7,15 @@ use std::{
 };
 
 use anyhow::Context;
-use harfrust::{BufferClusterLevel, Direction, SerializeFlags, UnicodeBuffer};
+use harfrust::{BufferClusterLevel, Direction, Script, SerializeFlags, UnicodeBuffer};
 use nanoserde::DeJson;
-use skrifa::{prelude::Size, GlyphId, MetadataProvider};
+use skrifa::{prelude::Size, GlyphId, MetadataProvider, Tag};
 
 use crate::{
+    cfont::{ConfiguredFont, ConfiguredFontSettings},
     error::CxtError,
     font::{Font, FontInner, FontOptions},
+    shape::{ShapingResult, ShapingResultEntry},
     tlist::TLocation,
     to_i16_clamped,
 };
@@ -358,4 +360,114 @@ pub unsafe extern "C" fn caxton1_font_shape_for_debug(
         inferred_direction,
         serialized_results,
     }
+}
+
+/// Creates a new configured font.
+///
+/// ## Safety
+///
+/// * `settings` must be valid and nul-terminated.
+#[no_mangle]
+pub unsafe extern "C" fn caxton1_font_configure<'font>(
+    font: &'font Font,
+    settings: *const c_char,
+) -> Caxton1Status<*mut ConfiguredFont<'font>> {
+    Caxton1Status::from_result((|| -> Result<_, CxtError> {
+        let settings = if !settings.is_null() {
+            ConfiguredFontSettings::deserialize_json(unsafe {
+                str::from_utf8(CStr::from_ptr(settings).to_bytes())
+                    .context("string decoding failed")?
+            })
+            .context("failed to parse options")?
+        } else {
+            ConfiguredFontSettings::default()
+        };
+        let configured_font = Box::new(ConfiguredFont { font, settings });
+        Ok(Box::into_raw(configured_font))
+    })())
+}
+
+/// Destroys a configured font.
+///
+/// ## Safety
+///
+/// `font` must have been returned from [`caxton1_font_create`]
+/// and must not have been passed to [`caxton1_font_destroy`]
+/// since then.
+#[no_mangle]
+pub unsafe extern "C" fn caxton1_cfont_destroy(cfont: *mut ConfiguredFont) {
+    mem::drop(Box::from_raw(cfont))
+}
+
+#[repr(C)]
+pub struct Caxton1ShapingResult {
+    data_count: u64,
+    data: *mut ShapingResultEntry,
+    total_width: i32,
+}
+
+/// Shapes a run of text.
+///
+/// ## Safety
+///
+/// `s` must be valid for `s_len` elements`.
+///
+/// ## Panics
+///
+/// Panics if `start > end` or `end > s_len`.
+#[no_mangle]
+pub unsafe extern "C" fn caxton1_cfont_shape(
+    cfont: &ConfiguredFont,
+    s: *const u16,
+    s_len: u64,
+    start: u64,
+    end: u64,
+    rtl: bool,
+    script: u32,
+) -> Caxton1ShapingResult {
+    let string = slice::from_raw_parts(s, s_len as usize);
+    let mut buffer = UnicodeBuffer::new(); // TODO: share buffer between different shaping runs
+    let script = Script::from_iso15924_tag(Tag::from_u32(script));
+    let substring = &string[(start as usize)..(end as usize)];
+    {
+        let mut i = 0;
+        for c in char::decode_utf16(substring.iter().copied()) {
+            let c = c.unwrap_or(char::REPLACEMENT_CHARACTER);
+            buffer.add(c, i);
+            i += c.len_utf16() as u32;
+        }
+    }
+    buffer.set_direction(if rtl {
+        Direction::LeftToRight
+    } else {
+        Direction::RightToLeft
+    });
+    if let Some(script) = script {
+        buffer.set_script(script);
+    }
+    buffer.guess_segment_properties();
+    buffer.set_cluster_level(BufferClusterLevel::MonotoneCharacters);
+
+    let shaped = cfont.shape(mem::take(&mut buffer));
+    let sr = ShapingResult::from_glyph_buffer(&shaped);
+
+    let data = Box::into_raw(sr.data.into_boxed_slice());
+    Caxton1ShapingResult {
+        data_count: data.len() as u64,
+        data: data.cast(),
+        total_width: sr.total_width,
+    }
+}
+
+/// Destroys a [`Caxton1ShapingResult`].
+///
+/// # Safety
+///
+/// `shaping_result` must have been returned from [`caxton1_cfont_shape`].
+#[no_mangle]
+pub unsafe extern "C" fn caxton1_shapingresult_destroy(shaping_result: &mut Caxton1ShapingResult) {
+    let count = shaping_result.data_count;
+    let data = shaping_result.data;
+    let data_slice = ptr::slice_from_raw_parts_mut(data, count as usize);
+    mem::drop(Box::from_raw(data_slice));
 }
