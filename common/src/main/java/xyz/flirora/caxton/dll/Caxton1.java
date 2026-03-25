@@ -62,7 +62,7 @@ public class Caxton1 {
       LINKER.downcallHandle(
           LOOKUP.findOrThrow("caxton1_font_destroy"), FunctionDescriptor.ofVoid(FONTPTR));
 
-  public static MemorySegment fontDestroy(MemorySegment font) {
+  public static void fontDestroy(MemorySegment font) {
     try {
       FONT_DESTROY.invoke(font);
     } catch (Throwable e) {
