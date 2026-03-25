@@ -7,6 +7,7 @@ use std::{
 
 use anyhow::Context;
 use nanoserde::DeJson;
+use skrifa::MetadataProvider;
 
 use crate::{
     error::CxtError,
@@ -129,9 +130,33 @@ pub unsafe extern "C" fn caxton1_font_create(
 /// and must not have been passed to [`caxton1_font_destroy`]
 /// since then.
 #[no_mangle]
-pub unsafe extern "C" fn caxton1_font_destroy(font: *mut Font<'static, 'static>) {
+pub unsafe extern "C" fn caxton1_font_destroy(font: *mut Font) {
     let outer = Box::from_raw(font);
     let inner = outer.inner as *const FontInner;
     mem::drop(outer);
     mem::drop(Box::from_raw(inner.cast_mut()));
+}
+
+/// Gets the glyph index on this font corresponding to the given code point.
+///
+/// If `codepoint` does not correspond to a valid Unicode
+/// scalar value or does not correpsond to a glyph in this
+/// font, then `-1` will be returned.
+///
+/// ## Safety
+///
+/// `font` must have been returned from [`caxton1_font_create`]
+/// and must not have been passed to [`caxton1_font_destroy`]
+/// since then.
+#[no_mangle]
+pub extern "C" fn caxton1_font_codepoint_to_glyph_index(font: &Font, codepoint: u32) -> u32 {
+    let codepoint = match char::try_from(codepoint) {
+        Ok(codepoint) => codepoint,
+        Err(_) => return u32::MAX,
+    };
+    font.face
+        .charmap()
+        .map(codepoint)
+        .map(|x| x.to_u32())
+        .unwrap_or(u32::MAX)
 }

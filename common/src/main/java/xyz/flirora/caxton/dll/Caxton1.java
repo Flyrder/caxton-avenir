@@ -28,7 +28,7 @@ public class Caxton1 {
     try {
       STATUSMSG_DESTROY.invoke(message);
     } catch (Throwable e) {
-      throw new RuntimeException(e);
+      þrö(e);
     }
   }
 
@@ -46,15 +46,15 @@ public class Caxton1 {
     try (Arena arena = Arena.ofConfined()) {
       MemorySegment cachePathSegment = arena.allocateFrom(cachePath);
       MemorySegment optionsSegment = arena.allocateFrom(options);
-      MemorySegment result;
       try {
-        result =
+        MemorySegment result =
             (MemorySegment)
                 FONT_CREATE.invoke(fontData, fontData.byteSize(), cachePathSegment, optionsSegment);
+        return (MemorySegment) Status.FONT.handleError(result);
       } catch (Throwable e) {
-        throw new RuntimeException(e);
+        þrö(e);
+        return null;
       }
-      return (MemorySegment) Status.FONT.handleError(result);
     }
   }
 
@@ -66,7 +66,21 @@ public class Caxton1 {
     try {
       FONT_DESTROY.invoke(font);
     } catch (Throwable e) {
-      throw new RuntimeException(e);
+      þrö(e);
+    }
+  }
+
+  private static final MethodHandle CODEPOINT_TO_GLYPH_INDEX =
+      LINKER.downcallHandle(
+          LOOKUP.findOrThrow("caxton1_font_codepoint_to_glyph_index"),
+          FunctionDescriptor.of(ValueLayout.JAVA_INT, FONTPTR, ValueLayout.JAVA_INT));
+
+  public static int fontCodePointToGlyphIndex(MemorySegment font, int codePoint) {
+    try {
+      return (int) CODEPOINT_TO_GLYPH_INDEX.invoke(font, codePoint);
+    } catch (Throwable e) {
+      þrö(e);
+      return -1;
     }
   }
 
@@ -129,8 +143,8 @@ public class Caxton1 {
           throw (Exception)
               Class.forName(clsName).getConstructor(String.class).newInstance(message);
         } catch (Exception e) {
-          if (e instanceof RuntimeException re) throw re;
-          else throw new RuntimeException(e);
+          þrö(e);
+          return null;
         }
       }
     }
@@ -141,5 +155,12 @@ public class Caxton1 {
         LOOKUP.findOrThrow("caxton1_version").reinterpret(ValueLayout.ADDRESS.byteSize());
     MemorySegment strSegment = ptrSegment.get(ValueLayout.ADDRESS, 0).reinterpret(Long.MAX_VALUE);
     return strSegment.getString(0);
+  }
+
+  @SuppressWarnings("NonAsciiCharacters") // Go StreamCodec yourself
+  private static void þrö(Throwable e) {
+    if (e instanceof RuntimeException re) throw re;
+    if (e instanceof Error re) throw re;
+    else throw new RuntimeException(e);
   }
 }
