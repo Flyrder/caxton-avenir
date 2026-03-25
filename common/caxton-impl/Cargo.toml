@@ -1,7 +1,7 @@
 [package]
 name = "caxton-impl"
 description = "Native library for the Caxton mod for Minecraft"
-version = "0.4.0"
+version = "1.0.0-alpha.1"
 edition = "2021"
 license = "MIT"
 repository = "https://gitlab.com/Kyarei/caxton"
@@ -29,3 +29,6 @@ crate-type = ["cdylib"]
 
 [profile.release]
 panic = 'abort'
+
+[build-dependencies]
+cbindgen = "0.29.2"

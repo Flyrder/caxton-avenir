@@ -4,6 +4,7 @@ extern crate nalgebra as na;
 pub mod cfont;
 pub mod error;
 pub mod extrude;
+pub mod ffm;
 pub mod font;
 pub mod jni;
 pub mod shape;
