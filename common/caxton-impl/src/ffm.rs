@@ -1,17 +1,21 @@
 use core::slice;
 use std::{
     ffi::{c_char, CStr, CString},
-    mem,
+    mem::{self, MaybeUninit},
     path::PathBuf,
+    ptr,
 };
 
 use anyhow::Context;
+use harfrust::{BufferClusterLevel, Direction, SerializeFlags, UnicodeBuffer};
 use nanoserde::DeJson;
-use skrifa::MetadataProvider;
+use skrifa::{prelude::Size, GlyphId, MetadataProvider};
 
 use crate::{
     error::CxtError,
     font::{Font, FontInner, FontOptions},
+    tlist::TLocation,
+    to_i16_clamped,
 };
 
 /// Passes errors from caxton-impl in a C-compatible form.
@@ -98,12 +102,17 @@ pub static mut caxton1_version: *const c_char = unsafe {
 #[no_mangle]
 pub unsafe extern "C" fn caxton1_font_create(
     font_data: *const u8,
-    font_len: usize,
+    font_len: u64,
     cache_path: *const c_char,
     options: *const c_char,
 ) -> Caxton1Status<*mut Font<'static, 'static>> {
     let result = (|| -> Result<_, CxtError> {
-        let font_data = unsafe { slice::from_raw_parts(font_data, font_len) };
+        let font_data = unsafe {
+            slice::from_raw_parts(
+                font_data,
+                usize::try_from(font_len).context("font_len was too large")?,
+            )
+        };
         let cache_path = unsafe { CStr::from_ptr(cache_path) }.to_str()?;
         let options = unsafe { CStr::from_ptr(options) }.to_str()?;
         let options =
@@ -159,4 +168,194 @@ pub extern "C" fn caxton1_font_codepoint_to_glyph_index(font: &Font, codepoint: 
         .map(codepoint)
         .map(|x| x.to_u32())
         .unwrap_or(u32::MAX)
+}
+
+#[repr(C)]
+pub struct Caxton1Metrics {
+    pub values: [i16; 9],
+}
+
+#[no_mangle]
+pub extern "C" fn caxton1_font_get_metrics(font: &Font) -> Caxton1Metrics {
+    let face = &font.face;
+
+    let metrics = face.metrics(Size::unscaled(), &font.axes);
+    // TODO: compute these metrics using heuristics if they are not available
+    let (underline_position, underline_thickness) = match &metrics.underline {
+        Some(underline) => (
+            to_i16_clamped(underline.offset),
+            to_i16_clamped(underline.thickness),
+        ),
+        None => (-1, -1),
+    };
+    let (strikeout_position, strikeout_thickness) = match &metrics.strikeout {
+        Some(strikeout) => (
+            to_i16_clamped(strikeout.offset),
+            to_i16_clamped(strikeout.thickness),
+        ),
+        None => (-1, -1),
+    };
+    let metrics = [
+        metrics.units_per_em as i16,
+        to_i16_clamped(metrics.ascent),
+        to_i16_clamped(metrics.descent),
+        to_i16_clamped(metrics.ascent - metrics.descent), // Height
+        to_i16_clamped(metrics.leading),                  // Line gap
+        underline_position,
+        underline_thickness,
+        strikeout_position,
+        strikeout_thickness,
+    ];
+    Caxton1Metrics { values: metrics }
+}
+
+#[no_mangle]
+pub extern "C" fn caxton1_font_num_mipmap_layers(font: &Font) -> i32 {
+    font.num_mipmap_layers() as i32
+}
+
+#[no_mangle]
+pub extern "C" fn caxton1_font_num_glyphs(font: &Font) -> i32 {
+    font.num_glyphs as i32
+}
+
+#[no_mangle]
+pub extern "C" fn caxton1_font_num_tlist_locations(font: &Font) -> i32 {
+    font.num_tlist_locations as i32
+}
+
+#[no_mangle]
+pub extern "C" fn caxton1_font_num_bytes_per_pixel(font: &Font) -> i32 {
+    font.bytes_per_pixel as i32
+}
+
+/// Gets a pointer to the array of glyph bounding boxes.
+///
+/// The result is valid for `caxton1_font_num_glyphs(font)`
+/// u64s as long as `font` is not deallocated (or mutated).
+#[no_mangle]
+pub extern "C" fn caxton1_font_get_bounding_boxes(font: &Font) -> *const u64 {
+    assert!(font.bboxes.len() >= font.num_glyphs);
+    font.bboxes.as_ptr()
+}
+
+/// Gets a pointer to the array of tlist locations for a given mipmap level.
+///
+/// The result is valid for `caxton1_font_num_tlist_locations(font)`
+/// `TLocation`s as long as `font` is not deallocated (or mutated).
+#[no_mangle]
+pub extern "C" fn caxton1_font_get_tlist_pointer(font: &Font, mipmap: i32) -> *const TLocation {
+    let locations = font.tlist[mipmap as usize].locations();
+    assert!(locations.len() >= font.num_tlist_locations);
+    locations.as_ptr()
+}
+
+/// Gets a pointer to the pixel data for a given mipmap level.
+///
+/// The number of bytes in the pixel data will be written to
+/// `size_out`, which must not be null.
+///
+/// The result is valid as long as `font` is not deallocated (or mutated).
+#[no_mangle]
+pub extern "C" fn caxton1_font_get_pixel_data(
+    font: &Font,
+    mipmap: i32,
+    size_out: &mut MaybeUninit<u64>,
+) -> *const u8 {
+    let pixel_data = font.tlist[mipmap as usize].data();
+    size_out.write(pixel_data.len() as u64);
+    pixel_data.as_ptr()
+}
+
+/// Gets the glyph name corresponding to the given glyph ID.
+///
+/// The number of bytes in the name will be written to `size_out`.
+/// The pointer returned is **not** null-terminated.
+///
+/// If the given glyph does not exist or is unnamed, then
+/// `*size_out` will be set to 0 and the return value is null.
+#[no_mangle]
+pub extern "C" fn caxton1_font_get_glyph_name(
+    font: &Font,
+    glyph_id: u32,
+    len_out: &mut MaybeUninit<u64>,
+) -> *const u8 {
+    let name = font.face.glyph_names().get(GlyphId::from(glyph_id));
+    match name {
+        Some(name) => {
+            let name_str = name.as_str();
+            len_out.write(name_str.len() as u64);
+            name_str.as_ptr()
+        }
+        None => {
+            len_out.write(0);
+            ptr::null()
+        }
+    }
+}
+
+#[repr(C)]
+pub struct Caxton1DebugShapeInfo {
+    /// Free with [`caxton1_statusmsg_destroy`] if not null.
+    inferred_language: *const c_char,
+    /// Free with [`caxton1_statusmsg_destroy`].
+    serialized_results: *const c_char,
+    inferred_script: u32,
+    inferred_direction: Caxton1Direction,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+#[repr(u8)]
+pub enum Caxton1Direction {
+    Invalid,
+    LeftToRight,
+    RightToLeft,
+    TopToBottom,
+    BottomToTop,
+}
+
+/// ## Safety
+///
+/// `text` must be a valid nul-terminated UTF-8 string.
+#[no_mangle]
+pub unsafe extern "C" fn caxton1_font_shape_for_debug(
+    font: &Font,
+    text: *const c_char,
+) -> Caxton1DebugShapeInfo {
+    let text = unsafe { str::from_utf8_unchecked(CStr::from_ptr(text).to_bytes()) };
+    let mut buffer = UnicodeBuffer::new();
+    buffer.push_str(text);
+    buffer.guess_segment_properties();
+    buffer.set_cluster_level(BufferClusterLevel::MonotoneCharacters);
+
+    let inferred_language = match buffer.language() {
+        Some(lang) => {
+            let mut s = String::from(lang.as_str());
+            s.push('\0');
+            CString::from_vec_with_nul(s.into()).unwrap().into_raw()
+        }
+        None => ptr::null(),
+    };
+    let inferred_script = u32::from_le_bytes(buffer.script().tag().into_bytes());
+    let inferred_direction = match buffer.direction() {
+        Direction::Invalid => Caxton1Direction::Invalid,
+        Direction::LeftToRight => Caxton1Direction::LeftToRight,
+        Direction::RightToLeft => Caxton1Direction::RightToLeft,
+        Direction::TopToBottom => Caxton1Direction::TopToBottom,
+        Direction::BottomToTop => Caxton1Direction::BottomToTop,
+    };
+
+    let buffer = font.shaper.shape(buffer, &[]);
+    let serialized_results = {
+        let mut s = buffer.serialize(&font.shaper, SerializeFlags::default());
+        s.push('\0');
+        CString::from_vec_with_nul(s.into()).unwrap().into_raw()
+    };
+
+    Caxton1DebugShapeInfo {
+        inferred_language,
+        inferred_script,
+        inferred_direction,
+        serialized_results,
+    }
 }

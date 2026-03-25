@@ -7,7 +7,9 @@ import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
-import java.util.Objects;
+import java.nio.charset.StandardCharsets;
+import org.jspecify.annotations.Nullable;
+import xyz.flirora.caxton.command.DebugShapeInfo;
 
 /// Handles calls to the caxton-impl native library through the Foreign Function & Memory API.
 public class Caxton1 {
@@ -15,8 +17,6 @@ public class Caxton1 {
   // TODO: replace with libraryLookup (might need to make Caxton1 a singleton class?)
   private static final SymbolLookup LOOKUP = SymbolLookup.loaderLookup();
   public static final AddressLayout FONTPTR = ValueLayout.ADDRESS.withName("Font *");
-  public static final ValueLayout UINTPTR_T =
-      (ValueLayout) Objects.requireNonNull(LINKER.canonicalLayouts().get("uintptr_t"));
   public static final String VERSION = getVersion();
 
   private static final MethodHandle STATUSMSG_DESTROY =
@@ -26,7 +26,7 @@ public class Caxton1 {
 
   private static void statusmsgDestroy(MemorySegment message) {
     try {
-      STATUSMSG_DESTROY.invoke(message);
+      STATUSMSG_DESTROY.invokeExact(message);
     } catch (Throwable e) {
       þrö(e);
     }
@@ -38,7 +38,7 @@ public class Caxton1 {
           FunctionDescriptor.of(
               Status.FONT.layout(),
               ValueLayout.ADDRESS.withTargetLayout(ValueLayout.JAVA_BYTE),
-              UINTPTR_T,
+              ValueLayout.JAVA_LONG,
               ValueLayout.ADDRESS,
               ValueLayout.ADDRESS));
 
@@ -49,7 +49,8 @@ public class Caxton1 {
       try {
         MemorySegment result =
             (MemorySegment)
-                FONT_CREATE.invoke(fontData, fontData.byteSize(), cachePathSegment, optionsSegment);
+                FONT_CREATE.invokeExact(
+                    fontData, fontData.byteSize(), cachePathSegment, optionsSegment);
         return (MemorySegment) Status.FONT.handleError(result);
       } catch (Throwable e) {
         þrö(e);
@@ -64,7 +65,7 @@ public class Caxton1 {
 
   public static void fontDestroy(MemorySegment font) {
     try {
-      FONT_DESTROY.invoke(font);
+      FONT_DESTROY.invokeExact(font);
     } catch (Throwable e) {
       þrö(e);
     }
@@ -77,10 +78,174 @@ public class Caxton1 {
 
   public static int fontCodePointToGlyphIndex(MemorySegment font, int codePoint) {
     try {
-      return (int) CODEPOINT_TO_GLYPH_INDEX.invoke(font, codePoint);
+      return (int) CODEPOINT_TO_GLYPH_INDEX.invokeExact(font, codePoint);
     } catch (Throwable e) {
       þrö(e);
       return -1;
+    }
+  }
+
+  private static final MethodHandle GET_METRICS =
+      LINKER.downcallHandle(
+          LOOKUP.findOrThrow("caxton1_font_get_metrics"),
+          FunctionDescriptor.of(Metrics.LAYOUT, FONTPTR));
+
+  public static MemorySegment fontGetMetrics(MemorySegment font, SegmentAllocator allocator) {
+    try {
+      return (MemorySegment) GET_METRICS.invokeExact(font, allocator);
+    } catch (Throwable e) {
+      þrö(e);
+      return null;
+    }
+  }
+
+  private static final FunctionDescriptor FONT_TO_I32_DESCRIPTOR =
+      FunctionDescriptor.of(ValueLayout.JAVA_INT, FONTPTR);
+
+  private static MethodHandle fontToI32Func(String name) {
+    return LINKER.downcallHandle(LOOKUP.findOrThrow(name), FONT_TO_I32_DESCRIPTOR);
+  }
+
+  private static final MethodHandle NUM_MIPMAP_LAYERS =
+      fontToI32Func("caxton1_font_num_mipmap_layers");
+  private static final MethodHandle NUM_GLYPHS = fontToI32Func("caxton1_font_num_glyphs");
+  private static final MethodHandle NUM_TLIST_LOCATIONS =
+      fontToI32Func("caxton1_font_num_tlist_locations");
+  private static final MethodHandle NUM_BYTES_PER_PIXEL =
+      fontToI32Func("caxton1_font_num_bytes_per_pixel");
+
+  public static int fontNumMipmapLayers(MemorySegment font) {
+    try {
+      return (int) NUM_MIPMAP_LAYERS.invokeExact(font);
+    } catch (Throwable e) {
+      þrö(e);
+      return -1;
+    }
+  }
+
+  public static int fontNumGlyphs(MemorySegment font) {
+    try {
+      return (int) NUM_GLYPHS.invokeExact(font);
+    } catch (Throwable e) {
+      þrö(e);
+      return -1;
+    }
+  }
+
+  public static int fontNumTlistLocations(MemorySegment font) {
+    try {
+      return (int) NUM_TLIST_LOCATIONS.invokeExact(font);
+    } catch (Throwable e) {
+      þrö(e);
+      return -1;
+    }
+  }
+
+  public static int fontNumBytesPerPixel(MemorySegment font) {
+    try {
+      return (int) NUM_BYTES_PER_PIXEL.invokeExact(font);
+    } catch (Throwable e) {
+      þrö(e);
+      return -1;
+    }
+  }
+
+  private static final MethodHandle GET_BOUNDING_BOXES =
+      LINKER.downcallHandle(
+          LOOKUP.findOrThrow("caxton1_font_get_bounding_boxes"),
+          FunctionDescriptor.of(
+              ValueLayout.ADDRESS.withTargetLayout(ValueLayout.JAVA_LONG), FONTPTR));
+
+  public static MemorySegment fontGetBoundingBoxes(MemorySegment font, long glyphCount) {
+    try {
+      MemorySegment segment = (MemorySegment) GET_BOUNDING_BOXES.invokeExact(font);
+      return segment.reinterpret(glyphCount * ValueLayout.JAVA_LONG.byteSize());
+    } catch (Throwable e) {
+      þrö(e);
+      return null;
+    }
+  }
+
+  private static final ValueLayout TLOCATION = ValueLayout.JAVA_LONG;
+  private static final MethodHandle GET_TLIST_POINTER =
+      LINKER.downcallHandle(
+          LOOKUP.findOrThrow("caxton1_font_get_tlist_pointer"),
+          FunctionDescriptor.of(
+              ValueLayout.ADDRESS.withTargetLayout(TLOCATION), FONTPTR, ValueLayout.JAVA_INT));
+
+  public static MemorySegment fontGetTlistPointer(
+      MemorySegment font, int mipmap, long tlistLocationCount) {
+    try {
+      MemorySegment segment = (MemorySegment) GET_TLIST_POINTER.invokeExact(font, mipmap);
+      return segment.reinterpret(tlistLocationCount * TLOCATION.byteSize());
+    } catch (Throwable e) {
+      þrö(e);
+      return null;
+    }
+  }
+
+  private static final MethodHandle GET_PIXEL_DATA =
+      LINKER.downcallHandle(
+          LOOKUP.findOrThrow("caxton1_get_pixel_data"),
+          FunctionDescriptor.of(
+              ValueLayout.ADDRESS.withTargetLayout(ValueLayout.JAVA_BYTE),
+              FONTPTR,
+              ValueLayout.JAVA_INT,
+              ValueLayout.ADDRESS.withTargetLayout(ValueLayout.JAVA_LONG)));
+
+  public static MemorySegment fontGetPixelData(MemorySegment font, int mipmap) {
+    try (Arena arena = Arena.ofConfined()) {
+      MemorySegment sizeSegment = arena.allocate(ValueLayout.JAVA_LONG);
+      MemorySegment segment = (MemorySegment) GET_PIXEL_DATA.invokeExact(font, mipmap, sizeSegment);
+      return segment.reinterpret(
+          sizeSegment.getAtIndex(ValueLayout.JAVA_LONG, 0) * TLOCATION.byteSize());
+    } catch (Throwable e) {
+      þrö(e);
+      return null;
+    }
+  }
+
+  private static final MethodHandle GET_GLYPH_NAME =
+      LINKER.downcallHandle(
+          LOOKUP.findOrThrow("caxton1_get_glyph_name"),
+          FunctionDescriptor.of(
+              ValueLayout.ADDRESS.withTargetLayout(ValueLayout.JAVA_BYTE),
+              FONTPTR,
+              ValueLayout.JAVA_INT,
+              ValueLayout.ADDRESS.withTargetLayout(ValueLayout.JAVA_LONG)));
+
+  public static @Nullable String fontGetGlyphName(MemorySegment font, int glyphId) {
+    try (Arena arena = Arena.ofConfined()) {
+      MemorySegment sizeSegment = arena.allocate(ValueLayout.JAVA_LONG);
+      MemorySegment segment =
+          (MemorySegment) GET_GLYPH_NAME.invokeExact(font, glyphId, sizeSegment);
+      if (segment.address() == 0) return null;
+      segment =
+          segment.reinterpret(
+              sizeSegment.getAtIndex(ValueLayout.JAVA_LONG, 0) * ValueLayout.JAVA_BYTE.byteSize());
+      byte[] bytes = segment.toArray(ValueLayout.JAVA_BYTE);
+      return new String(bytes, StandardCharsets.UTF_8);
+    } catch (Throwable e) {
+      þrö(e);
+      return null;
+    }
+  }
+
+  private static final MethodHandle SHAPE_FOR_DEBUG =
+      LINKER.downcallHandle(
+          LOOKUP.findOrThrow("caxton1_font_shape_for_debug"),
+          FunctionDescriptor.of(DebugShapeInfo1.LAYOUT, FONTPTR, ValueLayout.ADDRESS));
+
+  public static DebugShapeInfo fontShapeForDebug(MemorySegment font, String text) {
+    try (Arena arena = Arena.ofConfined()) {
+      MemorySegment textSegment = arena.allocateFrom(text);
+      MemorySegment result = (MemorySegment) SHAPE_FOR_DEBUG.invokeExact(font, textSegment, arena);
+      DebugShapeInfo info = DebugShapeInfo1.fromNative(result);
+      DebugShapeInfo1.destroy(result);
+      return info;
+    } catch (Throwable e) {
+      þrö(e);
+      return null;
     }
   }
 
@@ -136,8 +301,8 @@ public class Caxton1 {
       } else {
         MemorySegment clsSegment = (MemorySegment) this.cls.get(resultSegment, 0);
         MemorySegment messageSegment = (MemorySegment) this.message.get(resultSegment, 0);
-        String clsName = clsSegment.reinterpret(Long.MAX_VALUE).getString(0);
-        String message = messageSegment.reinterpret(Long.MAX_VALUE).getString(0);
+        String clsName = fromCStr(clsSegment);
+        String message = fromCStr(messageSegment);
         statusmsgDestroy(messageSegment);
         try {
           throw (Exception)
@@ -150,11 +315,71 @@ public class Caxton1 {
     }
   }
 
+  public static class Metrics {
+    public static final MemoryLayout LAYOUT =
+        MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(9, ValueLayout.JAVA_SHORT).withName("values"));
+    public static final VarHandle VALUES = LAYOUT.varHandle(groupElement("values"));
+
+    public static short get(MemorySegment metrics, int index) {
+      return ((MemorySegment) VALUES.get(metrics, 0)).getAtIndex(ValueLayout.JAVA_SHORT, index);
+    }
+  }
+
+  public static class DebugShapeInfo1 {
+    public static final MemoryLayout LAYOUT =
+        MemoryLayout.structLayout(
+            ValueLayout.ADDRESS.withName("inferred_language"),
+            ValueLayout.ADDRESS.withName("serialized_results"),
+            ValueLayout.JAVA_INT.withName("inferred_script"),
+            ValueLayout.JAVA_BYTE.withName("inferred_direction"));
+    public static final VarHandle INFERRED_LANGUAGE =
+        LAYOUT.varHandle(groupElement("inferred_language"));
+    public static final VarHandle SERIALIZED_RESULTS =
+        LAYOUT.varHandle(groupElement("serialized_results"));
+    public static final VarHandle INFERRED_SCRIPT =
+        LAYOUT.varHandle(groupElement("inferred_script"));
+    public static final VarHandle INFERRED_DIRECTION =
+        LAYOUT.varHandle(groupElement("inferred_direction"));
+
+    public static DebugShapeInfo fromNative(MemorySegment segment) {
+      String inferredLanguage = fromCStr((MemorySegment) INFERRED_LANGUAGE.get(segment, 0));
+      String serializedResult = fromCStr((MemorySegment) SERIALIZED_RESULTS.get(segment, 0));
+      int inferredScript = (int) INFERRED_SCRIPT.get(segment, 0);
+      byte direction = (byte) INFERRED_DIRECTION.get(segment, 0);
+
+      String inferredScriptStr =
+          new String(
+              new byte[] {
+                (byte) inferredScript,
+                (byte) (inferredScript >>> 8),
+                (byte) (inferredScript >>> 16),
+                (byte) (inferredScript >>> 24),
+              },
+              StandardCharsets.UTF_8);
+      String inferredDirectionStr = DebugShapeInfo.Direction.VALUES[direction].asString();
+
+      return new DebugShapeInfo(
+          serializedResult, inferredLanguage, inferredScriptStr, inferredDirectionStr);
+    }
+
+    public static void destroy(MemorySegment segment) {
+      MemorySegment inferredLanguage = (MemorySegment) INFERRED_LANGUAGE.get(segment, 0);
+      MemorySegment serializedResult = (MemorySegment) SERIALIZED_RESULTS.get(segment, 0);
+      if (inferredLanguage.address() != 0) {
+        statusmsgDestroy(inferredLanguage);
+      }
+      if (serializedResult.address() != 0) {
+        statusmsgDestroy(serializedResult);
+      }
+    }
+  }
+
   private static String getVersion() {
+    System.err.println(LINKER.canonicalLayouts());
     MemorySegment ptrSegment =
         LOOKUP.findOrThrow("caxton1_version").reinterpret(ValueLayout.ADDRESS.byteSize());
-    MemorySegment strSegment = ptrSegment.get(ValueLayout.ADDRESS, 0).reinterpret(Long.MAX_VALUE);
-    return strSegment.getString(0);
+    return fromCStr(ptrSegment.get(ValueLayout.ADDRESS, 0));
   }
 
   @SuppressWarnings("NonAsciiCharacters") // Go StreamCodec yourself
@@ -162,5 +387,10 @@ public class Caxton1 {
     if (e instanceof RuntimeException re) throw re;
     if (e instanceof Error re) throw re;
     else throw new RuntimeException(e);
+  }
+
+  private static String fromCStr(MemorySegment cStr) {
+    if (cStr.address() == 0) return null;
+    return cStr.reinterpret(Long.MAX_VALUE).getString(0);
   }
 }

@@ -7,7 +7,7 @@ use flate2::write::ZlibEncoder;
 use flate2::Compression;
 use image::Rgba32FImage;
 
-#[repr(C)]
+#[repr(transparent)]
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default)]
 pub struct TLocation {
     packed: u64,
