@@ -57,6 +57,19 @@ public class Caxton1 {
         }
     }
 
+    private static final MethodHandle FONT_DESTROY = LINKER.downcallHandle(
+            LOOKUP.findOrThrow("caxton1_font_destroy"),
+            FunctionDescriptor.ofVoid(FONTPTR)
+    );
+
+    public static MemorySegment fontDestroy(MemorySegment font) {
+        try {
+            FONT_DESTROY.invoke(font);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * A wrapper for caxton-impl’s {@code Caxton1Status<T>} type, parameterized on the value type {@code T}.
      *

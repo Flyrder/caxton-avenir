@@ -120,3 +120,18 @@ pub unsafe extern "C" fn caxton1_font_create(
     })();
     Caxton1Status::from_result(result)
 }
+
+/// Destroys a Caxton font.
+///
+/// ## Safety
+///
+/// `font` must have been returned from [`caxton1_font_create`]
+/// and must not have been passed to [`caxton1_font_destroy`]
+/// since then.
+#[no_mangle]
+pub unsafe extern "C" fn caxton1_font_destroy(font: *mut Font<'static, 'static>) {
+    let outer = Box::from_raw(font);
+    let inner = outer.inner as *const FontInner;
+    mem::drop(outer);
+    mem::drop(Box::from_raw(inner.cast_mut()));
+}
