@@ -48,16 +48,18 @@ public class Caxton1 {
     try (Arena arena = Arena.ofConfined()) {
       MemorySegment cachePathSegment = arena.allocateFrom(cachePath);
       MemorySegment optionsSegment = arena.allocateFrom(options);
-      try {
-        MemorySegment result =
-            (MemorySegment)
-                FONT_CREATE.invokeExact(
-                    fontData, fontData.byteSize(), cachePathSegment, optionsSegment);
-        return (MemorySegment) Status.FONT.handleError(result);
-      } catch (Throwable e) {
-        þrö(e);
-        return null;
-      }
+      MemorySegment result =
+          (MemorySegment)
+              FONT_CREATE.invokeExact(
+                  (SegmentAllocator) arena,
+                  fontData,
+                  fontData.byteSize(),
+                  cachePathSegment,
+                  optionsSegment);
+      return (MemorySegment) Status.FONT.handleError(result);
+    } catch (Throwable e) {
+      þrö(e);
+      return null;
     }
   }
 
@@ -94,7 +96,7 @@ public class Caxton1 {
 
   public static MemorySegment fontGetMetrics(MemorySegment font, SegmentAllocator allocator) {
     try {
-      return (MemorySegment) FONT_GET_METRICS.invokeExact(font, allocator);
+      return (MemorySegment) FONT_GET_METRICS.invokeExact(allocator, font);
     } catch (Throwable e) {
       þrö(e);
       return null;
@@ -243,7 +245,8 @@ public class Caxton1 {
     try (Arena arena = Arena.ofConfined()) {
       MemorySegment textSegment = arena.allocateFrom(text);
       MemorySegment result =
-          (MemorySegment) FONT_SHAPE_FOR_DEBUG.invokeExact(font, textSegment, arena);
+          (MemorySegment)
+              FONT_SHAPE_FOR_DEBUG.invokeExact((SegmentAllocator) arena, font, textSegment);
       DebugShapeInfo info = DebugShapeInfo1.fromNative(result);
       DebugShapeInfo1.destroy(result);
       return info;

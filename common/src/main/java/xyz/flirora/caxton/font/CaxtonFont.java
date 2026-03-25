@@ -11,7 +11,9 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,11 +25,10 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 import xyz.flirora.caxton.CaxtonModClient;
 import xyz.flirora.caxton.command.DebugShapeInfo;
-import xyz.flirora.caxton.dll.CaxtonInternal;
+import xyz.flirora.caxton.dll.Caxton1;
 
 /**
  * Holds information related to a single font file.
@@ -43,14 +44,15 @@ public class CaxtonFont implements AutoCloseable {
   private final short[] metrics;
   private final int glyphCount;
   private final int tlistEntryCount;
-  private final long[] tlistLocations;
-  private final long bboxes;
+  private final MemorySegment[] tlistLocations;
+  private final MemorySegment bboxes;
   private final CaxtonFontOptions options;
   private final Int2ObjectMap<IntList> glyphsByWidth;
-  private final long[] pixelData;
+  private final MemorySegment[] pixelData;
   private final NativeImage.Format format;
-  private ByteBuffer fontData;
-  private long fontPtr;
+  private final Arena fontArena = Arena.ofConfined();
+  private MemorySegment fontData;
+  private MemorySegment fontSegment;
   // CaxtonFont.{cloneReference, close} are called infrequently, so it wouldn’t
   // hurt much to protect them against race conditions.
   private final AtomicInteger refCount = new AtomicInteger(1);
@@ -70,32 +72,34 @@ public class CaxtonFont implements AutoCloseable {
   public CaxtonFont(InputStream input, Identifier id, JsonObject options) throws IOException {
     this.id = id;
 
-    try {
+    try (Arena arena = Arena.ofConfined()) {
       byte[] readInput = input.readAllBytes();
 
-      fontData = MemoryUtil.memAlloc(readInput.length);
-      fontData.put(readInput);
-      fontPtr = CaxtonInternal.createFont(fontData, getCacheDir(), options.toString());
-      metrics = CaxtonInternal.fontMetrics(fontPtr);
-      glyphCount = CaxtonInternal.fontAtlasSize(fontPtr);
-      tlistEntryCount = CaxtonInternal.fontAtlasPhysicalSize(fontPtr);
-      bboxes = CaxtonInternal.fontBboxes(fontPtr);
+      fontData = this.fontArena.allocate(ValueLayout.JAVA_BYTE, readInput.length);
+      MemorySegment.copy(readInput, 0, fontData, ValueLayout.JAVA_BYTE, 0, readInput.length);
+      fontSegment = Caxton1.fontCreate(fontData, getCacheDir(), options.toString());
+      MemorySegment metricsSegment = Caxton1.fontGetMetrics(fontSegment, arena);
+      metrics = metricsSegment.toArray(ValueLayout.JAVA_SHORT);
+      assert metrics.length == 9;
+      glyphCount = Caxton1.fontNumGlyphs(fontSegment);
+      tlistEntryCount = Caxton1.fontNumTlistLocations(fontSegment);
+      bboxes = Caxton1.fontGetBoundingBoxes(fontSegment, glyphCount);
 
-      int mipmapLayers = CaxtonInternal.fontMipmapLayers(fontPtr);
+      int mipmapLayers = Caxton1.fontNumMipmapLayers(fontSegment);
       if (mipmapLayers <= 0) {
         throw new IllegalArgumentException("mipmapLayers must be at least 1");
       }
       if (mipmapLayers > 5) {
         throw new IllegalArgumentException("mipmapLayers must be at most 5");
       }
-      tlistLocations = new long[mipmapLayers];
-      pixelData = new long[mipmapLayers];
+      tlistLocations = new MemorySegment[mipmapLayers];
+      pixelData = new MemorySegment[mipmapLayers];
       for (int i = 0; i < mipmapLayers; ++i) {
-        tlistLocations[i] = CaxtonInternal.fontAtlasLocations(fontPtr, i);
-        pixelData[i] = CaxtonInternal.fontAtlasPage(fontPtr, i);
+        tlistLocations[i] = Caxton1.fontGetTlistPointer(fontSegment, i, tlistEntryCount);
+        pixelData[i] = Caxton1.fontGetPixelData(fontSegment, i);
       }
       this.format =
-          switch (CaxtonInternal.fontBytesPerPixel(fontPtr)) {
+          switch (Caxton1.fontNumBytesPerPixel(fontSegment)) {
             case 1 -> NativeImage.Format.LUMINANCE;
             case 2 -> NativeImage.Format.LUMINANCE_ALPHA;
             case 3 -> NativeImage.Format.RGB;
@@ -108,7 +112,8 @@ public class CaxtonFont implements AutoCloseable {
       this.options = new CaxtonFontOptions(options);
       this.glyphsByWidth = new Int2ObjectOpenHashMap<>();
       for (int glyphId = 0; glyphId < glyphCount; ++glyphId) {
-        long tlLoc = MemoryUtil.memGetLong(tlistLocations[0] + 8 * Integer.toUnsignedLong(glyphId));
+        long tlLoc =
+            tlistLocations[0].getAtIndex(ValueLayout.JAVA_LONG, Integer.toUnsignedLong(glyphId));
         int width = (int) (tlLoc & 0xFFFF);
         this.glyphsByWidth.computeIfAbsent(width, w -> new IntArrayList()).add(glyphId);
       }
@@ -145,10 +150,10 @@ public class CaxtonFont implements AutoCloseable {
       throw new IllegalStateException("font closed with a refcount of 0");
     }
     if (remainingRefs == 0) {
-      if (fontPtr != 0) CaxtonInternal.destroyFont(fontPtr);
-      fontPtr = 0;
-      MemoryUtil.memFree(fontData);
+      if (fontSegment != null) Caxton1.fontDestroy(fontSegment);
+      fontSegment = null;
       fontData = null;
+      fontArena.close();
     }
     if (this.changes != null) {
       this.changes.add(ChangeEntry.capture(false));
@@ -164,7 +169,7 @@ public class CaxtonFont implements AutoCloseable {
   }
 
   public String toString() {
-    return "CaxtonFont[" + id + "@" + Long.toHexString(fontPtr) + "]";
+    return "CaxtonFont[" + id + "@" + fontSegment + "]";
   }
 
   /**
@@ -175,7 +180,7 @@ public class CaxtonFont implements AutoCloseable {
    */
   public boolean supportsCodePoint(int codePoint) {
     this.assertAvailable();
-    return CaxtonInternal.fontGlyphIndex(fontPtr, codePoint) != -1;
+    return Caxton1.fontCodePointToGlyphIndex(fontSegment, codePoint) != -1;
   }
 
   /**
@@ -211,10 +216,22 @@ public class CaxtonFont implements AutoCloseable {
    * Gets the raw pointer to this font.
    *
    * @return the address of the pointer to the font in native memory
+   * @deprecated Use {@link #getFontSegment()} instead
    */
+  @Deprecated(forRemoval = true)
   public long getFontPtr() {
     this.assertAvailable();
-    return fontPtr;
+    return fontSegment.address();
+  }
+
+  /**
+   * Gets the {@link MemorySegment} to this font.
+   *
+   * @return the {@link MemorySegment} to the font in native memory
+   */
+  public MemorySegment getFontSegment() {
+    this.assertAvailable();
+    return fontSegment;
   }
 
   public int getNumMipmapLevels() {
@@ -247,7 +264,8 @@ public class CaxtonFont implements AutoCloseable {
       throw new IndexOutOfBoundsException(
           "i must be in [0, " + tlistEntryCount + ") (got " + glyphId + ")");
     }
-    return MemoryUtil.memGetLong(tlistLocations[mipmap] + 8 * Integer.toUnsignedLong(glyphId));
+    return tlistLocations[mipmap].getAtIndex(
+        ValueLayout.JAVA_LONG, Integer.toUnsignedLong(glyphId));
   }
 
   /**
@@ -275,7 +293,7 @@ public class CaxtonFont implements AutoCloseable {
       throw new IndexOutOfBoundsException(
           "i must be in [0, " + glyphCount + ") (got " + glyphId + ")");
     }
-    return MemoryUtil.memGetLong(bboxes + 8 * Integer.toUnsignedLong(glyphId));
+    return bboxes.getAtIndex(ValueLayout.JAVA_LONG, Integer.toUnsignedLong(glyphId));
   }
 
   /**
@@ -285,6 +303,11 @@ public class CaxtonFont implements AutoCloseable {
    * @return the pointer to the pixel data.
    */
   public long getPixelData(int mipmap) {
+    this.assertAvailable();
+    return this.pixelData[mipmap].address();
+  }
+
+  public MemorySegment getPixelDataSegment(int mipmap) {
     this.assertAvailable();
     return this.pixelData[mipmap];
   }
@@ -307,7 +330,7 @@ public class CaxtonFont implements AutoCloseable {
 
   public @Nullable String getGlyphName(int id) {
     this.assertAvailable();
-    return CaxtonInternal.fontGlyphName(this.fontPtr, id);
+    return Caxton1.fontGetGlyphName(this.fontSegment, id);
   }
 
   /**
@@ -331,7 +354,7 @@ public class CaxtonFont implements AutoCloseable {
 
   public DebugShapeInfo shapeForDebug(String s) {
     this.assertAvailable();
-    return CaxtonInternal.fontShapeForDebug(this.fontPtr, s);
+    return Caxton1.fontShapeForDebug(this.fontSegment, s);
   }
 
   private static String getCacheDir() {
