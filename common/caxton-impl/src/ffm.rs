@@ -402,6 +402,7 @@ pub unsafe extern "C" fn caxton1_cfont_destroy(cfont: *mut ConfiguredFont) {
 #[repr(C)]
 pub struct Caxton1ShapingResult {
     data_count: u64,
+    /// Destroy with [`caxton1_free_shaping_result_entries`].
     data: *mut ShapingResultEntry,
     total_width: i32,
 }
@@ -438,9 +439,9 @@ pub unsafe extern "C" fn caxton1_cfont_shape(
         }
     }
     buffer.set_direction(if rtl {
-        Direction::LeftToRight
-    } else {
         Direction::RightToLeft
+    } else {
+        Direction::LeftToRight
     });
     if let Some(script) = script {
         buffer.set_script(script);
@@ -468,6 +469,20 @@ pub unsafe extern "C" fn caxton1_cfont_shape(
 pub unsafe extern "C" fn caxton1_shapingresult_destroy(shaping_result: &mut Caxton1ShapingResult) {
     let count = shaping_result.data_count;
     let data = shaping_result.data;
+    caxton1_free_shaping_result_entries(data, count);
+}
+
+/// Frees the memory allocated in a [`Caxton1ShapingResult`].
+///
+/// # Safety
+///
+/// `data` and `count` must have originated from a [`Caxton1ShapingResult`]
+/// returned from [`caxton1_cfont_shape`].
+#[no_mangle]
+pub unsafe extern "C" fn caxton1_free_shaping_result_entries(
+    data: *mut ShapingResultEntry,
+    count: u64,
+) {
     let data_slice = ptr::slice_from_raw_parts_mut(data, count as usize);
     mem::drop(Box::from_raw(data_slice));
 }
