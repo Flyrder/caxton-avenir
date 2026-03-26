@@ -2,15 +2,23 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.font;
 
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import com.mojang.datafixers.util.Either;
-import com.mojang.serialization.*;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.JsonOps;
+import java.lang.foreign.MemorySegment;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.JsonHelper;
 import org.jetbrains.annotations.Nullable;
+import xyz.flirora.caxton.dll.Caxton1;
 import xyz.flirora.caxton.dll.CaxtonInternal;
 import xyz.flirora.caxton.layout.ShapingResult;
 
@@ -38,7 +46,7 @@ import xyz.flirora.caxton.layout.ShapingResult;
 @Environment(EnvType.CLIENT)
 public record ConfiguredCaxtonFont(
     CaxtonFont font,
-    long ptr,
+    MemorySegment segment,
     float shadowOffset,
     float computedScaleFactor,
     float shiftX,
@@ -60,7 +68,7 @@ public record ConfiguredCaxtonFont(
     if (font == null) {
       throw new RuntimeException("font " + settings.id + " does not exist");
     }
-    long ptr = CaxtonInternal.configureFont(font.getFontPtr(), config);
+    MemorySegment segment = Caxton1.fontConfigure(font.getFontSegment(), config);
     float shadowOffset = 1.0f;
     double scaleFactor = 1.0f;
     float shiftX = 0.0f, shiftY = 0.0f, slant = 0.0f;
@@ -90,7 +98,7 @@ public record ConfiguredCaxtonFont(
     float computedScaleFactor =
         (float) (7.0 * scaleFactor / font.getMetrics(CaxtonFont.Metrics.ASCENDER));
     return new ConfiguredCaxtonFont(
-        font, ptr, shadowOffset, computedScaleFactor, shiftX, shiftY, slant);
+        font, segment, shadowOffset, computedScaleFactor, shiftX, shiftY, slant);
   }
 
   /**
@@ -101,7 +109,7 @@ public record ConfiguredCaxtonFont(
    */
   @Override
   public void close() {
-    CaxtonInternal.destroyConfiguredFont(ptr);
+    Caxton1.cfontDestroy(segment);
     font.close();
   }
 
@@ -124,8 +132,9 @@ public record ConfiguredCaxtonFont(
    *     that {@code result[i]} corresponds to {@code new String(s, bidiRuns[4 * i], bidiRuns[4 * i
    *     + 1] - bidiRuns[4 * i]}
    */
+  @Deprecated(forRemoval = true)
   public ShapingResult[] shape(char[] s, int[] bidiRuns) {
-    return CaxtonInternal.shape(ptr, s, bidiRuns);
+    return CaxtonInternal.shape(this.segment.address(), s, bidiRuns);
   }
 
   /**

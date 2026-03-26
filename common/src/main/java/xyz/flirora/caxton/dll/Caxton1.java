@@ -264,7 +264,9 @@ public class Caxton1 {
   public static MemorySegment fontConfigure(MemorySegment font, String settings) {
     try (Arena arena = Arena.ofConfined()) {
       MemorySegment settingsSegment = arena.allocateFrom(settings);
-      MemorySegment result = (MemorySegment) FONT_CONFIGURE.invokeExact(font, settingsSegment);
+      MemorySegment result =
+          (MemorySegment)
+              FONT_CONFIGURE.invokeExact((SegmentAllocator) arena, font, settingsSegment);
       return (MemorySegment) Status.CFONT.handleError(result);
     } catch (Throwable e) {
       þrö(e);
