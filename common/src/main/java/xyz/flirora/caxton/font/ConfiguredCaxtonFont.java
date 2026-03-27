@@ -33,7 +33,8 @@ import xyz.flirora.caxton.layout.ShapingResult;
  * a font provider itself are the domain of {@link ConfiguredCaxtonFont}.
  *
  * @param font the underlying {@link CaxtonFont}
- * @param ptr the address of the pointer to the configured font in native memory
+ * @param segment the {@link MemorySegment} corresponding to the Rust {@code ConfiguredFont} object
+ *     in memory
  * @param shadowOffset the shadow offset of the font
  * @param computedScaleFactor the scale factor from typographic units to scaled GUI units
  * @param shiftX the horizontal shift to apply, in scaled GUI units
