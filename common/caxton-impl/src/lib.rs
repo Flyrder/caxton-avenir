@@ -6,7 +6,6 @@ pub mod error;
 pub mod extrude;
 pub mod ffm;
 pub mod font;
-pub mod jni;
 pub mod shape;
 pub mod tlist;
 
