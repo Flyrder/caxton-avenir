@@ -38,6 +38,7 @@ import xyz.flirora.caxton.dll.Caxton1;
  */
 @Environment(EnvType.CLIENT)
 public class CaxtonFont implements AutoCloseable {
+  private static final Arena ARENA = Arena.ofAuto();
   private static final Logger LOGGER = LogUtils.getLogger();
   private static String cacheDir = null;
   private final Identifier id;
@@ -50,7 +51,6 @@ public class CaxtonFont implements AutoCloseable {
   private final Int2ObjectMap<IntList> glyphsByWidth;
   private final MemorySegment[] pixelData;
   private final NativeImage.Format format;
-  private final Arena fontArena = Arena.ofConfined();
   private MemorySegment fontData;
   private MemorySegment fontSegment;
   // CaxtonFont.{cloneReference, close} are called infrequently, so it wouldn’t
@@ -75,7 +75,7 @@ public class CaxtonFont implements AutoCloseable {
     try (Arena arena = Arena.ofConfined()) {
       byte[] readInput = input.readAllBytes();
 
-      fontData = this.fontArena.allocate(ValueLayout.JAVA_BYTE, readInput.length);
+      fontData = ARENA.allocate(ValueLayout.JAVA_BYTE, readInput.length);
       MemorySegment.copy(readInput, 0, fontData, ValueLayout.JAVA_BYTE, 0, readInput.length);
       fontSegment = Caxton1.fontCreate(fontData, getCacheDir(), options.toString());
       MemorySegment metricsSegment = Caxton1.fontGetMetrics(fontSegment, arena);
@@ -153,7 +153,6 @@ public class CaxtonFont implements AutoCloseable {
       if (fontSegment != null) Caxton1.fontDestroy(fontSegment);
       fontSegment = null;
       fontData = null;
-      fontArena.close();
     }
     if (this.changes != null) {
       this.changes.add(ChangeEntry.capture(false));
