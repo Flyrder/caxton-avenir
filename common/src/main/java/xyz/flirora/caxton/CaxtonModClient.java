@@ -38,11 +38,12 @@ public class CaxtonModClient {
 
   private static FontType getCaxtonFontType() {
     for (FontType variant : FontType.class.getEnumConstants()) {
-      if (variant.name().equals("CAXTON")) {
+      if (variant.name().equals("CAXTON_TTF")) {
         return variant;
       }
     }
-    throw new EnumConstantNotPresentException(FontType.class, "Could not find CAXTON font type");
+    throw new EnumConstantNotPresentException(
+        FontType.class, "Could not find CAXTON_TTF font type");
   }
 
   /** The {@link FontType} for Caxton fonts. */

@@ -22,7 +22,7 @@ public class CaxtonEarlyRiser implements Runnable {
         remapper.mapClassName(
             "official", "net.minecraft.client.gui.font.providers.GlyphProviderType");
     ClassTinkerers.enumBuilder(fontType, String.class, "Lcom/mojang/serialization/MapCodec;")
-        .addEnum("CAXTON", () -> new Object[] {"caxton", CaxtonFontLoader.CODEC})
+        .addEnum("CAXTON_TTF", () -> new Object[] {"caxton", CaxtonFontLoader.CODEC})
         .build();
   }
 }

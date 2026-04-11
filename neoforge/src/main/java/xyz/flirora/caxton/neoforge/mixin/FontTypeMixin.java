@@ -41,7 +41,7 @@ public class FontTypeMixin {
     var variants = new ArrayList<>(Arrays.asList(field_2316));
     var last = variants.get(variants.size() - 1);
     // This means our code will still work if other mods or Mojang add more variants!
-    var caxton = newVariant("CAXTON", last.ordinal() + 1, "caxton", CaxtonFontLoader.CODEC);
+    var caxton = newVariant("CAXTON_TTF", last.ordinal() + 1, "caxton", CaxtonFontLoader.CODEC);
     variants.add(caxton);
     field_2316 = variants.toArray(new FontType[0]);
   }
