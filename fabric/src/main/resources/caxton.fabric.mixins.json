@@ -1,8 +1,8 @@
 {
     "server": [],
-    "mixins": [],
+    "mixins": ["FontTypeMixin"],
     "minVersion": "0.8",
-    "package": "xyz.flirora.caxton.mixin",
+    "package": "xyz.flirora.caxton.fabric.mixin",
     "injectors": {"defaultRequire": 1},
     "compatibilityLevel": "JAVA_25",
     "client": [],

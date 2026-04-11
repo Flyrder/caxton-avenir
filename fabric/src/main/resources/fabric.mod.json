@@ -29,8 +29,7 @@
     "conflicts": {"iris": "*"},
     "entrypoints": {
         "client": ["xyz.flirora.caxton.fabric.CaxtonModGlyphContainerFlavor"],
-        "main": [],
-        "mm:early_risers": ["xyz.flirora.caxton.fabric.CaxtonEarlyRiser"]
+        "main": []
     },
     "id": "${mod_id}",
     "authors": ["${mod_author}"]
