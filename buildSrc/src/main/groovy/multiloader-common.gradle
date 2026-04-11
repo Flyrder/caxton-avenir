@@ -126,6 +126,7 @@ processResources {
             'archives_base_name'           : archives_base_name,
             'version'                      : version,
             'group'                        : project.group, //Else we target the task's group.
+            'loom_version'                 : loom_version,
             'minecraft_version'            : minecraft_version,
             'minecraft_version_fmj'        : convertMcVersionToFmjFormat(minecraft_version),
             'minecraft_version_range'      : minecraft_version_range,
