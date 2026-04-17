@@ -8,9 +8,11 @@ import java.util.List;
 import net.minecraft.Bootstrap;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.font.TextHandler;
+import net.minecraft.text.StringVisitable;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import org.apache.commons.lang3.mutable.MutableInt;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -75,5 +77,27 @@ public class CaxtonTextHandlerTest {
     Assertions.assertEquals(List.of(Pair.of(0, 2)), getWrapIndices(textHandler, "a ", 5, true));
     Assertions.assertEquals(List.of(Pair.of(0, 3)), getWrapIndices(textHandler, "a  ", 5, true));
     Assertions.assertEquals(List.of(Pair.of(0, 2)), getWrapIndices(textHandler, "a\n", 5, true));
+    Assertions.assertEquals(
+        List.of(Pair.of(0, 5)), getWrapIndices(textHandler, "  █  ", 99999, true));
+  }
+
+  private ArrayList<Pair<Integer, Integer>> getWrapIndices(
+      TextHandler textHandler, String string, int width) {
+    ArrayList<Pair<Integer, Integer>> bounds = new ArrayList<>();
+    MutableInt start = new MutableInt(0);
+    textHandler.wrapLines(
+        StringVisitable.plain(string),
+        width,
+        Style.EMPTY,
+        (line, continuation) -> {
+          bounds.add(Pair.of(start.getAndAdd(line.getString().length()), start.intValue()));
+        });
+    return bounds;
+  }
+
+  @Test
+  void testWrapLinesWithUnspecifiedTrailingWhitespace() {
+    TextHandler textHandler = new TextHandler((codePoint, style) -> 1.0f);
+    Assertions.assertEquals(List.of(Pair.of(0, 5)), getWrapIndices(textHandler, "  █  ", 99999));
   }
 }

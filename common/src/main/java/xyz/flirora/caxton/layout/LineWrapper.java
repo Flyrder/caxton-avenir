@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.layout;
 
-import static xyz.flirora.caxton.layout.Interleaving.*;
+import static xyz.flirora.caxton.layout.Interleaving.SHAPING_RUN_OFF_START;
+import static xyz.flirora.caxton.layout.Interleaving.SHAPING_RUN_STRIDE;
 
 import com.ibm.icu.lang.UCharacter;
 import com.ibm.icu.text.Bidi;
@@ -113,9 +114,11 @@ public class LineWrapper {
 
     Run.RunLister lister = new Run.RunLister(fontStorageAccessor, false);
     int lastNonspace = index;
-    while (lastNonspace > currentLineStart
-        && UCharacter.isWhitespace(contents.charAt(lastNonspace - 1))) {
-      --lastNonspace;
+    if (index < contents.length()) { // Skip stripping trailing whitespace if at end of text
+      while (lastNonspace > currentLineStart
+          && UCharacter.isWhitespace(contents.charAt(lastNonspace - 1))) {
+        --lastNonspace;
+      }
     }
     for (int i = currentLineStart; i < lastNonspace; ) {
       int codePoint = contents.codePointAt(i);
