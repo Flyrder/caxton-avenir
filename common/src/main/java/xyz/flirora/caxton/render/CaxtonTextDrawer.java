@@ -24,6 +24,7 @@ import xyz.flirora.caxton.font.ConfiguredCaxtonFont;
 import xyz.flirora.caxton.layout.RunGroup;
 import xyz.flirora.caxton.layout.ShapingResult;
 import xyz.flirora.caxton.layout.Threshold;
+import xyz.flirora.caxton.mixin.TextRendererAccessor;
 
 @Environment(EnvType.CLIENT)
 public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDrawable {
@@ -169,8 +170,9 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
       return false;
     }
 
-    GlyphProvider glyphProvider = this.textRenderer.getGlyphs(style.getFont());
-    var glyph = glyphProvider.get(codePoint);
+    var glyph =
+        ((TextRendererAccessor) this.textRenderer.vanillaTextRenderer)
+            .callGetGlyph(codePoint, style);
     return this.accept(index, style, glyph);
   }
 

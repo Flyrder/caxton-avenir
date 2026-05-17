@@ -1,3 +1,3 @@
-## 1.0.0-alpha.4
+## 1.0.0-alpha.5
 
-* Fix sign text with trailing spaces being misaligned
+* Fix obfuscated text rendering in legacy fonts

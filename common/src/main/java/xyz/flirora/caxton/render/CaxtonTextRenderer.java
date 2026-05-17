@@ -21,7 +21,6 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.window.Window;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
-import net.minecraft.text.StyleSpriteSource;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.random.Random;
@@ -98,10 +97,6 @@ public class CaxtonTextRenderer {
       return 1.0f / fontUnitYPx;
     }
     return 0.0f;
-  }
-
-  public GlyphProvider getGlyphs(StyleSpriteSource source) {
-    return ((TextRendererAccessor) this.vanillaTextRenderer).callGetGlyphs(source);
   }
 
   public FontManager.Fonts getFonts() {
