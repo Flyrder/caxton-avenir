@@ -75,6 +75,7 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
     this.xRight = xRight;
     this.threshold = threshold;
     this.trackEmpty = trackEmpty;
+    this.updateBackgroundBounds(x, y, 0.0f);
   }
 
   public CaxtonTextDrawer(
