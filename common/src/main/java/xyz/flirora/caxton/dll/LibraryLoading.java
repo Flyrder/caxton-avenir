@@ -127,8 +127,8 @@ public class LibraryLoading {
   }
 
   public static void showNativeLibraryLoadFailedScreen(MinecraftClient client, Exception e) {
-    Screen screen = client.currentScreen;
-    client.setScreen(
+    Screen screen = client.guiManager.getCurrentScreen();
+    client.guiManager.setScreen(
         nativeLibraryLoadFailedScreen(
             confirmed -> {
               if (confirmed) {
@@ -136,7 +136,7 @@ public class LibraryLoading {
                     e instanceof UnsupportedPlatformException ? OS_SUPPORT_URL : ISSUES_URL;
                 Util.getOperatingSystem().open(url);
               }
-              client.setScreen(screen);
+              client.guiManager.setScreen(screen);
             },
             e));
   }

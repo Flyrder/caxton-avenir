@@ -2,21 +2,26 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.render;
 
+import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.font.TextRenderLayerSet;
-import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.RenderPipelines;
 import net.minecraft.client.render.RenderSetup;
+import org.jspecify.annotations.Nullable;
 import xyz.flirora.caxton.font.FontTech;
 import xyz.flirora.caxton.layout.RenderSetupExt;
 import xyz.flirora.caxton.mixin.RenderLayerAccessor;
 
 @Environment(EnvType.CLIENT)
 public class CaxtonTextRenderLayers {
+  public static final ScopedValue<@Nullable GpuBuffer> UNIT_RANGE_UNIFORM =
+      ScopedValue.newInstance();
+
   private final Group msdf =
       new Group(
           RenderLayerFunctions::ofText,
@@ -31,19 +36,12 @@ public class CaxtonTextRenderLayers {
           RenderLayerFunctions::ofTextSeeThroughR,
           RenderLayerFunctions::ofTextOffsetR,
           RenderLayerFunctions::ofTextR,
-          RenderPipelines.GUI_TEXT_INTENSITY,
+          RenderPipelines.GUI_TEXT_GRAYSCALE,
           CaxtonShaders.TEXT_OUTLINE_RASTER);
 
   public void clear() {
     msdf.clear();
     raster.clear();
-  }
-
-  public RenderLayer text(CaxtonAtlas.Page page, CaxtonTextLayerType layerType, FontTech tech) {
-    return (switch (tech) {
-      case MSDF -> msdf.text(page, layerType);
-      case RASTER -> raster.text(page, layerType);
-    });
   }
 
   public TextRenderLayerSet renderLayerSet(CaxtonAtlas.Page page, FontTech tech, boolean outline) {
@@ -89,15 +87,6 @@ public class CaxtonTextRenderLayers {
       textOutline.clear();
     }
 
-    public RenderLayer text(CaxtonAtlas.Page page, CaxtonTextLayerType layerType) {
-      return switch (layerType) {
-        case NORMAL -> text.computeIfAbsent(page, this.ofText);
-        case SEE_THROUGH -> textSeeThrough.computeIfAbsent(page, this.ofTextSeeThrough);
-        case OUTLINE -> textOutline.computeIfAbsent(page, this.ofTextOutline);
-        case POLYGON_OFFSET -> textOffset.computeIfAbsent(page, this.ofTextOffset);
-      };
-    }
-
     public TextRenderLayerSet renderLayerSet(CaxtonAtlas.Page page, boolean outline) {
       if (outline) {
         return new TextRenderLayerSet(
@@ -119,11 +108,7 @@ public class CaxtonTextRenderLayers {
     private static RenderLayer make(
         String name, RenderPipeline pipeline, CaxtonAtlas.Page page, boolean rasterized) {
       RenderSetup setup =
-          RenderSetup.builder(pipeline)
-              .expectedBufferSize(0xc0000)
-              .texture("Sampler0", page.getId())
-              .useLightmap()
-              .build();
+          RenderSetup.builder(pipeline).texture("Sampler0", page.getId()).useLightmap().build();
       if (!rasterized) {
         ((RenderSetupExt) (Object) setup).caxton$setUnitRange(page.getUnitRangeBuffer());
       }
@@ -135,11 +120,11 @@ public class CaxtonTextRenderLayers {
     }
 
     private static RenderLayer ofTextSeeThrough(CaxtonAtlas.Page page) {
-      return make("caxton_text_see_through", CaxtonShaders.TEXT_SEE_THROUGH, page, false);
+      return make("caxton_text_see_through", CaxtonShaders.TEXT_SEETHROUGH, page, false);
     }
 
     private static RenderLayer ofTextOffset(CaxtonAtlas.Page page) {
-      return make("caxton_text_polygon_offset", CaxtonShaders.TEXT_OFFSET, page, false);
+      return make("caxton_text_polygon_offset", CaxtonShaders.TEXT_POLYGON_OFFSET, page, false);
     }
 
     private static RenderLayer ofTextOutline(CaxtonAtlas.Page page) {
@@ -147,21 +132,18 @@ public class CaxtonTextRenderLayers {
     }
 
     private static RenderLayer ofTextR(CaxtonAtlas.Page page) {
-      return make("caxton_text_raster", RenderPipelines.RENDERTYPE_TEXT_INTENSITY, page, true);
+      return make("caxton_text_raster", RenderPipelines.TEXT_GRAYSCALE, page, true);
     }
 
     private static RenderLayer ofTextSeeThroughR(CaxtonAtlas.Page page) {
       return make(
-          "caxton_text_see_through_raster",
-          RenderPipelines.RENDERTYPE_TEXT_INTENSITY_SEETHROUGH,
-          page,
-          true);
+          "caxton_text_see_through_raster", RenderPipelines.TEXT_GRAYSCALE_SEE_THROUGH, page, true);
     }
 
     private static RenderLayer ofTextOffsetR(CaxtonAtlas.Page page) {
       return make(
           "caxton_text_polygon_offset_raster",
-          RenderPipelines.RENDERTYPE_TEXT_INTENSITY,
+          RenderPipelines.TEXT_GRAYSCALE_POLYGON_OFFSET,
           page,
           true);
     }

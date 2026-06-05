@@ -2,25 +2,22 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin;
 
-import com.llamalad7.mixinextras.injector.ModifyReceiver;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.BufferBuilderStorage;
-import net.minecraft.client.render.GameRenderState;
-import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.render.block.entity.BlockEntityRenderManager;
-import net.minecraft.client.render.command.RenderDispatcher;
 import net.minecraft.client.render.entity.EntityRenderManager;
+import net.minecraft.client.render.model.BakedModelManager;
+import net.minecraft.client.shader.ShaderLoader;
+import net.minecraft.client.texture.AtlasManager;
+import net.minecraft.client.texture.TextureManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xyz.flirora.caxton.CaxtonModClient;
-import xyz.flirora.caxton.render.WorldRendererVertexConsumerProvider;
 
 @Environment(EnvType.CLIENT)
 @Mixin(WorldRenderer.class)
@@ -29,39 +26,46 @@ public class WorldRendererMixin {
 
   @Inject(method = "<init>", at = @At("RETURN"))
   private void initFields(
-      MinecraftClient client,
       EntityRenderManager entityRenderManager,
       BlockEntityRenderManager blockEntityRenderManager,
-      BufferBuilderStorage bufferBuilders,
-      GameRenderState gameRenderState,
-      RenderDispatcher entityRenderDispatcher,
+      BakedModelManager bakedModelManager,
+      TextureManager textureManager,
+      AtlasManager atlasManager,
+      ShaderLoader shaderLoader,
+      GameRenderer gameRenderer,
+      int width,
+      int height,
       CallbackInfo ci) {
     caxton$warnOnNonWrvcp = !CaxtonModClient.FORCE_DISABLE_BATCHING_HACK;
   }
 
-  @ModifyReceiver(
-      method = {"method_62214", "lambda$addMainPass$0"}, // Lambda in renderMain
-      at =
-          @At(
-              value = "INVOKE",
-              target = "Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;draw()V",
-              ordinal = 0),
-      slice =
-          @Slice(
-              from =
-                  @At(
-                      value = "INVOKE",
-                      target =
-                          "Lnet/minecraft/client/render/command/RenderDispatcher;renderTranslucent()V")))
-  private VertexConsumerProvider.Immediate addTranslucentDraws(
-      VertexConsumerProvider.Immediate immediate) {
-    if (immediate instanceof WorldRendererVertexConsumerProvider wrvcp) {
-      wrvcp.drawCaxtonTextLayers();
-    } else if (caxton$warnOnNonWrvcp) {
-      CaxtonModClient.LOGGER.warn(
-          "World text batching hack was enabled but did not get a WorldRendererVertexConsumerProvider back. Assuming that another mod is batching world rendering.");
-      caxton$warnOnNonWrvcp = false;
-    }
-    return immediate;
-  }
+  //    @ModifyReceiver(
+  //            method = {"method_62214", "lambda$addMainPass$0"}, // Lambda in renderMain
+  //            at =
+  //            @At(
+  //                    value = "INVOKE",
+  //                    target =
+  // "Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;draw()V",
+  //                    ordinal = 0),
+  //            slice =
+  //            @Slice(
+  //                    from =
+  //                    @At(
+  //                            value = "INVOKE",
+  //                            target =
+  //
+  // "Lnet/minecraft/client/render/command/RenderDispatcher;renderTranslucent()V")))
+  //    private VertexConsumerProvider.Immediate addTranslucentDraws(
+  //            VertexConsumerProvider.Immediate immediate) {
+  //        if (immediate instanceof WorldRendererVertexConsumerProvider wrvcp) {
+  //            wrvcp.drawCaxtonTextLayers();
+  //        } else if (caxton$warnOnNonWrvcp) {
+  //            CaxtonModClient.LOGGER.warn(
+  //                    "World text batching hack was enabled but did not get a
+  // WorldRendererVertexConsumerProvider back. Assuming that another mod is batching world
+  // rendering.");
+  //            caxton$warnOnNonWrvcp = false;
+  //        }
+  //        return immediate;
+  //    }
 }

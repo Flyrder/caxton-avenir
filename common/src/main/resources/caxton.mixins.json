@@ -8,6 +8,7 @@
         "BufferBuilderStorageMixin",
         "CommandContextAccessor",
         "DrawContextAccessor",
+        "DrawSpecMixin",
         "FontManagerAccessor",
         "FontManagerResourceReloaderMixin",
         "FontProviderListMixin",

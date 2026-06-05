@@ -102,8 +102,7 @@ public class CaxtonGlyphCache {
                     font.getOptions().blur());
             if (location == 0) return location;
 
-            GpuTexture page =
-                atlas.getAtlasPageTexture(CaxtonAtlas.getPage(location)).getGlTexture();
+            GpuTexture page = atlas.getAtlasPageTexture(CaxtonAtlas.getPage(location)).getTexture();
             CommandEncoder commandEncoder = RenderSystem.getDevice().createCommandEncoder();
 
             for (int mipmap = 0; mipmap < numMipmapLevels; ++mipmap) {
@@ -124,11 +123,7 @@ public class CaxtonGlyphCache {
                   mipmap,
                   0,
                   CaxtonAtlas.getX(location) >> mipmap,
-                  CaxtonAtlas.getY(location) >> mipmap,
-                  width,
-                  height,
-                  0,
-                  0);
+                  CaxtonAtlas.getY(location) >> mipmap);
               // Since nativeImage uses borrowed memory,
               // we should not close it
             }
@@ -178,7 +173,7 @@ public class CaxtonGlyphCache {
             return new BakedGlyphImpl(
                 metrics,
                 renderLayers.renderLayerSet(atlasPage, options.fontTech(), outline),
-                atlasPage.getGlTextureView(),
+                atlasPage.getTextureView(),
                 u0,
                 u1,
                 v0,

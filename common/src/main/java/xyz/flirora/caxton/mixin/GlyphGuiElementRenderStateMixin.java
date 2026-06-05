@@ -4,12 +4,12 @@ package xyz.flirora.caxton.mixin;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.blaze3d.textures.GpuSampler;
+import com.mojang.blaze3d.textures.SamplerCache;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextDrawable;
-import net.minecraft.client.gl.GpuSampler;
-import net.minecraft.client.gl.SamplerCache;
 import net.minecraft.client.gui.ScreenRect;
 import net.minecraft.client.gui.render.state.GlyphGuiElementRenderState;
 import org.joml.Matrix3x2fc;
@@ -48,7 +48,7 @@ public class GlyphGuiElementRenderStateMixin {
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/client/gl/SamplerCache;get(Lcom/mojang/blaze3d/textures/FilterMode;)Lnet/minecraft/client/gl/GpuSampler;"))
+                  "Lcom/mojang/blaze3d/textures/SamplerCache;get(Lcom/mojang/blaze3d/textures/FilterMode;)Lcom/mojang/blaze3d/textures/GpuSampler;"))
   private GpuSampler overrideSampler(SamplerCache instance, FilterMode filterMode) {
     return caxton$sampler;
   }

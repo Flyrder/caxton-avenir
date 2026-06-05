@@ -2,12 +2,8 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.render;
 
-import static xyz.flirora.caxton.layout.Interleaving.SHAPING_RUN_OFF_START;
-import static xyz.flirora.caxton.layout.Interleaving.SHAPING_RUN_STRIDE;
-
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.logging.LogUtils;
-import it.unimi.dsi.fastutil.ints.IntList;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import net.fabricmc.api.EnvType;
@@ -15,9 +11,6 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.*;
 import net.minecraft.client.gui.ScreenRect;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.window.Window;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
@@ -29,8 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
-import xyz.flirora.caxton.font.CaxtonFont;
-import xyz.flirora.caxton.font.CaxtonFontOptions;
 import xyz.flirora.caxton.font.ConfiguredCaxtonFont;
 import xyz.flirora.caxton.layout.*;
 import xyz.flirora.caxton.mixin.FontManagerAccessor;
@@ -112,38 +103,19 @@ public class CaxtonTextRenderer {
     return this.validatesAdvance;
   }
 
-  public void drawWithOutline(
-      OrderedText text,
-      float x,
-      float y,
-      int color,
-      int outlineColor,
-      Matrix4fc matrix,
-      VertexConsumerProvider vertexConsumers,
-      int light,
-      boolean addCorners) {
+  public TextRenderer.GlyphDrawable drawWithOutline(
+      OrderedText text, float x, float y, int outlineColor, boolean addCorners) {
+    // FIXME: will this be set to the right matrix?
+    float minThickness = getMinThickness(RenderSystem.getModelViewMatrixCopy());
     Threshold NO_THRESHOLD = new Threshold();
-    float minThickness = getMinThickness(matrix);
 
     CaxtonText runGroups =
         CaxtonText.from(text, fontStorageAccessor, validatesAdvance, this.rtl, handler.getCache());
-    int effectiveOutlineColor = tweakTransparency(outlineColor);
-    int effectiveColor = tweakTransparency(color);
 
     CaxtonTextDrawer outlineDrawer =
         new CaxtonTextDrawer(
-                this,
-                0.0f,
-                0.0f,
-                effectiveOutlineColor,
-                false,
-                false,
-                Float.POSITIVE_INFINITY,
-                NO_THRESHOLD)
+                this, 0.0f, 0.0f, outlineColor, false, false, Float.POSITIVE_INFINITY, NO_THRESHOLD)
             .outlined();
-    CaxtonTextDrawer centralDrawer =
-        new CaxtonTextDrawer(
-            this, x, y, effectiveColor, false, false, Float.POSITIVE_INFINITY, NO_THRESHOLD);
 
     for (RunGroup runGroup : runGroups.runGroups()) {
       ConfiguredCaxtonFont font = runGroup.getFont();
@@ -171,13 +143,7 @@ public class CaxtonTextRenderer {
                 });
           }
         }
-        centralDrawer.setX(x);
-        runGroup.acceptRender(
-            (index, style, codePoint) -> {
-              int index2 = runGroup.getCharOffset() + index;
-              return centralDrawer.accept(index2, style, codePoint);
-            });
-        x = centralDrawer.getX();
+        x = xBox.floatValue();
       } else {
         ShapingResult[] shapingResults = runGroup.getShapingResults();
 
@@ -185,234 +151,28 @@ public class CaxtonTextRenderer {
             font.font().getOptions().fontTech().offsetOutlineGlyphsByGlyphCounts()
                 ? font.font().getGlyphCount()
                 : 0;
+        outlineDrawer.setX(x);
+        outlineDrawer.setY(y);
 
         // FIXME (hard): underlines and strikethroughs don’t render
         // properly with this strategy
         for (int i = 0; i < shapingResults.length; i++) {
           ShapingResult shapingResult = shapingResults[i];
-          drawShapedRun(
+
+          outlineDrawer.acceptShapedRun(
               shapingResult,
               runGroup,
               i,
-              x,
-              y,
-              false,
-              matrix,
-              vertexConsumers,
-              CaxtonTextLayerType.OUTLINE,
-              light,
-              outlineDrawer,
-              NO_THRESHOLD,
-              Float.POSITIVE_INFINITY,
+              this.cache,
+              outlinedGlyphOffset,
               minThickness,
-              outlinedGlyphOffset);
-          x =
-              drawShapedRun(
-                  shapingResult,
-                  runGroup,
-                  i,
-                  x,
-                  y,
-                  false,
-                  matrix,
-                  vertexConsumers,
-                  CaxtonTextLayerType.POLYGON_OFFSET,
-                  light,
-                  centralDrawer,
-                  NO_THRESHOLD,
-                  Float.POSITIVE_INFINITY,
-                  minThickness,
-                  0);
+              this.renderLayers);
         }
+        x = outlineDrawer.getX();
       }
-      // FIXME: I’m sure we only need to do this at the end of the method, not every loop iteration
-      outlineDrawer.draw(
-          TextRenderer.GlyphDrawer.drawing(
-              vertexConsumers, matrix, TextRenderer.TextLayerType.NORMAL, light));
-      centralDrawer.draw(
-          TextRenderer.GlyphDrawer.drawing(
-              vertexConsumers, matrix, TextRenderer.TextLayerType.POLYGON_OFFSET, light));
     }
-  }
-
-  private float drawShapedRun(
-      ShapingResult shapedRun,
-      RunGroup runGroup,
-      int index,
-      float x,
-      float y,
-      boolean shadow,
-      Matrix4fc matrix,
-      VertexConsumerProvider vertexConsumers,
-      CaxtonTextLayerType layerType,
-      int light,
-      CaxtonTextDrawer drawer,
-      Threshold threshold,
-      float maxX,
-      float minThickness,
-      int glyphOffset) {
-    if (x >= maxX) return x;
-
-    ConfiguredCaxtonFont configuredFont = runGroup.getFont();
-    CaxtonFont font = configuredFont.font();
-    CaxtonFontOptions options = font.getOptions();
-    CaxtonGlyphCache.Font cacheForFont = cache.forFont(font);
-    EffectGlyph rectangle = this.getFonts().getRectangleGlyph();
-
-    assert glyphOffset + font.getGlyphCount() <= font.getTlistSize();
-
-    double shrink = options.shrinkage();
-    int margin = options.margin();
-    float shadowOffset = configuredFont.shadowOffset();
-    float textZ = shadow ? 0.03f : 0.0f;
-    float pageSize = CaxtonAtlas.PAGE_SIZE;
-
-    int offset = runGroup.getBidiRuns()[SHAPING_RUN_STRIDE * index + SHAPING_RUN_OFF_START];
-
-    int underlinePosition = font.getMetrics(CaxtonFont.Metrics.UNDERLINE_POSITION);
-    int underlineThickness = font.getMetrics(CaxtonFont.Metrics.UNDERLINE_THICKNESS);
-    int strikeoutPosition = font.getMetrics(CaxtonFont.Metrics.STRIKEOUT_POSITION);
-    int strikeoutThickness = font.getMetrics(CaxtonFont.Metrics.STRIKEOUT_THICKNESS);
-
-    float scale = configuredFont.getScale();
-    float baselineY = y + 7.0f + configuredFont.shiftY();
-    x += configuredFont.shiftX();
-
-    float yu = baselineY - underlinePosition * scale;
-    float ys = baselineY - strikeoutPosition * scale;
-    float dyu = underlineThickness * scale;
-    float dys = strikeoutThickness * scale;
-    float ou = 0.5f * dyu, os = 0.5f * dys;
-
-    // I don’t want to have to deal with computing this for every underlined
-    // character
-    if (dyu < minThickness) dyu = minThickness;
-    if (dys < minThickness) dys = minThickness;
-
-    float y0u = yu + 0.5f * dyu;
-    float y1u = yu - 0.5f * dyu;
-    float y0s = ys + 0.5f * dys;
-    float y1s = ys - 0.5f * dys;
-
-    int numGlyphs = shapedRun.numGlyphs();
-    int cumulAdvanceX = 0;
-    for (int i = 0; i < numGlyphs; ++i) {
-      int glyphId = shapedRun.glyphId(i);
-      int clusterIndex = shapedRun.clusterIndex(i);
-
-      if (threshold.updateCaxton(runGroup, index, shapedRun, i)) {
-        continue;
-      }
-
-      Style style = runGroup.getStyleAt(offset + clusterIndex);
-      if (style.isObfuscated()) {
-        long tlLoc = font.getTlistLocation(glyphId, 0);
-        int width = (int) (tlLoc & 0xFFFF);
-        IntList others = font.getGlyphsByWidth().get(width);
-        glyphId = others.getInt(RANDOM.nextInt(others.size()));
-      }
-      int textColor = drawer.getRenderColor(style.getColor());
-      int shadowColor = drawer.getShadowColor(style, textColor);
-
-      int advanceX = shapedRun.advanceX(i);
-      int offsetX = shapedRun.offsetX(i);
-      int offsetY = shapedRun.offsetY(i);
-      int gx = cumulAdvanceX + offsetX;
-
-      long atlasLoc = cacheForFont.getOrCreateAtlasLocation(glyphOffset + glyphId);
-      if (atlasLoc != 0) {
-        int atlasX = CaxtonAtlas.getX(atlasLoc);
-        int atlasY = CaxtonAtlas.getY(atlasLoc);
-        int atlasWidth = CaxtonAtlas.getW(atlasLoc);
-        int atlasHeight = CaxtonAtlas.getH(atlasLoc);
-        int atlasPageIndex = CaxtonAtlas.getPage(atlasLoc);
-        CaxtonAtlas.Page atlasPage = cache.getAtlasPageTexture(atlasPageIndex);
-
-        long glyphBbox = font.getBbox(glyphId);
-        short bbXMin = (short) glyphBbox;
-        short bbYMin = (short) (glyphBbox >> 16);
-        short bbXMax = (short) (glyphBbox >> 32);
-        short bbYMax = (short) (glyphBbox >> 48);
-        int bbWidth = ((int) bbXMax) - ((int) bbXMin);
-        int bbHeight = ((int) bbYMax) - ((int) bbYMin);
-        gx += bbXMin;
-        offsetY += bbYMin;
-
-        RenderLayer renderLayer = renderLayers.text(atlasPage, layerType, options.fontTech());
-        VertexConsumer vertexConsumer = vertexConsumers.getBuffer(renderLayer);
-
-        // Draw the quad
-
-        float x0 = (float) (x + (gx - shrink * margin) * scale);
-        float y1 = (float) ((-offsetY + shrink * margin) * scale);
-        float u0 = atlasX / pageSize;
-        float v0 = atlasY / pageSize;
-        float x1 = (float) (x + (gx + shrink * (atlasWidth - margin)) * scale);
-        float y0 = (float) ((-offsetY - shrink * (atlasHeight - margin)) * scale);
-        float u1 = (atlasX + atlasWidth) / pageSize;
-        float v1 = (atlasY + atlasHeight) / pageSize;
-        float lowerOffset = configuredFont.slant() * y0;
-        float upperOffset = configuredFont.slant() * y1;
-        y0 += baselineY;
-        y1 += baselineY;
-
-        if (x1 >= maxX) break;
-
-        vertexConsumer.vertex(matrix, x0 + lowerOffset, y0, textZ).color(textColor);
-        vertexConsumer.texture(u0, v0).light(light);
-        vertexConsumer.vertex(matrix, x0 + upperOffset, y1, textZ).color(textColor);
-        vertexConsumer.texture(u0, v1).light(light);
-        vertexConsumer.vertex(matrix, x1 + upperOffset, y1, textZ).color(textColor);
-        vertexConsumer.texture(u1, v1).light(light);
-        vertexConsumer.vertex(matrix, x1 + lowerOffset, y0, textZ).color(textColor);
-        vertexConsumer.texture(u1, v0).light(light);
-
-        if (shadow) {
-          x0 += shadowOffset;
-          x1 += shadowOffset;
-          y0 += shadowOffset;
-          y1 += shadowOffset;
-          vertexConsumer.vertex(matrix, x0 + lowerOffset, y0, 0.0f).color(shadowColor);
-          vertexConsumer.texture(u0, v0).light(light);
-          vertexConsumer.vertex(matrix, x0 + upperOffset, y1, 0.0f).color(shadowColor);
-          vertexConsumer.texture(u0, v1).light(light);
-          vertexConsumer.vertex(matrix, x1 + upperOffset, y1, 0.0f).color(shadowColor);
-          vertexConsumer.texture(u1, v1).light(light);
-          vertexConsumer.vertex(matrix, x1 + lowerOffset, y0, 0.0f).color(shadowColor);
-          vertexConsumer.texture(u1, v0).light(light);
-        }
-      }
-
-      float x0a = x + cumulAdvanceX * scale;
-      float x1a = x + (cumulAdvanceX + advanceX) * scale;
-      if (style.isUnderlined()) {
-        drawer.addRectangle(
-            rectangle.create(
-                x0a,
-                y0u,
-                x1a,
-                y1u,
-                drawer.getForegroundZIndex() + textZ,
-                textColor,
-                shadowColor,
-                shadowOffset));
-      }
-      if (style.isStrikethrough()) {
-        drawer.addRectangle(
-            rectangle.create(
-                x0a,
-                y0s,
-                x1a,
-                y1s,
-                drawer.getForegroundZIndex() + textZ,
-                textColor,
-                shadowColor,
-                shadowOffset));
-      }
-
-      cumulAdvanceX += advanceX;
-    }
-    return x + cumulAdvanceX * scale - configuredFont.shiftX();
+    outlineDrawer.clearRectangles();
+    return outlineDrawer;
   }
 
   public TextRenderer.GlyphDrawable prepare(
@@ -427,7 +187,7 @@ public class CaxtonTextRenderer {
       float maxWidth) {
     getCache();
     // FIXME: will this be set to the right matrix?
-    float minThickness = getMinThickness(RenderSystem.getModelViewMatrix());
+    float minThickness = getMinThickness(RenderSystem.getModelViewMatrixCopy());
     CaxtonTextDrawer drawer =
         new CaxtonTextDrawer(
             this,
@@ -470,7 +230,7 @@ public class CaxtonTextRenderer {
     getCache();
     Threshold NO_THRESHOLD = new Threshold();
     // FIXME: will this be set to the right matrix?
-    float minThickness = getMinThickness(RenderSystem.getModelViewMatrix());
+    float minThickness = getMinThickness(RenderSystem.getModelViewMatrixCopy());
 
     int effectiveOutlineColor = tweakTransparency(outlineColor);
     int effectiveColor = tweakTransparency(color);

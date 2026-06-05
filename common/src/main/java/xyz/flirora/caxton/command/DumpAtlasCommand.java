@@ -57,7 +57,7 @@ public class DumpAtlasCommand {
       CaxtonAtlas.Page page = pages.get(i);
       int numMipmaps = page.getNumMipmapLevels();
       String name = "page" + i;
-      TextureUtil.writeAsPNG(outputPath, name, page.getGlTexture(), numMipmaps, color -> color);
+      TextureUtil.writeAsPNG(outputPath, name, page.getTexture(), numMipmaps, color -> color);
     }
 
     Map<CaxtonFont, CaxtonGlyphCache.Font> locations = cache.getLocations();

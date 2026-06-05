@@ -149,6 +149,10 @@ public class CaxtonTextDrawer implements CharacterVisitor, TextRenderer.GlyphDra
         rectangle.getEffectiveMaxY());
   }
 
+  public void clearRectangles() {
+    this.rectangles = null;
+  }
+
   private void addEmptyGlyphRect(EmptyGlyphRect glyph) {
     if (this.emptyGlyphRects == null) {
       this.emptyGlyphRects = new ArrayList<>();

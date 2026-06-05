@@ -9,7 +9,7 @@ import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
-import com.mojang.blaze3d.textures.TextureFormat;
+import com.mojang.blaze3d.textures.TexelFormat;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.floats.Float2ObjectArrayMap;
 import it.unimi.dsi.fastutil.floats.Float2ObjectMap;
@@ -18,12 +18,16 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
 import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
 import org.slf4j.Logger;
 
@@ -222,7 +226,7 @@ public class CaxtonAtlas implements AutoCloseable {
         blur ? "linear" : "nearest");
     Page page = new Page(this, pageNum, range, numMipmapLevels, format, blur);
     this.pages.add(page);
-    this.pagesByGpuTexture.put(page.getGlTexture().getLabel(), page);
+    this.pagesByGpuTexture.put(page.getTexture().getLabel(), page);
     this.unallocatedSpaces.add(pageNum << 12);
   }
 
@@ -270,15 +274,15 @@ public class CaxtonAtlas implements AutoCloseable {
       super();
       this.blur = blur;
       this.format = format;
-      TextureFormat textureFormat =
+      TexelFormat textureFormat =
           switch (format) {
-            case RGBA -> TextureFormat.RGBA8;
-            case RGB -> TextureFormat.RGBA8;
-            case LUMINANCE_ALPHA -> TextureFormat.RGBA8;
-            case LUMINANCE -> TextureFormat.RED8;
+            case RGBA -> TexelFormat.RGBA8_UNORM;
+            case RGB -> TexelFormat.RGBA8_UNORM;
+            case LUMINANCE_ALPHA -> TexelFormat.RGBA8_UNORM;
+            case LUMINANCE -> TexelFormat.R8_UNORM;
           };
       GpuDevice device = RenderSystem.getDevice();
-      this.glTexture =
+      this.texture =
           device.createTexture(
               () -> "Caxton atlas page #" + pageNum,
               GpuTexture.USAGE_COPY_DST
@@ -292,11 +296,11 @@ public class CaxtonAtlas implements AutoCloseable {
               numMipmapLevels);
       this.sampler =
           RenderSystem.getSamplerCache().get(blur ? FilterMode.LINEAR : FilterMode.NEAREST);
-      this.glTextureView = device.createTextureView(this.glTexture);
+      this.textureView = device.createTextureView(this.texture);
       // Technically, the contents of this texture are undefined at this
       // point, which can pose a problem with the edges of any inserted
       // textures. Hopefully this doesn’t blow up on us at some point!
-      device.createCommandEncoder().clearColorTexture(this.glTexture, 0);
+      device.createCommandEncoder().clearColorTexture(this.texture, new Vector4f(0.0f));
       // this.clearContents();
       this.id = Identifier.of("caxton", "atlas/" + pageNum);
       this.range = range;

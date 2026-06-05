@@ -9,10 +9,8 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
-import org.joml.Matrix4fc;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -64,15 +62,9 @@ public abstract class TextRendererMixin implements HasCaxtonTextRenderer {
       OrderedText text,
       float x,
       float y,
-      int color,
       int outlineColor,
-      Matrix4fc matrix,
-      VertexConsumerProvider vertexConsumers,
-      int light,
-      CallbackInfo ci) {
-    caxton$renderer.drawWithOutline(
-        text, x, y, color, outlineColor, matrix, vertexConsumers, light, true);
-    ci.cancel();
+      CallbackInfoReturnable<TextRenderer.GlyphDrawable> cir) {
+    cir.setReturnValue(caxton$renderer.drawWithOutline(text, x, y, outlineColor, true));
   }
 
   @Inject(

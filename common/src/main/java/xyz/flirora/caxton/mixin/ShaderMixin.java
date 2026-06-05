@@ -5,7 +5,8 @@ package xyz.flirora.caxton.mixin;
 import java.util.Set;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gl.ShaderProgram;
+import net.minecraft.client.gl.GlShaderProgram;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -13,9 +14,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Environment(EnvType.CLIENT)
-@Mixin(ShaderProgram.class)
+@Mixin(GlShaderProgram.class)
 public abstract class ShaderMixin {
-  @Shadow public static Set<String> predefinedUniforms;
+  @Final @Shadow public static Set<String> predefinedUniforms;
 
   // Needed for some reason on NeoForge.
   @Inject(at = @At("RETURN"), method = "<clinit>")
