@@ -1,4 +1,4 @@
-FROM gradle:9.4-jdk25-noble
+FROM gradle:9.5-jdk25-noble
 
 RUN apt-get update && apt-get -y install gcc gcc-mingw-w64-x86-64-win32
 
