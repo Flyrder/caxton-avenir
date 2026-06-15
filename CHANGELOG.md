@@ -1,3 +1,3 @@
-## 1.0.0-alpha.5
+## 1.1.0-alpha.1
 
-* Fix obfuscated text rendering in legacy fonts
+Port to 26.2

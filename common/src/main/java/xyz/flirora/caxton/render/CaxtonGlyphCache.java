@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.client.font.BakedGlyph;
@@ -37,7 +38,7 @@ public class CaxtonGlyphCache {
         font,
         f -> {
           LOGGER.info("Adding entry for font {}", font);
-          return new Font(font, new Int2LongOpenHashMap(), new Int2ObjectOpenHashMap<>());
+          return new Font(font);
         });
   }
 
@@ -71,12 +72,12 @@ public class CaxtonGlyphCache {
   public class Font {
     private final CaxtonFont font;
     private final Int2LongMap entry;
-    private final Int2ObjectMap<BakedGlyph> entryBaked;
+    private final Map<ConfiguredFontKey, Int2ObjectMap<BakedGlyph>> entryBaked;
 
-    private Font(CaxtonFont font, Int2LongMap entry, Int2ObjectMap<BakedGlyph> entryBaked) {
+    private Font(CaxtonFont font) {
       this.font = font;
-      this.entry = entry;
-      this.entryBaked = entryBaked;
+      this.entry = new Int2LongOpenHashMap();
+      this.entryBaked = new Object2ObjectOpenHashMap<>();
     }
 
     public Int2LongMap getEntry() {
@@ -131,6 +132,12 @@ public class CaxtonGlyphCache {
           });
     }
 
+    private Int2ObjectMap<BakedGlyph> getBakedGlyphCache(ConfiguredCaxtonFont cfont) {
+      return this.entryBaked.computeIfAbsent(
+          new ConfiguredFontKey(cfont.getScale(), cfont.shadowOffset()),
+          _ -> new Int2ObjectOpenHashMap<>());
+    }
+
     public @Nullable BakedGlyph getBakedGlyph(
         int glyphId,
         CaxtonTextRenderLayers renderLayers,
@@ -139,50 +146,54 @@ public class CaxtonGlyphCache {
         boolean outline,
         float advance,
         int glyphOffset) {
-      return this.entryBaked.computeIfAbsent(
-          glyphId | (outline ? 0x80000000 : 0),
-          id -> {
-            long atlasLoc = this.getOrCreateAtlasLocation(glyphId + glyphOffset);
-            if (atlasLoc == 0) {
-              return null;
-            }
+      return this.getBakedGlyphCache(configuredFont)
+          .computeIfAbsent(
+              glyphId | (outline ? 0x80000000 : 0),
+              id -> {
+                long atlasLoc = this.getOrCreateAtlasLocation(glyphId + glyphOffset);
+                if (atlasLoc == 0) {
+                  return null;
+                }
 
-            int atlasX = CaxtonAtlas.getX(atlasLoc);
-            int atlasY = CaxtonAtlas.getY(atlasLoc);
-            int atlasWidth = CaxtonAtlas.getW(atlasLoc);
-            int atlasHeight = CaxtonAtlas.getH(atlasLoc);
-            int atlasPageIndex = CaxtonAtlas.getPage(atlasLoc);
-            CaxtonAtlas.Page atlasPage = cache.getAtlasPageTexture(atlasPageIndex);
+                int atlasX = CaxtonAtlas.getX(atlasLoc);
+                int atlasY = CaxtonAtlas.getY(atlasLoc);
+                int atlasWidth = CaxtonAtlas.getW(atlasLoc);
+                int atlasHeight = CaxtonAtlas.getH(atlasLoc);
+                int atlasPageIndex = CaxtonAtlas.getPage(atlasLoc);
+                CaxtonAtlas.Page atlasPage = cache.getAtlasPageTexture(atlasPageIndex);
 
-            float pageSize = CaxtonAtlas.PAGE_SIZE;
-            float u0 = atlasX / pageSize;
-            float v0 = atlasY / pageSize;
-            float u1 = (atlasX + atlasWidth) / pageSize;
-            float v1 = (atlasY + atlasHeight) / pageSize;
+                float pageSize = CaxtonAtlas.PAGE_SIZE;
+                float u0 = atlasX / pageSize;
+                float v0 = atlasY / pageSize;
+                float u1 = (atlasX + atlasWidth) / pageSize;
+                float v1 = (atlasY + atlasHeight) / pageSize;
 
-            CaxtonFontOptions options = font.getOptions();
-            double shrink = options.shrinkage();
-            int margin = options.margin();
-            float scale = configuredFont.getScale();
-            float x0 = (float) ((-shrink * margin) * scale);
-            float y1 = (float) ((shrink * margin) * scale);
-            float x1 = (float) ((shrink * (atlasWidth - margin)) * scale);
-            float y0 = (float) ((-shrink * (atlasHeight - margin)) * scale);
-            GlyphMetrics metrics = new CaxtonGlyphMetrics(configuredFont.shadowOffset(), advance);
+                CaxtonFontOptions options = font.getOptions();
+                double shrink = options.shrinkage();
+                int margin = options.margin();
+                float scale = configuredFont.getScale();
+                float x0 = (float) ((-shrink * margin) * scale);
+                float y1 = (float) ((shrink * margin) * scale);
+                float x1 = (float) ((shrink * (atlasWidth - margin)) * scale);
+                float y0 = (float) ((-shrink * (atlasHeight - margin)) * scale);
+                GlyphMetrics metrics =
+                    new CaxtonGlyphMetrics(configuredFont.shadowOffset(), advance);
 
-            return new BakedGlyphImpl(
-                metrics,
-                renderLayers.renderLayerSet(atlasPage, options.fontTech(), outline),
-                atlasPage.getTextureView(),
-                u0,
-                u1,
-                v0,
-                v1,
-                x0,
-                x1,
-                y0,
-                y1);
-          });
+                return new BakedGlyphImpl(
+                    metrics,
+                    renderLayers.renderLayerSet(atlasPage, options.fontTech(), outline),
+                    atlasPage.getTextureView(),
+                    u0,
+                    u1,
+                    v0,
+                    v1,
+                    x0,
+                    x1,
+                    y0,
+                    y1);
+              });
     }
+
+    private record ConfiguredFontKey(float scale, float shadowOffset) {}
   }
 }
