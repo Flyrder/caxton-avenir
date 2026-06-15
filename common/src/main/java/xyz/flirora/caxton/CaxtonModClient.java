@@ -50,14 +50,6 @@ public class CaxtonModClient {
   public static final FontType CAXTON_FONT_TYPE = getCaxtonFontType();
 
   /**
-   * Whether to force the batching hack in {@link
-   * xyz.flirora.caxton.mixin.BufferBuilderStorageMixin} to be disabled.
-   *
-   * <p>This is set when Iris is loaded.
-   */
-  public static boolean FORCE_DISABLE_BATCHING_HACK = false;
-
-  /**
    * The current global config for the mod.
    *
    * <p>This is set during initialization.
@@ -104,7 +96,6 @@ public class CaxtonModClient {
   public static void init(PlatformHooks platformHooks) {
     CaxtonModClient.platformHooks = platformHooks;
     CaxtonModClient.batchingApi = BatchingApi.createImpl(platformHooks);
-    FORCE_DISABLE_BATCHING_HACK = platformHooks.isModLoaded("iris");
 
     LOGGER.info(APRIL_FOOLS ? "Ufhed Gaadn ghap Muzsar!" : "Initializing mod...");
 
