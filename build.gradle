@@ -1,11 +1,3 @@
-buildscript {
-    configurations.configureEach {
-        resolutionStrategy {
-            force 'net.fabricmc:tiny-remapper:0.14.0'
-        }
-    }
-}
-
 plugins {
     id 'org.relativitymc.neo-loom-remap' version "${loom_version}" apply false
     id 'maven-publish'
