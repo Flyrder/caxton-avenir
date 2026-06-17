@@ -113,13 +113,13 @@ publishMods {
     }
 
     // NeoForge specific options for CurseForge
-//    curseforge("curseforgeNeoforge") {
-//        from cfOptions
-//        file project(":neoforge")
-//        modLoaders.add("neoforge")
-//        version = "${rootProject.version}+${rootProject.minecraft_version}-NEOFORGE"
-//        displayName = "Caxton " + "${rootProject.version}+${rootProject.minecraft_version}-NEOFORGE"
-//    }
+    curseforge("curseforgeNeoforge") {
+        from cfOptions
+        file project(":neoforge")
+        modLoaders.add("neoforge")
+        version = "${rootProject.version}+${rootProject.minecraft_version}-NEOFORGE"
+        displayName = "Caxton " + "${rootProject.version}+${rootProject.minecraft_version}-NEOFORGE"
+    }
 
     // Fabric specific options for Modrinth
     modrinth("modrinthFabric") {
@@ -134,11 +134,11 @@ publishMods {
     }
 
     // NeoForge specific options for Modrinth
-//    modrinth("modrinthNeoforge") {
-//        from mrOptions
-//        file project(":neoforge")
-//        modLoaders.add("neoforge")
-//        version = "${rootProject.version}+${rootProject.minecraft_version}-NEOFORGE"
-//        displayName = "Caxton " + "${rootProject.version}+${rootProject.minecraft_version}-NEOFORGE"
-//    }
+    modrinth("modrinthNeoforge") {
+        from mrOptions
+        file project(":neoforge")
+        modLoaders.add("neoforge")
+        version = "${rootProject.version}+${rootProject.minecraft_version}-NEOFORGE"
+        displayName = "Caxton " + "${rootProject.version}+${rootProject.minecraft_version}-NEOFORGE"
+    }
 }

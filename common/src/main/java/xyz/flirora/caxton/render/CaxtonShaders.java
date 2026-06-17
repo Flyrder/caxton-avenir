@@ -7,6 +7,8 @@ import static net.minecraft.client.render.RenderPipelines.register;
 import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.DepthTest;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.shaders.BindGroupLayout;
+import com.mojang.blaze3d.shaders.UniformType;
 import java.util.Optional;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -18,12 +20,16 @@ import xyz.flirora.caxton.CaxtonModClient;
 public class CaxtonShaders {
   public static final Identifier TEXT_ID = Identifier.of(CaxtonModClient.MOD_ID, "core/text");
 
+  public static final BindGroupLayout UNIT_RANGE_LAYOUT =
+      BindGroupLayout.builder().buffer("UnitRangeU", UniformType.UNIFORM_BUFFER).build();
+
   public static final RenderPipeline TEXT =
       register(
           RenderPipeline.builder(RenderPipelines.TEXT_SNIPPET)
               .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text"))
               .withVertexShader(TEXT_ID)
               .withFragmentShader(TEXT_ID)
+              .withBindGroupLayout(UNIT_RANGE_LAYOUT)
               .build());
   public static final RenderPipeline GUI_TEXT =
       register(
@@ -31,6 +37,7 @@ public class CaxtonShaders {
               .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/gui_text"))
               .withVertexShader(TEXT_ID)
               .withFragmentShader(TEXT_ID)
+              .withBindGroupLayout(UNIT_RANGE_LAYOUT)
               .build());
 
   public static final RenderPipeline TEXT_POLYGON_OFFSET =
@@ -39,6 +46,7 @@ public class CaxtonShaders {
               .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text_polygon_offset"))
               .withVertexShader(TEXT_ID)
               .withFragmentShader(TEXT_ID)
+              .withBindGroupLayout(UNIT_RANGE_LAYOUT)
               .withDepthStencilState(
                   new DepthStencilState(DepthTest.GREATER_THAN_OR_EQUAL, true, 1.0F, 10.0F))
               .build());
@@ -49,6 +57,7 @@ public class CaxtonShaders {
               .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text_see_through"))
               .withVertexShader(TEXT_ID)
               .withFragmentShader(TEXT_ID)
+              .withBindGroupLayout(UNIT_RANGE_LAYOUT)
               .withShaderDefine("IS_SEE_THROUGH")
               .withDepthStencilState(Optional.empty())
               .build());
@@ -59,6 +68,7 @@ public class CaxtonShaders {
               .withLocation(Identifier.of(CaxtonModClient.MOD_ID, "pipeline/text_outline"))
               .withVertexShader(TEXT_ID)
               .withFragmentShader(TEXT_ID)
+              .withBindGroupLayout(UNIT_RANGE_LAYOUT)
               .withShaderDefine("IS_OUTLINE")
               .build());
   public static final RenderPipeline TEXT_OUTLINE_RASTER =
