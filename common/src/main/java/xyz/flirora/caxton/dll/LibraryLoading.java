@@ -126,19 +126,17 @@ public class LibraryLoading {
         true);
   }
 
-  public static void showNativeLibraryLoadFailedScreen(MinecraftClient client, Exception e) {
-    Screen screen = client.guiManager.getCurrentScreen();
-    client.guiManager.setScreen(
-        nativeLibraryLoadFailedScreen(
-            confirmed -> {
-              if (confirmed) {
-                String url =
-                    e instanceof UnsupportedPlatformException ? OS_SUPPORT_URL : ISSUES_URL;
-                Util.getOperatingSystem().open(url);
-              }
-              client.guiManager.setScreen(screen);
-            },
-            e));
+  public static Screen nativeLibraryLoadFailedScreen(
+      MinecraftClient client, Exception e, Runnable closeAction) {
+    return nativeLibraryLoadFailedScreen(
+        confirmed -> {
+          if (confirmed) {
+            String url = e instanceof UnsupportedPlatformException ? OS_SUPPORT_URL : ISSUES_URL;
+            Util.getOperatingSystem().open(url);
+          }
+          closeAction.run();
+        },
+        e);
   }
 
   private record Metadata(int size, String sha256Base64) {}

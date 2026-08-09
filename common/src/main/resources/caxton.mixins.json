@@ -28,7 +28,7 @@
         "TextRendererAccessor",
         "TextRendererMixin",
         "TranslationStorageMixin",
-        "dll.MinecraftClientMixin",
+        "dll.GuiManagerMixin",
         "gui.AbstractSignEditScreenMixin",
         "gui.ChatInputSuggestorMixin",
         "gui.EditBoxMixin",
