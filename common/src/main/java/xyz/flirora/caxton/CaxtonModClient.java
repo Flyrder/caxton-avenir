@@ -102,6 +102,8 @@ public class CaxtonModClient {
     CONFIG = CaxtonConfig.readFromFile();
 
     LibraryLoading.loadNativeLibrary(LOGGER);
-    LOGGER.info("caxton-impl version: " + Caxton1.VERSION);
+    if (LibraryLoading.getLoadingException() == null) {
+      LOGGER.info("caxton-impl version: " + Caxton1.VERSION);
+    }
   }
 }
