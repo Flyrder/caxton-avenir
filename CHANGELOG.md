@@ -1,4 +1,4 @@
-## 1.1.0-alpha.2
+## 1.1.0-alpha.3
 
-* Add NeoForge release
-* Specify bind group for unit range uniform, fixing a crash with the Vulkan backend
+* Encountering a native library loading failure should have shown a special screen on startup; this is now shown as
+  intended
