@@ -1,4 +1,3 @@
-## 1.1.0-alpha.3
+## 1.2.0-alpha.1
 
-* Encountering a native library loading failure should have shown a special screen on startup; this is now shown as
-  intended
+Update to 26.3-rc-1
