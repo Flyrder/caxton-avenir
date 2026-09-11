@@ -300,7 +300,7 @@ public class CaxtonAtlas implements AutoCloseable {
       // Technically, the contents of this texture are undefined at this
       // point, which can pose a problem with the edges of any inserted
       // textures. Hopefully this doesn’t blow up on us at some point!
-      device.createCommandEncoder().clearColorTexture(this.texture, new Vector4f(0.0f));
+      device.getCommandEncoder().clearColorTexture(this.texture, new Vector4f(0.0f));
       // this.clearContents();
       this.id = Identifier.of("caxton", "atlas/" + pageNum);
       this.range = range;
@@ -317,10 +317,10 @@ public class CaxtonAtlas implements AutoCloseable {
                         UNIT_RANGE_BUFFER_SIZE);
                 try (MemoryStack memoryStack = MemoryStack.stackPush()) {
                   ByteBuffer byteBuffer =
-                      Std140Builder.onStack(memoryStack, RenderSystem.PROJECTION_MATRIX_UBO_SIZE)
+                      Std140Builder.onStack(memoryStack, RenderSystem.MAT4F_SIZE)
                           .putFloat(unitRange)
                           .get();
-                  device.createCommandEncoder().writeToBuffer(ubo.slice(), byteBuffer);
+                  device.getCommandEncoder().writeToBuffer(ubo.slice(), byteBuffer);
                 }
                 return ubo;
               });

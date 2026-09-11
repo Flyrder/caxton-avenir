@@ -17,6 +17,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.font.FontType;
 import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import xyz.flirora.caxton.compat.immediatelyfast.BatchingApi;
 import xyz.flirora.caxton.dll.Caxton1;
@@ -35,6 +36,10 @@ public class CaxtonModClient {
       PREVIOUS_BROKEN_METHOD_CALLERS = new ConcurrentHashMap<>();
   private static PlatformHooks platformHooks;
   private static BatchingApi batchingApi;
+
+  public static Identifier id(String path) {
+    return Identifier.of(MOD_ID, path);
+  }
 
   private static FontType getCaxtonFontType() {
     for (FontType variant : FontType.class.getEnumConstants()) {

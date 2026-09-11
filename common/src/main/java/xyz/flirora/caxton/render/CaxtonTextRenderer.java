@@ -106,7 +106,7 @@ public class CaxtonTextRenderer {
   public TextRenderer.GlyphDrawable drawWithOutline(
       OrderedText text, float x, float y, int outlineColor, boolean addCorners) {
     // FIXME: will this be set to the right matrix?
-    float minThickness = getMinThickness(RenderSystem.getModelViewMatrixCopy());
+    float minThickness = getMinThickness(RenderSystem.getGlobalMatrixStack());
     Threshold NO_THRESHOLD = new Threshold();
 
     CaxtonText runGroups =
@@ -187,7 +187,7 @@ public class CaxtonTextRenderer {
       float maxWidth) {
     getCache();
     // FIXME: will this be set to the right matrix?
-    float minThickness = getMinThickness(RenderSystem.getModelViewMatrixCopy());
+    float minThickness = getMinThickness(RenderSystem.getGlobalMatrixStack());
     CaxtonTextDrawer drawer =
         new CaxtonTextDrawer(
             this,
@@ -230,7 +230,7 @@ public class CaxtonTextRenderer {
     getCache();
     Threshold NO_THRESHOLD = new Threshold();
     // FIXME: will this be set to the right matrix?
-    float minThickness = getMinThickness(RenderSystem.getModelViewMatrixCopy());
+    float minThickness = getMinThickness(RenderSystem.getGlobalMatrixStack());
 
     int effectiveOutlineColor = tweakTransparency(outlineColor);
     int effectiveColor = tweakTransparency(color);

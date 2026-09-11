@@ -10,6 +10,7 @@ accessible field net/minecraft/client/render/RenderPipelines GUI_TEXT_SNIPPET Lc
 accessible field net/minecraft/client/render/RenderPipelines BASE_TEXT_SNIPPET Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;
 accessible field net/minecraft/client/render/RenderPipelines FOG_AND_SAMPLERS_SNIPPET Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;
 accessible method net/minecraft/client/render/RenderPipelines register (Lcom/mojang/blaze3d/pipeline/RenderPipeline;)Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+accessible method net/minecraft/client/render/RenderPipelines register (Lnet/minecraft/client/render/oit/OitPipelineSet;)Lnet/minecraft/client/render/oit/OitPipelineSet;
 
 accessible class net/minecraft/client/gui/DrawContext$ScissorStack
 accessible class net/minecraft/client/gui/render/GuiRenderer$Draw

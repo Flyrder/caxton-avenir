@@ -31,8 +31,7 @@ public class GuiManagerMixin {
       @Local(name = "onboardingScreenAdded") LocalBooleanRef onboardingScreenAdded) {
     Exception e = LibraryLoading.getLoadingException();
     if (e != null) {
-      factoriesOut.add(
-          closeAction -> LibraryLoading.nativeLibraryLoadFailedScreen(this.client, e, closeAction));
+      factoriesOut.add(closeAction -> LibraryLoading.nativeLibraryLoadFailedScreen(e, closeAction));
       onboardingScreenAdded.set(true);
     }
   }

@@ -104,7 +104,7 @@ public class CaxtonGlyphCache {
             if (location == 0) return location;
 
             GpuTexture page = atlas.getAtlasPageTexture(CaxtonAtlas.getPage(location)).getTexture();
-            CommandEncoder commandEncoder = RenderSystem.getDevice().createCommandEncoder();
+            CommandEncoder commandEncoder = RenderSystem.getDevice().getCommandEncoder();
 
             for (int mipmap = 0; mipmap < numMipmapLevels; ++mipmap) {
               tlLoc = font.getTlistLocation(glyphId, mipmap);

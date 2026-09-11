@@ -5,7 +5,6 @@ package xyz.flirora.caxton.command;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
-import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
@@ -18,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.texture.ImageHelper;
 import net.minecraft.text.Text;
 import net.minecraft.util.Util;
 import org.slf4j.Logger;
@@ -57,7 +57,7 @@ public class DumpAtlasCommand {
       CaxtonAtlas.Page page = pages.get(i);
       int numMipmaps = page.getNumMipmapLevels();
       String name = "page" + i;
-      TextureUtil.writeAsPNG(outputPath, name, page.getTexture(), numMipmaps, color -> color);
+      ImageHelper.saveTexture(outputPath, name, page.getTexture(), numMipmaps, color -> color);
     }
 
     Map<CaxtonFont, CaxtonGlyphCache.Font> locations = cache.getLocations();

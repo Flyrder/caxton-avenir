@@ -2,16 +2,15 @@
 // SPDX-License-Identifier: MIT
 package xyz.flirora.caxton.mixin;
 
-import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.buffers.MultiDrawBuffer;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.systems.RenderPass;
-import com.mojang.blaze3d.vertex.IndexType;
 import java.util.List;
 import java.util.NoSuchElementException;
 import net.minecraft.client.render.DrawSpec;
-import net.minecraft.client.render.OutputTarget;
+import net.minecraft.client.render.oit.OitPipelineSet;
 import net.minecraft.client.render.state.ScissorState;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
@@ -29,8 +28,9 @@ public class DrawSpecMixin {
 
   @Inject(method = "<init>", at = @At("RETURN"))
   private void receiveUnitRangeUniform(
+      String name,
       RenderPipeline pipeline,
-      OutputTarget outputTarget,
+      OitPipelineSet oitPipelineSet,
       GpuBufferSlice dynamicTransforms,
       ScissorState scissorState,
       List<DrawSpec.Texture> textures,
@@ -43,21 +43,16 @@ public class DrawSpecMixin {
   }
 
   @Inject(
-      method =
-          "draw(Lcom/mojang/blaze3d/buffers/GpuBuffer;Lcom/mojang/blaze3d/buffers/GpuBuffer;Lcom/mojang/blaze3d/vertex/IndexType;III)V",
+      method = "drawInternal",
       at =
           @At(
               value = "INVOKE",
               target = "Lcom/mojang/blaze3d/systems/RenderPass;drawIndexed(IIIII)V"))
   private void setUnitRangeUniform(
-      GpuBuffer vertexBuffer,
-      GpuBuffer indexBuffer,
-      IndexType indexType,
-      int baseVertex,
-      int firstIndex,
-      int indexCount,
-      CallbackInfo ci,
-      @Local(name = "renderPass") RenderPass renderPass) {
+      MultiDrawBuffer.DrawCall drawCall,
+      RenderPass renderPass,
+      RenderPipeline pipeline,
+      CallbackInfo ci) {
     if (caxton$unitRangeBuffer != null) renderPass.setUniform("UnitRangeU", caxton$unitRangeBuffer);
   }
 }

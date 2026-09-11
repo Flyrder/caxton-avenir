@@ -4,6 +4,7 @@ package xyz.flirora.caxton.dll;
 
 import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
 import java.io.*;
+import java.net.URI;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -13,10 +14,10 @@ import java.util.Scanner;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ConfirmLinkScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.util.SdlUtil;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.Util;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.system.Platform;
 import org.slf4j.Logger;
@@ -36,10 +37,11 @@ public class LibraryLoading {
                   .formatted(Formatting.BOLD));
   private static final Text LIBRARY_LOADING_FAILED_DESC =
       Text.translatable("caxton.gui.libraryLoadingFailed.description");
-  public static final String ISSUES_URL = "https://gitlab.com/Kyarei/caxton/-/issues";
+  public static final URI ISSUES_URL = URI.create("https://gitlab.com/Kyarei/caxton/-/issues");
   private static final Text LIBRARY_LOADING_FAILED_LINK =
       Text.translatable("caxton.gui.libraryLoadingFailed.link", ISSUES_URL);
-  public static final String OS_SUPPORT_URL = "https://gitlab.com/Kyarei/caxton#os-support";
+  public static final URI OS_SUPPORT_URL =
+      URI.create("https://gitlab.com/Kyarei/caxton#os-support");
   private static final Text UNSUPPORTED_PLATFORM_LINK =
       Text.translatable("caxton.gui.unsupportedPlatform.link", OS_SUPPORT_URL);
 
@@ -126,13 +128,12 @@ public class LibraryLoading {
         true);
   }
 
-  public static Screen nativeLibraryLoadFailedScreen(
-      MinecraftClient client, Exception e, Runnable closeAction) {
+  public static Screen nativeLibraryLoadFailedScreen(Exception e, Runnable closeAction) {
     return nativeLibraryLoadFailedScreen(
         confirmed -> {
           if (confirmed) {
-            String url = e instanceof UnsupportedPlatformException ? OS_SUPPORT_URL : ISSUES_URL;
-            Util.getOperatingSystem().open(url);
+            URI url = e instanceof UnsupportedPlatformException ? OS_SUPPORT_URL : ISSUES_URL;
+            SdlUtil.openUri(url);
           }
           closeAction.run();
         },

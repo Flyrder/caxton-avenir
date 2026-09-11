@@ -31,7 +31,7 @@ public class GuiRendererMixin {
             .getCaxtonTextRenderer()
             .getCache()
             .getAtlas()
-            .getPageByGpuTexture(texture.texture());
+            .getPageByGpuTexture(texture.getTexture());
     if (page != null) {
       pass.setUniform("UnitRangeU", page.getUnitRangeBuffer());
     }

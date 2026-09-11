@@ -12,6 +12,7 @@ import net.minecraft.client.font.TextRenderLayerSet;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderPipelines;
 import net.minecraft.client.render.RenderSetup;
+import net.minecraft.client.render.oit.OitPipelineSet;
 import org.jspecify.annotations.Nullable;
 import xyz.flirora.caxton.font.FontTech;
 import xyz.flirora.caxton.layout.RenderSetupExt;
@@ -63,21 +64,21 @@ public class CaxtonTextRenderLayers {
         ofTextSeeThrough,
         ofTextOffset,
         ofTextOutline;
-    private final RenderPipeline pipeline, outlinePipeline;
+    private final RenderPipeline guiPipeline, outlineGuiPipeline;
 
     public Group(
         Function<CaxtonAtlas.Page, RenderLayer> ofText,
         Function<CaxtonAtlas.Page, RenderLayer> ofTextSeeThrough,
         Function<CaxtonAtlas.Page, RenderLayer> ofTextOffset,
         Function<CaxtonAtlas.Page, RenderLayer> ofTextOutline,
-        RenderPipeline pipeline,
-        RenderPipeline outlinePipeline) {
+        RenderPipeline guiPipeline,
+        RenderPipeline outlineGuiPipeline) {
       this.ofText = ofText;
       this.ofTextSeeThrough = ofTextSeeThrough;
       this.ofTextOffset = ofTextOffset;
       this.ofTextOutline = ofTextOutline;
-      this.pipeline = pipeline;
-      this.outlinePipeline = outlinePipeline;
+      this.guiPipeline = guiPipeline;
+      this.outlineGuiPipeline = outlineGuiPipeline;
     }
 
     public void clear() {
@@ -93,22 +94,30 @@ public class CaxtonTextRenderLayers {
             textOutline.computeIfAbsent(page, this.ofTextOutline),
             textSeeThrough.computeIfAbsent(page, this.ofTextSeeThrough),
             textOffset.computeIfAbsent(page, this.ofTextOffset),
-            this.outlinePipeline);
+            this.outlineGuiPipeline);
       } else {
         return new TextRenderLayerSet(
             text.computeIfAbsent(page, this.ofText),
             textSeeThrough.computeIfAbsent(page, this.ofTextSeeThrough),
             textOffset.computeIfAbsent(page, this.ofTextOffset),
-            this.pipeline);
+            this.guiPipeline);
       }
     }
   }
 
   private abstract static class RenderLayerFunctions {
     private static RenderLayer make(
-        String name, RenderPipeline pipeline, CaxtonAtlas.Page page, boolean rasterized) {
+        String name,
+        RenderPipeline pipeline,
+        OitPipelineSet oitPipelines,
+        CaxtonAtlas.Page page,
+        boolean rasterized) {
       RenderSetup setup =
-          RenderSetup.builder(pipeline).texture("Sampler0", page.getId()).useLightmap().build();
+          RenderSetup.builder(pipeline)
+              .oitPipelineSet(oitPipelines)
+              .texture("Sampler0", page.getId())
+              .useLightmap()
+              .build();
       if (!rasterized) {
         ((RenderSetupExt) (Object) setup).caxton$setUnitRange(page.getUnitRangeBuffer());
       }
@@ -116,34 +125,54 @@ public class CaxtonTextRenderLayers {
     }
 
     private static RenderLayer ofText(CaxtonAtlas.Page page) {
-      return make("caxton_text", CaxtonShaders.TEXT, page, false);
+      return make("caxton_text", CaxtonShaders.TEXT, CaxtonShaders.OIT_TEXT, page, false);
     }
 
     private static RenderLayer ofTextSeeThrough(CaxtonAtlas.Page page) {
-      return make("caxton_text_see_through", CaxtonShaders.TEXT_SEETHROUGH, page, false);
+      return make("caxton_text_see_through", CaxtonShaders.TEXT_SEETHROUGH, null, page, false);
     }
 
     private static RenderLayer ofTextOffset(CaxtonAtlas.Page page) {
-      return make("caxton_text_polygon_offset", CaxtonShaders.TEXT_POLYGON_OFFSET, page, false);
+      return make(
+          "caxton_text_polygon_offset",
+          CaxtonShaders.TEXT_POLYGON_OFFSET,
+          CaxtonShaders.OIT_TEXT_POLYGON_OFFSET,
+          page,
+          false);
     }
 
     private static RenderLayer ofTextOutline(CaxtonAtlas.Page page) {
-      return make("caxton_text_outline", CaxtonShaders.TEXT_OUTLINE, page, false);
+      return make(
+          "caxton_text_outline",
+          CaxtonShaders.TEXT_OUTLINE,
+          CaxtonShaders.OIT_TEXT_OUTLINE,
+          page,
+          false);
     }
 
     private static RenderLayer ofTextR(CaxtonAtlas.Page page) {
-      return make("caxton_text_raster", RenderPipelines.TEXT_GRAYSCALE, page, true);
+      return make(
+          "caxton_text_raster",
+          RenderPipelines.TEXT_GRAYSCALE,
+          RenderPipelines.OIT_TEXT_GRAYSCALE,
+          page,
+          true);
     }
 
     private static RenderLayer ofTextSeeThroughR(CaxtonAtlas.Page page) {
       return make(
-          "caxton_text_see_through_raster", RenderPipelines.TEXT_GRAYSCALE_SEE_THROUGH, page, true);
+          "caxton_text_see_through_raster",
+          RenderPipelines.TEXT_GRAYSCALE_SEE_THROUGH,
+          null,
+          page,
+          true);
     }
 
     private static RenderLayer ofTextOffsetR(CaxtonAtlas.Page page) {
       return make(
           "caxton_text_polygon_offset_raster",
           RenderPipelines.TEXT_GRAYSCALE_POLYGON_OFFSET,
+          RenderPipelines.OIT_TEXT_GRAYSCALE_POLYGON_OFFSET,
           page,
           true);
     }

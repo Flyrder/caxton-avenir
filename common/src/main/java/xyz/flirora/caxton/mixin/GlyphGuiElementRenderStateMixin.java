@@ -37,7 +37,7 @@ public class GlyphGuiElementRenderStateMixin {
             .getCaxtonTextRenderer()
             .getCache()
             .getAtlas()
-            .getPageByGpuTexture(renderable.textureView().texture());
+            .getPageByGpuTexture(renderable.textureView().getTexture());
     this.caxton$sampler =
         page != null ? page.getSampler() : RenderSystem.getSamplerCache().get(FilterMode.NEAREST);
   }

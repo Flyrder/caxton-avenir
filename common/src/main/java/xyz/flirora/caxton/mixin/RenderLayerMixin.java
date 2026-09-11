@@ -9,9 +9,9 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import java.util.List;
 import net.minecraft.client.render.DrawSpec;
-import net.minecraft.client.render.OutputTarget;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderSetup;
+import net.minecraft.client.render.oit.OitPipelineSet;
 import net.minecraft.client.render.state.ScissorState;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -30,10 +30,11 @@ public class RenderLayerMixin {
           @At(
               value = "NEW",
               target =
-                  "(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/client/render/OutputTarget;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lnet/minecraft/client/render/state/ScissorState;Ljava/util/List;)Lnet/minecraft/client/render/DrawSpec;"))
+                  "(Ljava/lang/String;Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/client/render/oit/OitPipelineSet;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lnet/minecraft/client/render/state/ScissorState;Ljava/util/List;)Lnet/minecraft/client/render/DrawSpec;"))
   private DrawSpec sendUnitRangeUniform(
+      String name,
       RenderPipeline pipeline,
-      OutputTarget outputTarget,
+      OitPipelineSet oitPipelineSet,
       GpuBufferSlice dynamicTransforms,
       ScissorState scissorState,
       List<DrawSpec.Texture> textures,
@@ -41,6 +42,8 @@ public class RenderLayerMixin {
     GpuBuffer unitRangeBuffer = ((RenderSetupExt) (Object) this.renderSetup).caxton$getUnitRange();
     return ScopedValue.where(CaxtonTextRenderLayers.UNIT_RANGE_UNIFORM, unitRangeBuffer)
         .call(
-            () -> original.call(pipeline, outputTarget, dynamicTransforms, scissorState, textures));
+            () ->
+                original.call(
+                    name, pipeline, oitPipelineSet, dynamicTransforms, scissorState, textures));
   }
 }
