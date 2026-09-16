@@ -1,3 +1,3 @@
-## 1.2.0-alpha.1
+## 1.2.0-alpha.2
 
-Update to 26.3-rc-1
+Update to 26.3 (Fabric and NeoForge)
