@@ -26,7 +26,7 @@ public class FontTypeMixin {
     throw new AssertionError();
   }
 
-  @Shadow private static @Final @Mutable FontType[] field_2316;
+  @Shadow private static @Final @Mutable FontType[] $VALUES;
 
   @Inject(
       method = "<clinit>",
@@ -35,14 +35,14 @@ public class FontTypeMixin {
               value = "FIELD",
               opcode = Opcodes.PUTSTATIC,
               target =
-                  "Lnet/minecraft/client/font/FontType;field_2316:[Lnet/minecraft/client/font/FontType;",
+                  "Lnet/minecraft/client/font/FontType;$VALUES:[Lnet/minecraft/client/font/FontType;",
               shift = At.Shift.AFTER))
   private static void addCustomVariant(CallbackInfo ci) {
-    var variants = new ArrayList<>(Arrays.asList(field_2316));
+    var variants = new ArrayList<>(Arrays.asList($VALUES));
     var last = variants.get(variants.size() - 1);
     // This means our code will still work if other mods or Mojang add more variants!
     var caxton = newVariant("CAXTON_TTF", last.ordinal() + 1, "caxton", CaxtonFontLoader.CODEC);
     variants.add(caxton);
-    field_2316 = variants.toArray(new FontType[0]);
+    $VALUES = variants.toArray(new FontType[0]);
   }
 }

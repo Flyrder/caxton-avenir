@@ -39,11 +39,11 @@ public class LibraryLoading {
       Text.translatable("caxton.gui.libraryLoadingFailed.description");
   public static final URI ISSUES_URL = URI.create("https://gitlab.com/Kyarei/caxton/-/issues");
   private static final Text LIBRARY_LOADING_FAILED_LINK =
-      Text.translatable("caxton.gui.libraryLoadingFailed.link", ISSUES_URL);
+      Text.translatable("caxton.gui.libraryLoadingFailed.link", ISSUES_URL.toString());
   public static final URI OS_SUPPORT_URL =
       URI.create("https://gitlab.com/Kyarei/caxton#os-support");
   private static final Text UNSUPPORTED_PLATFORM_LINK =
-      Text.translatable("caxton.gui.unsupportedPlatform.link", OS_SUPPORT_URL);
+      Text.translatable("caxton.gui.unsupportedPlatform.link", OS_SUPPORT_URL.toString());
 
   private static Exception loadingException = new IllegalStateException("library not yet loaded");
 
