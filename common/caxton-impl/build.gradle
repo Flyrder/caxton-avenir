@@ -59,6 +59,11 @@ def copyHostPlatformNative = tasks.register('copyHostPlatformNative', Copy) {
     from(build.outputFiles) {
         rename(name -> "$hostTarget-" + name)
     }
+    if (hostTarget == "aarch64-pc-windows-gnullvm") {
+        from(build.outputFiles) {
+            rename(name -> "aarch64-pc-windows-gnu-" + name)
+        }
+    }
     into "build/natives/"
 }
 
@@ -66,14 +71,16 @@ def createFileDigests = tasks.register('createFileDigests') {
     dependsOn copyHostPlatformNative
     inputs.dir("build/natives")
     outputs.file("build/checksum/checksums.txt")
-    outputs.files.singleFile.parentFile.mkdirs()
-    try (def output = new FileWriter(outputs.files.singleFile)) {
-        for (File file : inputs.files.asFileTree.files) {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256")
-            byte[] contents = file.bytes
-            digest.update(contents)
-            String digestStr = Base64.encoder.encodeToString(digest.digest())
-            output.write("" + file.name + "\t" + contents.length + "\t" + digestStr + "\n")
+    doLast {
+        outputs.files.singleFile.parentFile.mkdirs()
+        try (def output = new FileWriter(outputs.files.singleFile)) {
+            for (File file : inputs.files.asFileTree.files) {
+                MessageDigest digest = MessageDigest.getInstance("SHA-256")
+                byte[] contents = file.bytes
+                digest.update(contents)
+                String digestStr = Base64.encoder.encodeToString(digest.digest())
+                output.write("" + file.name + "\t" + contents.length + "\t" + digestStr + "\n")
+            }
         }
     }
 }

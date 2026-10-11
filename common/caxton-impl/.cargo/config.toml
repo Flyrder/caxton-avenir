@@ -1,0 +1,5 @@
+[target.aarch64-pc-windows-gnullvm]
+rustflags = [
+    "-C", "link-self-contained=yes",
+    "-L", "native=C:/Users/voide/.rustup/toolchains/stable-aarch64-pc-windows-gnullvm/lib/rustlib/aarch64-pc-windows-gnullvm/lib/self-contained"
+]

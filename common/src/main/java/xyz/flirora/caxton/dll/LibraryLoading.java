@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
 import net.minecraft.client.MinecraftClient;
@@ -64,8 +65,22 @@ public class LibraryLoading {
     File runDirectory = MinecraftClient.getInstance().runDirectory;
 
     String soName = System.mapLibraryName("caxton_impl");
-    String soNameWithPlatform = RustPlatform.forCurrent() + "-" + soName;
-    Metadata metadata = readFromChecksumsTxt(soNameWithPlatform, logger);
+    List<String> candidates = RustPlatform.candidatesForCurrent();
+    String soNameWithPlatform = null;
+    Metadata metadata = null;
+
+    for (String candidate : candidates) {
+      String testName = candidate + "-" + soName;
+      if (CaxtonModClient.class.getResource("/natives/" + testName) != null) {
+        soNameWithPlatform = testName;
+        metadata = readFromChecksumsTxt(soNameWithPlatform, logger);
+        break;
+      }
+    }
+
+    if (soNameWithPlatform == null) {
+      soNameWithPlatform = RustPlatform.forCurrent() + "-" + soName;
+    }
 
     try (InputStream libStream =
         CaxtonModClient.class.getResourceAsStream("/natives/" + soNameWithPlatform)) {
